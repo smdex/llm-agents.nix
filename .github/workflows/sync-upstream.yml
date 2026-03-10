@@ -11,12 +11,19 @@ permissions:
 
 jobs:
   sync:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     steps:
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.SYNC_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0  # Full history needed for rebase
 
       - name: Configure git
@@ -51,7 +58,7 @@ jobs:
         if: steps.check.outputs.has_changes == 'true'
         id: rebase
         env:
-          GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           # Create a sync branch
           SYNC_BRANCH="sync/upstream-$(date +%Y%m%d-%H%M%S)"
@@ -84,14 +91,14 @@ jobs:
       - name: Push sync branch
         if: steps.rebase.outputs.rebase_success == 'true'
         env:
-          GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           git push -u origin "${{ steps.rebase.outputs.sync_branch }}"
 
       - name: Create pull request
         if: steps.rebase.outputs.rebase_success == 'true'
         env:
-          GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           SYNC_BRANCH="${{ steps.rebase.outputs.sync_branch }}"
           COMMITS_BEHIND="${{ steps.check.outputs.commits_behind }}"
