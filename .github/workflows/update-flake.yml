@@ -60,7 +60,6 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
-      metadata: read
     steps:
       - name: Generate GitHub App Token
         id: app-token
@@ -114,7 +113,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-      metadata: read
     steps:
       - name: Generate GitHub App Token
         id: app-token
