@@ -31,7 +31,7 @@ on:
         required: true
 jobs:
   discover:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.build-matrix.outputs.matrix }}
       has-updates: ${{ steps.build-matrix.outputs.has-updates }}
@@ -52,7 +52,7 @@ jobs:
   update:
     needs: discover
     if: needs.discover.outputs.has-updates == 'true'
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.discover.outputs.matrix) }}
@@ -107,7 +107,7 @@ jobs:
             "${{ steps.update.outputs.new_version }}"
   update-readme:
     needs: [discover, update]
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     if: always() && needs.discover.outputs.has-updates == 'true'
     permissions:
       contents: write
@@ -159,7 +159,7 @@ jobs:
             --label "documentation,automated"
   summary:
     needs: [discover, update, update-readme]
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     if: always() && needs.discover.outputs.has-updates == 'true'
     steps:
       - name: Generate summary
