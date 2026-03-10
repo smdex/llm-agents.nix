@@ -9,7 +9,6 @@ permissions:
   contents: write
   pull-requests: write
   issues: write
-  metadata: read
 
 jobs:
   sync:
@@ -21,8 +20,6 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          repositories: smdex/llm-agents.nix
-          owner: smdex
 
       - name: Checkout repository
         uses: actions/checkout@v4
