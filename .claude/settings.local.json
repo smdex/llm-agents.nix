@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__exa__web_search_exa",
+      "mcp__zread__get_repo_structure",
+      "mcp__zread__read_file",
+      "mcp__web-reader__webReader",
+      "Bash(nix-instantiate:*)",
+      "Bash(nix:*)",
+      "mcp__exa__get_code_context_exa",
+      "Bash(comma gh:*)"
+    ]
+  }
+}
