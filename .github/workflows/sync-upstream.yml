@@ -1,0 +1,119 @@
+name: Sync with Upstream
+on:
+  schedule:
+    # Run daily at 3 AM UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-slim
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.SYNC_TOKEN }}
+          fetch-depth: 0  # Full history needed for rebase
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/numtide/llm-agents.nix.git
+          git fetch upstream
+
+      - name: Check for upstream changes
+        id: check
+        run: |
+          UPSTREAM_HEAD=$(git rev-parse upstream/main)
+          LOCAL_HEAD=$(git rev-parse origin/main)
+
+          if [ "$UPSTREAM_HEAD" = "$LOCAL_HEAD" ]; then
+            echo "Already up to date with upstream"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            COMMITS_BEHIND=$(git rev-list --count origin/main..upstream/main)
+            COMMITS_AHEAD=$(git rev-list --count upstream/main..origin/main)
+            echo "Upstream is $COMMITS_BEHIND commits ahead, local has $COMMITS_AHEAD commits"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "commits_behind=$COMMITS_BEHIND" >> $GITHUB_OUTPUT
+            echo "commits_ahead=$COMMITS_AHEAD" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Rebase onto upstream
+        if: steps.check.outputs.has_changes == 'true'
+        id: rebase
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
+        run: |
+          # Create a sync branch
+          SYNC_BRANCH="sync/upstream-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b "$SYNC_BRANCH"
+
+          # Attempt rebase
+          if git rebase upstream/main; then
+            echo "rebase_success=true" >> $GITHUB_OUTPUT
+            echo "sync_branch=$SYNC_BRANCH" >> $GITHUB_OUTPUT
+          else
+            echo "Rebase failed - conflicts detected"
+            git rebase --abort
+            echo "rebase_success=false" >> $GITHUB_OUTPUT
+
+            # Create an issue to notify about conflicts
+            gh issue create \
+              --title "Upstream sync failed - merge conflicts" \
+              --body "The automated sync with upstream failed due to merge conflicts.
+
+          Upstream repository: numtide/llm-agents.nix
+          Failed at: $(date -u +%Y-%m-%d\ %H:%M:%S\ UTC)
+          Commits behind: ${{ steps.check.outputs.commits_behind }}
+          Commits ahead: ${{ steps.check.outputs.commits_ahead }}
+
+          Manual intervention required to resolve conflicts." \
+              --label "upstream-sync,needs-attention"
+            exit 1
+          fi
+
+      - name: Push sync branch
+        if: steps.rebase.outputs.rebase_success == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
+        run: |
+          git push -u origin "${{ steps.rebase.outputs.sync_branch }}"
+
+      - name: Create pull request
+        if: steps.rebase.outputs.rebase_success == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
+        run: |
+          SYNC_BRANCH="${{ steps.rebase.outputs.sync_branch }}"
+          COMMITS_BEHIND="${{ steps.check.outputs.commits_behind }}"
+          COMMITS_AHEAD="${{ steps.check.outputs.commits_ahead }}"
+
+          gh pr create \
+            --title "Sync with upstream: ${COMMITS_BEHIND} new commits" \
+            --body "## Upstream Sync
+
+          This PR brings in the latest changes from the upstream repository.
+
+          **Upstream:** numtide/llm-agents.nix
+          **Commits pulled:** ${COMMITS_BEHIND}
+          **Local commits preserved:** ${COMMITS_AHEAD}
+
+          ### Changes from upstream
+
+          \`\`\`
+          $(git log --oneline origin/main..upstream/main | head -20)
+          \`\`\`
+
+          ---
+          *This is an automated sync PR.*" \
+            --label "upstream-sync,automated" \
+            --base main
