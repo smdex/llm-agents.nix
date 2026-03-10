@@ -8,7 +8,6 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  issues: write
 
 jobs:
   sync:
@@ -31,6 +30,27 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Ensure labels exist
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          # Create labels if they don't exist
+          for label in "upstream-sync" "automated" "needs-attention"; do
+            if ! gh label list "$label" --json name --jq '.[].name' 2>/dev/null | grep -q "^$label$"; then
+              case "$label" in
+                upstream-sync)
+                  gh label create "$label" --color "#bbaec7" --description "Changes synced from upstream repository" 2>/dev/null || true
+                  ;;
+                automated)
+                  gh label create "$label" --color "#0E8A16" --description "Automated changes by workflows" 2>/dev/null || true
+                  ;;
+                needs-attention)
+                  gh label create "$label" --color "#d93f0b" --description "Requires manual attention" 2>/dev/null || true
+                  ;;
+              esac
+            fi
+          done
 
       - name: Add upstream remote
         run: |
@@ -85,7 +105,17 @@ jobs:
           Commits ahead: ${{ steps.check.outputs.commits_ahead }}
 
           Manual intervention required to resolve conflicts." \
-              --label "upstream-sync,needs-attention"
+              --label "upstream-sync,needs-attention" 2>/dev/null || \
+            gh issue create \
+              --title "Upstream sync failed - merge conflicts" \
+              --body "The automated sync with upstream failed due to merge conflicts.
+
+          Upstream repository: numtide/llm-agents.nix
+          Failed at: $(date -u +%Y-%m-%d\ %H:%M:%S\ UTC)
+          Commits behind: ${{ steps.check.outputs.commits_behind }}
+          Commits ahead: ${{ steps.check.outputs.commits_ahead }}
+
+          Manual intervention required to resolve conflicts."
             exit 1
           fi
 
@@ -123,5 +153,23 @@ jobs:
 
           ---
           *This is an automated sync PR.*" \
-            --label "upstream-sync,automated" \
+            --label "upstream-sync,automated" 2>/dev/null || \
+          gh pr create \
+            --title "Sync with upstream: ${COMMITS_BEHIND} new commits" \
+            --body "## Upstream Sync
+
+          This PR brings in the latest changes from the upstream repository.
+
+          **Upstream:** numtide/llm-agents.nix
+          **Commits pulled:** ${COMMITS_BEHIND}
+          **Local commits preserved:** ${COMMITS_AHEAD}
+
+          ### Changes from upstream
+
+          \`\`\`
+          $(git log --oneline origin/main..upstream/main | head -20)
+          \`\`\`
+
+          ---
+          *This is an automated sync PR.*" \
             --base main
