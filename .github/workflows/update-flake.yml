@@ -59,7 +59,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-      issues: write
     steps:
       - name: Generate GitHub App Token
         id: app-token
@@ -71,6 +70,26 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
+      - name: Ensure labels exist
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          # Create labels if they don't exist
+          for label in "dependencies" "automated" "documentation"; do
+            if ! gh label list "$label" --json name --jq '.[].name' 2>/dev/null | grep -q "^$label$"; then
+              case "$label" in
+                dependencies)
+                  gh label create "$label" --color "#0366d6" --description "Dependency updates" 2>/dev/null || true
+                  ;;
+                automated)
+                  gh label create "$label" --color "#0E8A16" --description "Automated changes by workflows" 2>/dev/null || true
+                  ;;
+                documentation)
+                  gh label create "$label" --color "#0075ca" --description "Improvements or additions to documentation" 2>/dev/null || true
+                  ;;
+              esac
+            fi
+          done
       - name: Setup Nix
         uses: cachix/install-nix-action@v31
         with:
