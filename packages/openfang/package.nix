@@ -10,16 +10,16 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "openfang";
-  version = "0.3.47";
+  version = "0.3.48";
 
   src = fetchFromGitHub {
     owner = "RightNow-AI";
     repo = "openfang";
     tag = "v${version}";
-    hash = "sha256-zrg6cNklwIGHCBhwIawib5d41rUIo6Ol+UWclSN0mIc=";
+    hash = "sha256-QNt44ITlYRsKhvTggxl30+fd/U5AOd7Nt1DI54hcPQE=";
   };
 
-  cargoHash = "sha256-8iLdcJYDbnJ8dn0fk2TPjMK4xy9vWrFkDwPEGko7bP0=";
+  cargoHash = "sha256-JRlaXc7nj7/RqAPysqtY4FvpE4XAeWuBN9u/2Czny8Y=";
 
   # Build only the CLI crate
   buildAndTestSubdir = "crates/openfang-cli";
