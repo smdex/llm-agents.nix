@@ -8,13 +8,13 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "beads-rust";
-  version = "0.1.27";
+  version = "0.1.28";
 
   src = fetchFromGitHub {
     owner = "Dicklesworthstone";
     repo = "beads_rust";
     tag = "v${version}";
-    hash = "sha256-JlCvOd6pyeU7/vNuIXyY9cztZxF0vYB/6I8LeaZodkc=";
+    hash = "sha256-X7D5OHCLwHPUdfUjSPzAIP/ufsO+yHX3qrgyZqy1UQM=";
   };
 
   cargoHash = "sha256-AR+gYP+yEv0k7MGzdo6CtEeriMflzU4kFxhEuK4hcN0=";
