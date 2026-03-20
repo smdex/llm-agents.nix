@@ -9,16 +9,16 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "zeroclaw";
-  version = "0.5.1";
+  version = "0.5.2";
 
   src = fetchFromGitHub {
     owner = "zeroclaw-labs";
     repo = "zeroclaw";
     tag = "v${version}";
-    hash = "sha256-5P+TjAf7i0oUxBCyBtagrmIHPXW2iZ6620PNxVYYjlQ=";
+    hash = "sha256-+nOjzz5CaCtXPOQM9nvQ5bj2Dv7WF3DCCMlnQjylOUQ=";
   };
 
-  cargoHash = "sha256-tpgeRLWyye43fuzw2MRevQx8YKEbyOnIgLzjg8EzwCg=";
+  cargoHash = "sha256-yV2sZkqI85FwezN1DCkCkBtlx9TdvY5/aNWgX4m2xbE=";
 
   # Tests require runtime configuration and network access
   doCheck = false;
