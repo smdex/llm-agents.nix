@@ -240,6 +240,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Nix**: [packages/qwen-code/package.nix](packages/qwen-code/package.nix)
 
 </details>
+<details>
+<summary><strong>refact</strong> - Open-source AI Software Development Agent</summary>
+
+- **Source**: source
+- **License**: BSD-3-Clause
+- **Homepage**: https://refact.ai
+- **Usage**: `nix run github:numtide/llm-agents.nix#refact -- --help`
+- **Nix**: [packages/refact/package.nix](packages/refact/package.nix)
+
+</details>
 
 ### AI Assistants
 
@@ -261,6 +271,26 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://openclaw.ai
 - **Usage**: `nix run github:numtide/llm-agents.nix#openclaw -- --help`
 - **Nix**: [packages/openclaw/package.nix](packages/openclaw/package.nix)
+
+</details>
+<details>
+<summary><strong>openfang</strong> - Open-source Agent Operating System built in Rust</summary>
+
+- **Source**: source
+- **License**: Check package
+- **Homepage**: https://openfang.sh
+- **Usage**: `nix run github:numtide/llm-agents.nix#openfang -- --help`
+- **Nix**: [packages/openfang/package.nix](packages/openfang/package.nix)
+
+</details>
+<details>
+<summary><strong>openfang-desktop</strong> - Native desktop application for the OpenFang Agent OS (Tauri 2.0)</summary>
+
+- **Source**: source
+- **License**: Check package
+- **Homepage**: https://openfang.sh
+- **Usage**: `nix run github:numtide/llm-agents.nix#openfang-desktop -- --help`
+- **Nix**: [packages/openfang-desktop/package.nix](packages/openfang-desktop/package.nix)
 
 </details>
 <details>
