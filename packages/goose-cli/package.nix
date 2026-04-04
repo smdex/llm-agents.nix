@@ -1,62 +1,58 @@
 {
   lib,
-  fetchFromGitHub,
-  rustPlatform,
-  pkg-config,
-  openssl,
-  libxcb,
-  dbus,
+  stdenv,
+  fetchurl,
+  autoPatchelfHook,
+  gcc-unwrapped,
   versionCheckHook,
-  librusty_v8,
+  versionCheckHomeHook,
 }:
 
-rustPlatform.buildRustPackage rec {
-  pname = "goose-cli";
-  version = "1.29.0";
+let
+  versionData = builtins.fromJSON (builtins.readFile ./hashes.json);
+  inherit (versionData) version hashes;
 
-  src = fetchFromGitHub {
-    owner = "block";
-    repo = "goose";
-    rev = "v${version}";
-    hash = "sha256-CqNITxafZBT230ETC4nxNEP+cvH8R9aCobcuCDP+IHU=";
+  platformAssets = {
+    x86_64-linux = "goose-x86_64-unknown-linux-gnu.tar.bz2";
+    aarch64-linux = "goose-aarch64-unknown-linux-gnu.tar.bz2";
+    x86_64-darwin = "goose-x86_64-apple-darwin.tar.bz2";
+    aarch64-darwin = "goose-aarch64-apple-darwin.tar.bz2";
   };
 
-  cargoHash = "sha256-RUWvbV+/LVSyiHJ/2pseuAP8Nobjr8dMrictDlNgl0c=";
+  platform = stdenv.hostPlatform.system;
+  asset = platformAssets.${platform} or (throw "Unsupported system: ${platform}");
+in
+stdenv.mkDerivation {
+  pname = "goose-cli";
+  inherit version;
 
-  nativeBuildInputs = [ pkg-config ];
+  src = fetchurl {
+    url = "https://github.com/aaif-goose/goose/releases/download/v${version}/${asset}";
+    hash = hashes.${platform} or (throw "Missing goose-cli hash for platform ${platform}");
+  };
 
-  buildInputs = [
-    openssl
-    libxcb
-    dbus
-  ];
+  sourceRoot = ".";
 
-  # The v8 package will try to download a `librusty_v8.a` release at build time to our read-only filesystem
-  # To avoid this we pre-download the file and export it via RUSTY_V8_ARCHIVE
-  env.RUSTY_V8_ARCHIVE = librusty_v8;
+  dontStrip = stdenv.hostPlatform.isDarwin;
 
-  # Build only the CLI package
-  cargoBuildFlags = [
-    "--package"
-    "goose-cli"
-  ];
+  nativeBuildInputs = lib.optionals stdenv.hostPlatform.isLinux [ autoPatchelfHook ];
 
-  # Enable tests with proper environment
-  doCheck = true;
-  checkPhase = ''
-    export HOME=$(mktemp -d)
-    export XDG_CONFIG_HOME=$HOME/.config
-    export XDG_DATA_HOME=$HOME/.local/share
-    export XDG_STATE_HOME=$HOME/.local/state
-    export XDG_CACHE_HOME=$HOME/.cache
-    mkdir -p $XDG_CONFIG_HOME $XDG_DATA_HOME $XDG_STATE_HOME $XDG_CACHE_HOME
+  buildInputs = lib.optionals stdenv.hostPlatform.isLinux [ gcc-unwrapped.lib ];
 
-    # Run tests for goose-cli package only
-    cargo test --package goose-cli --release
+  installPhase = ''
+    runHook preInstall
+
+    install -Dm755 goose $out/bin/goose
+
+    runHook postInstall
   '';
 
   doInstallCheck = true;
-  nativeInstallCheckInputs = [ versionCheckHook ];
+  nativeInstallCheckInputs = [
+    versionCheckHook
+    versionCheckHomeHook
+  ];
+  versionCheckProgramArg = [ "--version" ];
 
   passthru.category = "AI Coding Agents";
 
@@ -65,7 +61,8 @@ rustPlatform.buildRustPackage rec {
     homepage = "https://github.com/block/goose";
     changelog = "https://github.com/block/goose/releases/tag/v${version}";
     license = licenses.asl20;
-    sourceProvenance = with sourceTypes; [ fromSource ];
+    sourceProvenance = with sourceTypes; [ binaryNativeCode ];
     mainProgram = "goose";
+    platforms = builtins.attrNames platformAssets;
   };
 }

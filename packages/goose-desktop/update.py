@@ -1,7 +1,7 @@
 #!/usr/bin/env nix
 #! nix shell --inputs-from .# nixpkgs#python3 --command python3
 
-"""Update script for goose-cli package."""
+"""Update script for goose-desktop package."""
 
 import sys
 from pathlib import Path
@@ -20,13 +20,6 @@ from updater import (
 from updater.hash import hex_to_sri
 
 HASHES_FILE = Path(__file__).parent / "hashes.json"
-
-ASSETS = {
-    "x86_64-linux": "goose-x86_64-unknown-linux-gnu.tar.bz2",
-    "aarch64-linux": "goose-aarch64-unknown-linux-gnu.tar.bz2",
-    "x86_64-darwin": "goose-x86_64-apple-darwin.tar.bz2",
-    "aarch64-darwin": "goose-aarch64-apple-darwin.tar.bz2",
-}
 
 
 def release_assets(version: str) -> dict[str, dict[str, Any]]:
@@ -62,7 +55,7 @@ def asset_hash(asset: dict[str, Any]) -> str:
 
 
 def main() -> None:
-    """Update the goose-cli package."""
+    """Update the goose-desktop package."""
     data = load_hashes(HASHES_FILE)
     current = data["version"]
     latest = fetch_github_latest_release("block", "goose")
@@ -73,20 +66,19 @@ def main() -> None:
         print("Already up to date")
         return
 
-    assets = release_assets(latest)
-    hashes: dict[str, str] = {}
-    for platform, asset_name in ASSETS.items():
-        asset = assets.get(asset_name)
-        if asset is None:
-            msg = f"Missing expected release asset: {asset_name}"
-            raise ValueError(msg)
-        hashes[platform] = asset_hash(asset)
+    asset_name = f"goose_{latest}_amd64.deb"
+    asset = release_assets(latest).get(asset_name)
+    if asset is None:
+        msg = f"Missing expected release asset: {asset_name}"
+        raise ValueError(msg)
 
     save_hashes(
         HASHES_FILE,
         {
             "version": latest,
-            "hashes": hashes,
+            "hashes": {
+                "x86_64-linux": asset_hash(asset),
+            },
         },
     )
 
