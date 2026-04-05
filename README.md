@@ -40,6 +40,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>cli-proxy-api-plus</strong> - Unified proxy providing OpenAI/Gemini/Claude/Codex and others compatible APIs for AI coding CLI tools</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/router-for-me/CLIProxyAPIPlus
+- **Usage**: `nix run github:numtide/llm-agents.nix#cli-proxy-api-plus -- --help`
+- **Nix**: [packages/cli-proxy-api-plus/package.nix](packages/cli-proxy-api-plus/package.nix)
+
+</details>
+<details>
 <summary><strong>code</strong> - Fork of codex. Orchestrate agents from OpenAI, Claude, Gemini or any provider.</summary>
 
 - **Source**: source
@@ -148,6 +158,26 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/block/goose
 - **Usage**: `nix run github:numtide/llm-agents.nix#goose-cli -- --help`
 - **Nix**: [packages/goose-cli/package.nix](packages/goose-cli/package.nix)
+
+</details>
+<details>
+<summary><strong>goose-desktop</strong> - Desktop app for Goose - a local, extensible, open source AI agent</summary>
+
+- **Source**: source
+- **License**: Apache-2.0
+- **Homepage**: https://github.com/block/goose
+- **Usage**: `nix run github:numtide/llm-agents.nix#goose-desktop -- --help`
+- **Nix**: [packages/goose-desktop/package.nix](packages/goose-desktop/package.nix)
+
+</details>
+<details>
+<summary><strong>goose-server</strong> - HTTP server for Goose - a local, extensible, open source AI agent</summary>
+
+- **Source**: source
+- **License**: Apache-2.0
+- **Homepage**: https://github.com/block/goose
+- **Usage**: `nix run github:numtide/llm-agents.nix#goose-server -- --help`
+- **Nix**: [packages/goose-server/package.nix](packages/goose-server/package.nix)
 
 </details>
 <details>
@@ -321,6 +351,26 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://openclaw.ai
 - **Usage**: `nix run github:numtide/llm-agents.nix#openclaw -- --help`
 - **Nix**: [packages/openclaw/package.nix](packages/openclaw/package.nix)
+
+</details>
+<details>
+<summary><strong>openfang</strong> - Open-source Agent Operating System built in Rust</summary>
+
+- **Source**: source
+- **License**: Apache-2.0 / MIT
+- **Homepage**: https://openfang.sh
+- **Usage**: `nix run github:numtide/llm-agents.nix#openfang -- --help`
+- **Nix**: [packages/openfang/package.nix](packages/openfang/package.nix)
+
+</details>
+<details>
+<summary><strong>openfang-desktop</strong> - Native desktop application for the OpenFang Agent OS (Tauri 2.0)</summary>
+
+- **Source**: source
+- **License**: Apache-2.0 / MIT
+- **Homepage**: https://openfang.sh
+- **Usage**: `nix run github:numtide/llm-agents.nix#openfang-desktop -- --help`
+- **Nix**: [packages/openfang-desktop/package.nix](packages/openfang-desktop/package.nix)
 
 </details>
 <details>
