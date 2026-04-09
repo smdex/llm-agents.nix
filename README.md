@@ -637,6 +637,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>mardi-gras</strong> - Terminal UI for Beads issue tracking with a parade-inspired workflow view</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/quietpublish/mardi-gras
+- **Usage**: `nix run github:numtide/llm-agents.nix#mardi-gras -- --help`
+- **Nix**: [packages/mardi-gras/package.nix](packages/mardi-gras/package.nix)
+
+</details>
+<details>
 <summary><strong>openspec</strong> - Spec-driven development for AI coding assistants</summary>
 
 - **Source**: bytecode
