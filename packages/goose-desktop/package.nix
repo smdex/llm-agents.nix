@@ -57,6 +57,7 @@ buildNpmPackage rec {
     node -e "const fs=require('fs'); const p='ui/desktop/forge.config.ts'; const s=fs.readFileSync(p,'utf8'); fs.writeFileSync(p, s.replace('  asar: true,', '  asar: true,\\n  prune: false,'));"
     substituteInPlace ui/desktop/forge.config.ts \
       --replace-fail "  rebuildConfig: {}," "  rebuildConfig: { types: [] },"
+    node -e "const fs=require('fs'); const p='ui/desktop/vite.main.config.mts'; const s=fs.readFileSync(p,'utf8'); const before=\"  define: {\\n    'process.env.GITHUB_OWNER': JSON.stringify(process.env.GITHUB_OWNER || 'block'),\"; const after=\"  define: {\\n    MAIN_WINDOW_VITE_DEV_SERVER_URL: 'undefined',\\n    MAIN_WINDOW_VITE_NAME: JSON.stringify('main_window'),\\n    'process.env.GITHUB_OWNER': JSON.stringify(process.env.GITHUB_OWNER || 'block'),\"; fs.writeFileSync(p, s.replace(before, after));"
     node -e "const fs=require('fs'); const p='ui/desktop/vite.preload.config.mts'; const s=fs.readFileSync(p,'utf8'); const replacement=[\"    outDir: '.vite/build',\", '    emptyOutDir: false,'].join('\\n'); fs.writeFileSync(p, s.replace(\"    outDir: '.vite/build',\", replacement));"
     rm -f ui/package.json ui/pnpm-workspace.yaml
     substituteInPlace ui/desktop/src/updates.ts \
