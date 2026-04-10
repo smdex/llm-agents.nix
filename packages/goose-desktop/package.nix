@@ -57,6 +57,7 @@ buildNpmPackage rec {
     node -e "const fs=require('fs'); const p='ui/desktop/forge.config.ts'; const s=fs.readFileSync(p,'utf8'); fs.writeFileSync(p, s.replace('  asar: true,', '  asar: true,\\n  prune: false,'));"
     substituteInPlace ui/desktop/forge.config.ts \
       --replace-fail "  rebuildConfig: {}," "  rebuildConfig: { types: [] },"
+    node -e "const fs=require('fs'); const p='ui/desktop/vite.preload.config.mts'; const s=fs.readFileSync(p,'utf8'); const replacement=[\"    outDir: '.vite/build',\", '    emptyOutDir: false,'].join('\\n'); fs.writeFileSync(p, s.replace(\"    outDir: '.vite/build',\", replacement));"
     rm -f ui/package.json ui/pnpm-workspace.yaml
     substituteInPlace ui/desktop/src/updates.ts \
       --replace-fail "export const UPDATES_ENABLED = true;" "export const UPDATES_ENABLED = false;"
@@ -104,6 +105,13 @@ buildNpmPackage rec {
       --set-default ENABLE_DEV_UPDATES false
 
     runHook postInstall
+  '';
+
+  doInstallCheck = true;
+  installCheckPhase = ''
+    test -f "$out/share/goose-desktop/app/.vite/build/main.js"
+    test -f "$out/share/goose-desktop/app/.vite/build/preload.js"
+    test -f "$out/share/goose-desktop/app/.vite/renderer/main_window/index.html"
   '';
 
   passthru.category = "AI Coding Agents";
