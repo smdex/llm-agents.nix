@@ -158,6 +158,10 @@ python3.pkgs.buildPythonApplication rec {
     firecrawl-py
     parallel-web
     fal-client
+    # Gateway integrations
+    python-telegram-bot
+    aiohttp
+    matrix-nio
     # Text-to-speech
     edge-tts
     faster-whisper
@@ -171,6 +175,19 @@ python3.pkgs.buildPythonApplication rec {
     "pydantic"
     "firecrawl-py"
     "pyjwt"
+  ];
+
+  postPatch = ''
+    substituteInPlace hermes_cli/gateway.py \
+      --replace-fail 'python_path = get_python_path()' 'hermes_cli = get_hermes_cli_path()' \
+      --replace-fail 'ExecStart={python_path} -m hermes_cli.main{f" {profile_arg}" if profile_arg else ""} gateway run --replace' 'ExecStart={hermes_cli}{f" {profile_arg}" if profile_arg else ""} gateway run --replace'
+  '';
+
+  makeWrapperArgs = [
+    "--prefix"
+    "PYTHONPATH"
+    ":"
+    "${placeholder "out"}/${python3.sitePackages}:${python3.pkgs.makePythonPath dependencies}"
   ];
 
   pythonImportsCheck = [ "hermes_cli" ];
