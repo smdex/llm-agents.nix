@@ -21,7 +21,7 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "happy-relay-server";
-  version = "unstable-2026-04-12";
+  version = "1.1.6";
 
   src = fetchFromGitHub {
     owner = "slopus";
