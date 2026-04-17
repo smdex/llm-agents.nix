@@ -32,16 +32,16 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "openfang-desktop";
-  version = "0.5.6";
+  version = "0.5.9";
 
   src = fetchFromGitHub {
     owner = "RightNow-AI";
     repo = "openfang";
     tag = "v${version}";
-    hash = "sha256-a8sGbW21XAE4+EWi4eVqpXNwO7kH+XuDSltg1Xtvetw=";
+    hash = "sha256-AR2QKCRum5YUPwcwgAOi4EWbIaD14Akq+F4e7U4ooFs=";
   };
 
-  cargoHash = "sha256-phCJ84g6wXPTisR0zmfyQSnNjN5pc0leLB0Uziq7dWI=";
+  cargoHash = "sha256-GxYgV0MBvbHosVDc88m79H7SqooNLnCg1gHLIqUUCq0=";
 
   # Build only the desktop crate
   buildAndTestSubdir = "crates/openfang-desktop";
