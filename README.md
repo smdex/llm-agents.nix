@@ -60,16 +60,6 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
-<summary><strong>cli-proxy-api-plus</strong> - Unified proxy providing OpenAI/Gemini/Claude/Codex and others compatible APIs for AI coding CLI tools</summary>
-
-- **Source**: source
-- **License**: MIT
-- **Homepage**: https://github.com/router-for-me/CLIProxyAPIPlus
-- **Usage**: `nix run github:numtide/llm-agents.nix#cli-proxy-api-plus -- --help`
-- **Nix**: [packages/cli-proxy-api-plus/package.nix](packages/cli-proxy-api-plus/package.nix)
-
-</details>
-<details>
 <summary><strong>code</strong> - Fork of codex. Orchestrate agents from OpenAI, Claude, Gemini or any provider.</summary>
 
 - **Source**: source
@@ -173,7 +163,7 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 <details>
 <summary><strong>goose-cli</strong> - CLI for Goose - a local, extensible, open source AI agent that automates engineering tasks</summary>
 
-- **Source**: source
+- **Source**: binary
 - **License**: Apache-2.0
 - **Homepage**: https://github.com/block/goose
 - **Usage**: `nix run github:numtide/llm-agents.nix#goose-cli -- --help`
@@ -183,7 +173,7 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 <details>
 <summary><strong>goose-desktop</strong> - Desktop app for Goose - a local, extensible, open source AI agent</summary>
 
-- **Source**: source
+- **Source**: binary
 - **License**: Apache-2.0
 - **Homepage**: https://github.com/block/goose
 - **Usage**: `nix run github:numtide/llm-agents.nix#goose-desktop -- --help`
@@ -381,26 +371,6 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://openclaw.ai
 - **Usage**: `nix run github:numtide/llm-agents.nix#openclaw -- --help`
 - **Nix**: [packages/openclaw/package.nix](packages/openclaw/package.nix)
-
-</details>
-<details>
-<summary><strong>openfang</strong> - Open-source Agent Operating System built in Rust</summary>
-
-- **Source**: source
-- **License**: Apache-2.0 / MIT
-- **Homepage**: https://openfang.sh
-- **Usage**: `nix run github:numtide/llm-agents.nix#openfang -- --help`
-- **Nix**: [packages/openfang/package.nix](packages/openfang/package.nix)
-
-</details>
-<details>
-<summary><strong>openfang-desktop</strong> - Native desktop application for the OpenFang Agent OS (Tauri 2.0)</summary>
-
-- **Source**: source
-- **License**: Apache-2.0 / MIT
-- **Homepage**: https://openfang.sh
-- **Usage**: `nix run github:numtide/llm-agents.nix#openfang-desktop -- --help`
-- **Nix**: [packages/openfang-desktop/package.nix](packages/openfang-desktop/package.nix)
 
 </details>
 <details>
@@ -697,6 +667,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>mardi-gras</strong> - Terminal UI for Beads issue tracking with a parade-inspired workflow view</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/quietpublish/mardi-gras
+- **Usage**: `nix run github:numtide/llm-agents.nix#mardi-gras -- --help`
+- **Nix**: [packages/mardi-gras/package.nix](packages/mardi-gras/package.nix)
+
+</details>
+<details>
 <summary><strong>openspec</strong> - Spec-driven development for AI coding assistants</summary>
 
 - **Source**: bytecode
@@ -913,6 +893,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>happier-relay-server</strong> - Official runner for the Happier self-hosted relay server</summary>
+
+- **Source**: bytecode
+- **License**: MIT
+- **Homepage**: https://github.com/happier-dev/happier
+- **Usage**: `nix run github:numtide/llm-agents.nix#happier-relay-server -- --help`
+- **Nix**: [packages/happier-relay-server/package.nix](packages/happier-relay-server/package.nix)
+
+</details>
+<details>
 <summary><strong>happy-coder</strong> - Mobile and Web client for Codex and Claude Code, with realtime voice and encryption</summary>
 
 - **Source**: source
@@ -920,6 +910,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/slopus/happy
 - **Usage**: `nix run github:numtide/llm-agents.nix#happy-coder -- --help`
 - **Nix**: [packages/happy-coder/package.nix](packages/happy-coder/package.nix)
+
+</details>
+<details>
+<summary><strong>happy-relay-server</strong> - Relay server runtime for Happy mobile and web clients</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/slopus/happy
+- **Usage**: `nix run github:numtide/llm-agents.nix#happy-relay-server -- --help`
+- **Nix**: [packages/happy-relay-server/package.nix](packages/happy-relay-server/package.nix)
 
 </details>
 <details>
