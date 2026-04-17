@@ -1350,9 +1350,9 @@
     url = "https://registry.npmjs.org/@npmcli/fs/-/fs-4.0.0.tgz";
     hash = "sha512-/xGlezI6xfGO9NwuJlnwz/K14qD1kCSAGtacBHnGzeAIuJGazcp45KP5NuyARXoKb7cwulAGWVsbeSxdG/cb0Q==";
   };
-  "@office-ai/aioncli-core@0.30.2" = fetchurl {
-    url = "https://registry.npmjs.org/@office-ai/aioncli-core/-/aioncli-core-0.30.2.tgz";
-    hash = "sha512-9SsRULyRVDDK0uBTVFlnZ7aRagJN1yo2HrU+E6JGOrBkiLgHYb8UPOBSl9BEGIDdMWS6092pV9ZlJeMJXRpjtA==";
+  "@office-ai/aioncli-core@0.30.5" = fetchurl {
+    url = "https://registry.npmjs.org/@office-ai/aioncli-core/-/aioncli-core-0.30.5.tgz";
+    hash = "sha512-LtNUXK5bk+jd6IPy6KV1bbfMqVhPDejk89lj9elH0jewtFE9uQ+Ju0S3yHNfN2NLbSdOWdRfgzNQvWre48gosA==";
   };
   "@office-ai/platform@0.3.16" = fetchurl {
     url = "https://registry.npmjs.org/@office-ai/platform/-/platform-0.3.16.tgz";
@@ -3037,6 +3037,10 @@
   "@vitest/utils@4.1.0" = fetchurl {
     url = "https://registry.npmjs.org/@vitest/utils/-/utils-4.1.0.tgz";
     hash = "sha512-XfPXT6a8TZY3dcGY8EdwsBulFCIw+BeeX0RZn2x/BtiY/75YGh8FeWGG8QISN/WhaqSrE2OrlDgtF8q5uhOTmw==";
+  };
+  "@wecom/aibot-node-sdk@1.0.6" = fetchurl {
+    url = "https://registry.npmjs.org/@wecom/aibot-node-sdk/-/aibot-node-sdk-1.0.6.tgz";
+    hash = "sha512-WZJN3Q+s+94Qjc0VW8d5W1cVkA3emYxiqf+mNRO9UEHoF40puHvizreNMtudjFhm7mmkYiK5ue/QzNiCk+xwLA==";
   };
   "@xmldom/xmldom@0.8.11" = fetchurl {
     url = "https://registry.npmjs.org/@xmldom/xmldom/-/xmldom-0.8.11.tgz";
