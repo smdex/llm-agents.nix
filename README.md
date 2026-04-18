@@ -647,6 +647,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>mardi-gras</strong> - Terminal UI for Beads issue tracking with a parade-inspired workflow view</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/quietpublish/mardi-gras
+- **Usage**: `nix run github:numtide/llm-agents.nix#mardi-gras -- --help`
+- **Nix**: [packages/mardi-gras/package.nix](packages/mardi-gras/package.nix)
+
+</details>
+<details>
 <summary><strong>openspec</strong> - Spec-driven development for AI coding assistants</summary>
 
 - **Source**: bytecode
@@ -830,6 +840,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/steipete/mcporter
 - **Usage**: `nix run github:numtide/llm-agents.nix#mcporter -- --help`
 - **Nix**: [packages/mcporter/package.nix](packages/mcporter/package.nix)
+
+</details>
+<details>
+<summary><strong>memvid-cli</strong> - AI memory CLI - crash-safe, single-file storage with semantic search</summary>
+
+- **Source**: binary
+- **License**: Apache-2.0
+- **Homepage**: https://memvid.com
+- **Usage**: `nix run github:numtide/llm-agents.nix#memvid-cli -- --help`
+- **Nix**: [packages/memvid-cli/package.nix](packages/memvid-cli/package.nix)
 
 </details>
 <details>
