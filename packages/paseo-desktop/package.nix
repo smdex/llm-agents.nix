@@ -116,6 +116,9 @@ stdenv.mkDerivation {
       $out/lib/paseo-desktop/resources/app.asar.unpacked/node_modules/koffi/build/koffi/openbsd_* \
       $out/lib/paseo-desktop/resources/app.asar.unpacked/node_modules/@mariozechner/clipboard-linux-x64-musl
 
+    substituteInPlace $out/lib/paseo-desktop/Paseo \
+      --replace-fail 'Paseo.bin" --no-sandbox "$@"' 'Paseo.bin" "$@"'
+
     makeWrapper $out/lib/paseo-desktop/Paseo $out/bin/paseo-desktop \
       --chdir $out/lib/paseo-desktop \
       --prefix LD_LIBRARY_PATH : ${
@@ -125,9 +128,7 @@ stdenv.mkDerivation {
         ]
       } \
       --set GSETTINGS_SCHEMA_DIR ${gsettings-desktop-schemas}/share/gsettings-schemas/${gsettings-desktop-schemas.name}/glib-2.0/schemas \
-      --prefix XDG_DATA_DIRS : ${gsettings-desktop-schemas}/share/gsettings-schemas/${gsettings-desktop-schemas.name}:${gtk3}/share/gsettings-schemas/${gtk3.name}:${hicolor-icon-theme}/share:$out/share \
-      --add-flags --no-sandbox \
-      --add-flags --disable-gpu-sandbox
+      --prefix XDG_DATA_DIRS : ${gsettings-desktop-schemas}/share/gsettings-schemas/${gsettings-desktop-schemas.name}:${gtk3}/share/gsettings-schemas/${gtk3.name}:${hicolor-icon-theme}/share:$out/share
 
     cp -R $out/lib/paseo-desktop/usr/share/icons $out/share/
     install -Dm644 $out/lib/paseo-desktop/Paseo.desktop \
