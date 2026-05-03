@@ -39,11 +39,11 @@
 
 let
   pname = "paseo-desktop";
-  version = "0.1.66";
+  version = "0.1.67";
 
   src = fetchurl {
     url = "https://github.com/getpaseo/paseo/releases/download/v${version}/Paseo-${version}-x86_64.AppImage";
-    hash = "sha256-KciIrCBZTLH0KiguuX1C52A7ywewdD4/m2K4K7fqQVU=";
+    hash = "sha256-2SlMRXCemqIAeMzVx/bSsEoyl68mAMq8mNucL3cUfuM=";
   };
 
   appimageContents = appimageTools.extractType2 {
