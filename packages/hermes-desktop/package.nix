@@ -39,11 +39,11 @@
 
 let
   pname = "hermes-desktop";
-  version = "0.3.7";
+  version = "0.4.1";
 
   src = fetchurl {
     url = "https://github.com/fathah/hermes-desktop/releases/download/v${version}/hermes-desktop-${version}.AppImage";
-    hash = "sha256-Sn0poS2xAOc/+LdbsuCAqsGBGfQzUPqCxzMMwz+14iQ=";
+    hash = "sha256-5K5ZR0LUViUJ5Jy5Rhr0nu5RUgeOxXqrnN/uqBjNnss=";
   };
 
   appimageContents = appimageTools.extractType2 {
