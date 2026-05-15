@@ -39,11 +39,11 @@
 
 let
   pname = "vessel-browser";
-  version = "0.1.99";
+  version = "0.1.101";
 
   src = fetchurl {
     url = "https://github.com/unmodeled-tyler/vessel-browser/releases/download/v${version}/Vessel-${version}-x86_64.AppImage";
-    hash = "sha256-z1T90OIFsKImcxASiWjvroa0KVaTVFq7jpaNQqU1q/s=";
+    hash = "sha256-5JH7FbTTFds2ZAyI7JU5QU9f0uR5wEO4ZPBMR644aKk=";
   };
 
   appimageContents = appimageTools.extractType2 {
