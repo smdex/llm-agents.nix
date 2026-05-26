@@ -285,7 +285,7 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 - **Source**: source
 - **License**: MIT
-- **Homepage**: https://github.com/Yeachan-Heo/oh-my-codex
+- **Homepage**: https://github.com/smdex/oh-my-codex
 - **Usage**: `nix run github:numtide/llm-agents.nix#oh-my-codex -- --help`
 - **Nix**: [packages/oh-my-codex/package.nix](packages/oh-my-codex/package.nix)
 
