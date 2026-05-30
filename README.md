@@ -285,9 +285,19 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 - **Source**: source
 - **License**: MIT
-- **Homepage**: https://github.com/smdex/oh-my-codex
+- **Homepage**: https://github.com/Yeachan-Heo/oh-my-codex
 - **Usage**: `nix run github:numtide/llm-agents.nix#oh-my-codex -- --help`
 - **Nix**: [packages/oh-my-codex/package.nix](packages/oh-my-codex/package.nix)
+
+</details>
+<details>
+<summary><strong>oh-my-codex-smdex</strong> - Multi-agent orchestration layer for OpenAI Codex CLI</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/smdex/oh-my-codex
+- **Usage**: `nix run github:numtide/llm-agents.nix#oh-my-codex-smdex -- --help`
+- **Nix**: [packages/oh-my-codex-smdex/package.nix](packages/oh-my-codex-smdex/package.nix)
 
 </details>
 <details>
@@ -374,6 +384,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 ### AI Assistants
 
 <details>
+<summary><strong>aionui</strong> - Desktop and WebUI cowork app that turns AI agents into a local assistant and server</summary>
+
+- **Source**: source
+- **License**: Apache-2.0
+- **Homepage**: https://github.com/iOfficeAI/AionUi
+- **Usage**: `nix run github:numtide/llm-agents.nix#aionui -- --help`
+- **Nix**: [packages/aionui/package.nix](packages/aionui/package.nix)
+
+</details>
+<details>
 <summary><strong>hermes-agent</strong> - Self-improving AI agent by Nous Research — creates skills from experience and runs anywhere</summary>
 
 - **Source**: source
@@ -381,6 +401,26 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://hermes-agent.nousresearch.com/
 - **Usage**: `nix run github:numtide/llm-agents.nix#hermes-agent -- --help`
 - **Nix**: [packages/hermes-agent/package.nix](packages/hermes-agent/package.nix)
+
+</details>
+<details>
+<summary><strong>hermes-desktop</strong> - Desktop companion for Hermes Agent</summary>
+
+- **Source**: binary
+- **License**: MIT
+- **Homepage**: https://github.com/fathah/hermes-desktop
+- **Usage**: `nix run github:numtide/llm-agents.nix#hermes-desktop -- --help`
+- **Nix**: [packages/hermes-desktop/package.nix](packages/hermes-desktop/package.nix)
+
+</details>
+<details>
+<summary><strong>hermes-hud</strong> - TUI consciousness monitor for Hermes Agent</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/joeynyc/hermes-hud
+- **Usage**: `nix run github:numtide/llm-agents.nix#hermes-hud -- --help`
+- **Nix**: [packages/hermes-hud/package.nix](packages/hermes-hud/package.nix)
 
 </details>
 <details>
@@ -411,6 +451,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://picoclaw.io
 - **Usage**: `nix run github:numtide/llm-agents.nix#picoclaw -- --help`
 - **Nix**: [packages/picoclaw/package.nix](packages/picoclaw/package.nix)
+
+</details>
+<details>
+<summary><strong>vessel-browser</strong> - Agent-oriented browser with durable state and MCP control</summary>
+
+- **Source**: binary
+- **License**: MIT
+- **Homepage**: https://github.com/unmodeled-tyler/vessel-browser
+- **Usage**: `nix run github:numtide/llm-agents.nix#vessel-browser -- --help`
+- **Nix**: [packages/vessel-browser/package.nix](packages/vessel-browser/package.nix)
 
 </details>
 <details>
@@ -687,6 +737,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>mardi-gras</strong> - Terminal UI for Beads issue tracking with a parade-inspired workflow view</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/quietpublish/mardi-gras
+- **Usage**: `nix run github:numtide/llm-agents.nix#mardi-gras -- --help`
+- **Nix**: [packages/mardi-gras/package.nix](packages/mardi-gras/package.nix)
+
+</details>
+<details>
 <summary><strong>openspec</strong> - Spec-driven development for AI coding assistants</summary>
 
 - **Source**: bytecode
@@ -704,6 +764,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/jixoai/openspecui
 - **Usage**: `nix run github:numtide/llm-agents.nix#openspecui -- --help`
 - **Nix**: [packages/openspecui/package.nix](packages/openspecui/package.nix)
+
+</details>
+<details>
+<summary><strong>paseo-desktop</strong> - Voice-controlled desktop development environment for AI coding agents</summary>
+
+- **Source**: binary
+- **License**: AGPL-3.0-or-later
+- **Homepage**: https://paseo.sh
+- **Usage**: `nix run github:numtide/llm-agents.nix#paseo-desktop -- --help`
+- **Nix**: [packages/paseo-desktop/package.nix](packages/paseo-desktop/package.nix)
 
 </details>
 <details>
@@ -963,6 +1033,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>memvid-cli</strong> - AI memory CLI - crash-safe, single-file storage with semantic search</summary>
+
+- **Source**: binary
+- **License**: Apache-2.0
+- **Homepage**: https://memvid.com
+- **Usage**: `nix run github:numtide/llm-agents.nix#memvid-cli -- --help`
+- **Nix**: [packages/memvid-cli/package.nix](packages/memvid-cli/package.nix)
+
+</details>
+<details>
 <summary><strong>nono</strong> - Kernel-enforced agent sandbox. Capability-based isolation with secure key management, atomic rollback, cryptographic immutable audit chain of provenance. Run your agents in a zero-trust environment.</summary>
 
 - **Source**: source
@@ -970,6 +1050,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://nono.sh/
 - **Usage**: `nix run github:numtide/llm-agents.nix#nono -- --help`
 - **Nix**: [packages/nono/package.nix](packages/nono/package.nix)
+
+</details>
+<details>
+<summary><strong>officecli</strong> - CLI for creating and editing Office Open XML documents</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/iOfficeAI/OfficeCLI
+- **Usage**: `nix run github:numtide/llm-agents.nix#officecli -- --help`
+- **Nix**: [packages/officecli/package.nix](packages/officecli/package.nix)
 
 </details>
 <details>
