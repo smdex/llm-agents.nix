@@ -384,6 +384,26 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>hermes-hudui</strong> - Web UI consciousness monitor for Hermes</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/joeynyc/hermes-hudui
+- **Usage**: `nix run github:numtide/llm-agents.nix#hermes-hudui -- --help`
+- **Nix**: [packages/hermes-hudui/package.nix](packages/hermes-hudui/package.nix)
+
+</details>
+<details>
+<summary><strong>hermes-webui</strong> - Browser-based control panel for Hermes Agent</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/nesquena/hermes-webui
+- **Usage**: `nix run github:numtide/llm-agents.nix#hermes-webui -- --help`
+- **Nix**: [packages/hermes-webui/package.nix](packages/hermes-webui/package.nix)
+
+</details>
+<details>
 <summary><strong>localgpt</strong> - Local AI assistant with persistent markdown memory, autonomous tasks, and semantic search</summary>
 
 - **Source**: source
