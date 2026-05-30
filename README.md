@@ -384,6 +384,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>hermes-desktop</strong> - Desktop companion for Hermes Agent</summary>
+
+- **Source**: binary
+- **License**: MIT
+- **Homepage**: https://github.com/fathah/hermes-desktop
+- **Usage**: `nix run github:numtide/llm-agents.nix#hermes-desktop -- --help`
+- **Nix**: [packages/hermes-desktop/package.nix](packages/hermes-desktop/package.nix)
+
+</details>
+<details>
 <summary><strong>localgpt</strong> - Local AI assistant with persistent markdown memory, autonomous tasks, and semantic search</summary>
 
 - **Source**: source
