@@ -167,7 +167,13 @@ def nix_prefetch_url(url: str, *, unpack: bool = False) -> str:
     # nix-prefetch-url returns base32-encoded hash, convert to SRI
     hash_b32 = result.stdout.strip()
 
-    # Convert to SRI format by using nix hash convert
-    convert_args = ["hash", "convert", "--hash-algo", "sha256", hash_b32]
-    convert_result = nix_command(convert_args)
-    return convert_result.stdout.strip()
+    # Convert to SRI format. Lix and newer Nix expose this as `to-sri`;
+    # older Nix used `convert --hash-algo`, so keep a fallback for both.
+    convert_args = ["hash", "to-sri", "--type", "sha256", hash_b32]
+    convert_result = nix_command(convert_args, check=False)
+    if convert_result.returncode == 0:
+        return convert_result.stdout.strip()
+
+    legacy_convert_args = ["hash", "convert", "--hash-algo", "sha256", hash_b32]
+    legacy_convert_result = nix_command(legacy_convert_args)
+    return legacy_convert_result.stdout.strip()
