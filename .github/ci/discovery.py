@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """Discover packages and flake inputs for update checking.
 
-Discovers all packages with version attributes and all flake inputs,
-outputting a matrix JSON suitable for GitHub Actions.
+Discovers packages with version attributes and, when requested, flake inputs.
+Fork automation can restrict package updates to packages that exist in this
+repository but are absent from upstream/main.
 """
 
 import json
 import logging
 import os
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -54,6 +56,67 @@ class MatrixItem:
             "name": self.name,
             "current_version": self.current_version,
         }
+
+
+def parse_bool(value: str | None, *, default: bool = False) -> bool:
+    """Parse common CI boolean spellings."""
+    if value is None or value == "":
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def run_git(args: list[str]) -> subprocess.CompletedProcess[str]:
+    """Run a git command and capture output for discovery decisions."""
+    return subprocess.run(
+        ["git", *args],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def upstream_package_names(upstream_ref: str) -> set[str]:
+    """Return package directory names present at the upstream ref."""
+    result = run_git(["ls-tree", "-d", "--name-only", f"{upstream_ref}:packages"])
+    if result.returncode != 0:
+        log.error(
+            "::error::failed to list packages at %s: %s",
+            upstream_ref,
+            result.stderr.strip(),
+        )
+        sys.exit(1)
+    return {line.strip() for line in result.stdout.splitlines() if line.strip()}
+
+
+def filter_added_packages(
+    packages: list[str] | None,
+    *,
+    upstream_ref: str,
+) -> list[str] | None:
+    """Keep only packages whose directory is absent from upstream/main."""
+    upstream_packages = upstream_package_names(upstream_ref)
+
+    if packages is None:
+        local_packages = sorted(
+            path.name
+            for path in Path("packages").iterdir()
+            if path.is_dir() and path.name not in upstream_packages
+        )
+        log.info(
+            "Restricting package discovery to %d fork-added package(s)",
+            len(local_packages),
+        )
+        for name in local_packages:
+            log.info("Fork-added package: %s", name)
+        return local_packages
+
+    added_packages = []
+    for name in packages:
+        if name in upstream_packages:
+            log.info("Skipping %s (present in upstream)", name)
+            continue
+        added_packages.append(name)
+    return added_packages
 
 
 def discover_packages(
@@ -151,16 +214,28 @@ def main() -> None:
 
     packages_env = os.environ.get("PACKAGES", "")
     inputs_env = os.environ.get("INPUTS", "")
+    include_inputs = parse_bool(os.environ.get("INCLUDE_INPUTS"), default=True)
+    added_packages_only = parse_bool(os.environ.get("ADDED_PACKAGES_ONLY"))
+    upstream_ref = os.environ.get("UPSTREAM_REF", "upstream/main")
     system = os.environ.get("SYSTEM", "x86_64-linux")
 
+    packages_filter = packages_env.split() or None
+    if added_packages_only:
+        packages_filter = filter_added_packages(
+            packages_filter,
+            upstream_ref=upstream_ref,
+        )
+
     log.info("=== Discovery Configuration ===")
-    log.info("PACKAGES: %s", packages_env or "<all>")
-    log.info("INPUTS: %s", inputs_env or "<all>")
+    log.info("PACKAGES: %s", " ".join(packages_filter or []) or "<all>")
+    log.info("ADDED_PACKAGES_ONLY: %s", str(added_packages_only).lower())
+    log.info("UPSTREAM_REF: %s", upstream_ref if added_packages_only else "<unused>")
+    log.info("INPUTS: %s", inputs_env or ("<all>" if include_inputs else "<disabled>"))
     log.info("")
 
     matrix_items = [
-        *discover_packages(packages_env.split() or None, system),
-        *discover_flake_inputs(inputs_env.split() or None),
+        *discover_packages(packages_filter, system),
+        *(discover_flake_inputs(inputs_env.split() or None) if include_inputs else []),
     ]
 
     log.info("")
