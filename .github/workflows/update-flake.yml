@@ -12,6 +12,21 @@ on:
         required: false
         type: string
         default: ''
+      include-inputs:
+        description: 'Include flake inputs in the update matrix'
+        required: false
+        type: boolean
+        default: true
+      added-packages-only:
+        description: 'Only update packages that are not present in upstream/main'
+        required: false
+        type: boolean
+        default: false
+      upstream-repository:
+        description: 'Upstream owner/repository used to detect fork-added packages'
+        required: false
+        type: string
+        default: 'numtide/llm-agents.nix'
       pr-labels:
         description: 'Comma-separated list of labels to add to PRs'
         required: false
@@ -23,9 +38,12 @@ on:
         type: boolean
         default: false
     secrets:
+      APP_ID:
+        description: 'GitHub App ID'
+        required: false
       CLIENT_ID:
-        description: 'GitHub App client ID'
-        required: true
+        description: 'Compatibility fallback for repositories that stored the GitHub App ID in CLIENT_ID'
+        required: false
       APP_PRIVATE_KEY:
         description: 'GitHub App private key'
         required: true
@@ -37,6 +55,16 @@ jobs:
       has-updates: ${{ steps.build-matrix.outputs.has-updates }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Fetch upstream package tree
+        if: ${{ inputs['added-packages-only'] }}
+        env:
+          UPSTREAM_REPOSITORY: ${{ inputs['upstream-repository'] }}
+        run: |
+          git remote add upstream "https://github.com/${UPSTREAM_REPOSITORY}.git" || \
+            git remote set-url upstream "https://github.com/${UPSTREAM_REPOSITORY}.git"
+          git fetch --depth=1 upstream main
       - name: Setup Nix
         uses: cachix/install-nix-action@v31
         with:
@@ -48,6 +76,9 @@ jobs:
         env:
           PACKAGES: "${{ inputs.packages }}"
           INPUTS: "${{ inputs.inputs }}"
+          INCLUDE_INPUTS: "${{ inputs['include-inputs'] }}"
+          ADDED_PACKAGES_ONLY: "${{ inputs['added-packages-only'] }}"
+          UPSTREAM_REF: upstream/main
         run: .github/ci/discovery.py
   update:
     needs: discover
@@ -64,8 +95,10 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
-          client-id: ${{ secrets.CLIENT_ID }}
+          app-id: ${{ secrets.APP_ID || secrets.CLIENT_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
@@ -139,8 +172,10 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
-          client-id: ${{ secrets.CLIENT_ID }}
+          app-id: ${{ secrets.APP_ID || secrets.CLIENT_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
@@ -186,16 +221,20 @@ jobs:
     steps:
       - name: Generate summary
         run: |-
-          echo "## Update Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Update Summary"
+            echo ""
 
-          # Check overall status
-          if [ "${{ contains(needs.update.result, 'failure') }}" = "true" ]; then
-            echo "⚠️ Some updates failed. Check individual job logs for details." >> $GITHUB_STEP_SUMMARY
-          else
-            echo "✅ All update jobs completed." >> $GITHUB_STEP_SUMMARY
-          fi
+            # Check overall status
+            if [ "${{ contains(needs.update.result, 'failure') }}" = "true" ]; then
+              echo "⚠️ Some updates failed. Check individual job logs for details."
+            else
+              echo "✅ All update jobs completed."
+            fi
 
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Configuration:" >> $GITHUB_STEP_SUMMARY
-          echo "- Auto-merge: ${{ inputs.auto-merge }}" >> $GITHUB_STEP_SUMMARY
+            echo ""
+            echo "Configuration:"
+            echo "- Auto-merge: ${{ inputs.auto-merge }}"
+            echo "- Include flake inputs: ${{ inputs['include-inputs'] }}"
+            echo "- Added packages only: ${{ inputs['added-packages-only'] }}"
+          } >> "$GITHUB_STEP_SUMMARY"
