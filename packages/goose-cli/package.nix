@@ -80,7 +80,7 @@ rustPlatform.buildRustPackage rec {
   passthru.category = "AI Coding Agents";
 
   meta = with lib; {
-    description = "CLI for Goose - a local, extensible, open source AI agent that automates engineering tasks";
+    description = "Legacy Rust CLI for Goose, a local extensible AI agent";
     homepage = "https://github.com/aaif-goose/goose";
     changelog = "https://github.com/aaif-goose/goose/releases/tag/v${version}";
     license = licenses.asl20;
