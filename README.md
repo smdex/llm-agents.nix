@@ -663,6 +663,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Nix**: [packages/entire/package.nix](packages/entire/package.nix)
 
 </details>
+<details>
+<summary><strong>tokscale</strong> - CLI and TUI for AI token usage analytics</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/junhoyeo/tokscale
+- **Usage**: `nix run github:numtide/llm-agents.nix#tokscale -- --help`
+- **Nix**: [packages/tokscale/package.nix](packages/tokscale/package.nix)
+
+</details>
 
 ### Workflow & Project Management
 
