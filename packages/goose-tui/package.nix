@@ -16,7 +16,7 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "goose-tui";
-  version = "0.20.1";
+  version = "1.37.0";
 
   src = fetchFromGitHub {
     owner = "aaif-goose";
