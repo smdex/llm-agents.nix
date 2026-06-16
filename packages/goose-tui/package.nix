@@ -16,13 +16,13 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "goose-tui";
-  version = "1.37.0";
+  version = "1.38.0";
 
   src = fetchFromGitHub {
     owner = "aaif-goose";
     repo = "goose";
-    rev = "v1.37.0";
-    hash = "sha256-YEK4cGcSx2ppEtR60x/4wwtJFMDO9jnK5bAo2RW3E64=";
+    rev = "v1.38.0";
+    hash = "sha256-6CunYKgFFpX/1CmK4qeE0hHN2mBVe/WQsri6qIAuETo=";
   };
 
   sourceRoot = "${finalAttrs.src.name}/ui";
@@ -44,7 +44,7 @@ stdenv.mkDerivation (finalAttrs: {
     sourceRoot = "${finalAttrs.src.name}/ui";
     inherit pnpm;
     fetcherVersion = 3;
-    hash = "sha256-xFW9NUN/oR7c7bBwydHksASfPywuIQFP++Y0u7hYTBs=";
+    hash = "sha256-koxRQBUtFeZR9RlqMOv8FX+31DB+xiomxOShpHP55WQ=";
   };
 
   nativeBuildInputs = [
@@ -89,7 +89,7 @@ stdenv.mkDerivation (finalAttrs: {
   meta = with lib; {
     description = "TypeScript terminal UI for Goose";
     homepage = "https://github.com/aaif-goose/goose/tree/main/ui/text";
-    changelog = "https://github.com/aaif-goose/goose/releases/tag/v1.37.0";
+    changelog = "https://github.com/aaif-goose/goose/releases/tag/v1.38.0";
     license = licenses.asl20;
     sourceProvenance = with sourceTypes; [ fromSource ];
     mainProgram = "goose-tui";
