@@ -17,13 +17,13 @@ let
 in
 stdenv.mkDerivation rec {
   pname = "hermes-webui";
-  version = "0.51.469";
+  version = "0.51.474";
 
   src = fetchFromGitHub {
     owner = "nesquena";
     repo = "hermes-webui";
     rev = "v${version}";
-    hash = "sha256-wEHB7LS5I+SndQ8aMeYKztPDA83bCOINS1KZcbEtaLA=";
+    hash = "sha256-o5sjY/eDkooS+Y8gMlt+TmNgtU7Z5J/lv492LUzf524=";
   };
 
   nativeBuildInputs = [ makeWrapper ];
