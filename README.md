@@ -401,16 +401,6 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
-<summary><strong>vtcode</strong> - Terminal-native coding agent CLI</summary>
-
-- **Source**: source
-- **License**: MIT
-- **Homepage**: https://github.com/vinhnx/vtcode
-- **Usage**: `nix run github:numtide/llm-agents.nix#vtcode -- --help`
-- **Nix**: [packages/vtcode/package.nix](packages/vtcode/package.nix)
-
-</details>
-<details>
 <summary><strong>vix</strong> - Sleek, Fast and Token Efficient AI Coding Agent</summary>
 
 - **Source**: source
@@ -418,6 +408,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/get-vix/vix
 - **Usage**: `nix run github:numtide/llm-agents.nix#vix -- --help`
 - **Nix**: [packages/vix/package.nix](packages/vix/package.nix)
+
+</details>
+<details>
+<summary><strong>vtcode</strong> - Terminal-native coding agent CLI</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/vinhnx/vtcode
+- **Usage**: `nix run github:numtide/llm-agents.nix#vtcode -- --help`
+- **Nix**: [packages/vtcode/package.nix](packages/vtcode/package.nix)
 
 </details>
 
@@ -501,6 +501,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/localgpt-app/localgpt
 - **Usage**: `nix run github:numtide/llm-agents.nix#localgpt -- --help`
 - **Nix**: [packages/localgpt/package.nix](packages/localgpt/package.nix)
+
+</details>
+<details>
+<summary><strong>mnemosyne-memory</strong> - Universal Hermes-first SQLite memory layer for AI agents with MCP, sync, and vector search support</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/AxDSan/mnemosyne
+- **Usage**: `nix run github:numtide/llm-agents.nix#mnemosyne-memory -- --help`
+- **Nix**: [packages/mnemosyne-memory/package.nix](packages/mnemosyne-memory/package.nix)
 
 </details>
 <details>
