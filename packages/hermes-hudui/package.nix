@@ -7,14 +7,14 @@
 
 python3.pkgs.buildPythonApplication rec {
   pname = "hermes-hudui";
-  version = "0.9.1";
+  version = "0.10.0";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "joeynyc";
     repo = "hermes-hudui";
     rev = "v${version}";
-    hash = "sha256-S/+ylp1KYeBRqazU/Uy3VX15n8zBrYkMJMzG65u8ka4=";
+    hash = "sha256-k4vhWke4N3Scla/bbozZZLh2qAqOSGrpsSlscGOz37E=";
   };
 
   build-system = with python3.pkgs; [
