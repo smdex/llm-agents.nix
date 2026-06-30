@@ -7,14 +7,14 @@
 
 python3.pkgs.buildPythonApplication rec {
   pname = "mnemosyne-memory";
-  version = "3.10.1";
+  version = "3.11.0";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "AxDSan";
     repo = "mnemosyne";
     tag = "v${version}";
-    hash = "sha256-hpNnKc8ZNbqcy9X4Yu/4zMGEW7TCyT9aEfRv03ffuig=";
+    hash = "sha256-BiMectDB4z3cYad8ANLVFygvhiuIti8sXXu9NQ+T4lw=";
   };
 
   build-system = with python3.pkgs; [
