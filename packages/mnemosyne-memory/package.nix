@@ -3,23 +3,78 @@
   flake,
   python3,
   fetchFromGitHub,
+  rustPlatform,
+  cargo,
+  rustc,
+  enableCompression ? true,
+  enableFastembed ? true,
+  enableSqliteVec ? true,
+  enableNumpy ? true,
+  enableHuggingfaceHub ? true,
 }:
 
+let
+  rustCave001 = python3.pkgs.buildPythonPackage rec {
+    pname = "rust-cave-001";
+    version = "0.4.3";
+    pyproject = true;
+
+    src = fetchFromGitHub {
+      owner = "ether-btc";
+      repo = "rust-cave-001";
+      tag = "v${version}";
+      hash = "sha256-QPBPzeBaa32oMGTrMbNNthxAxkXvDk1Ljc32znOawB8=";
+    };
+
+    cargoDeps = rustPlatform.fetchCargoVendor {
+      inherit pname version src;
+      hash = "sha256-WHgzZEZE4tD8MXAi5UDC739WNiq+J3wq+aA2FSrHUYA=";
+    };
+
+    build-system = [
+      cargo
+      rustPlatform.cargoSetupHook
+      rustPlatform.maturinBuildHook
+      rustc
+    ];
+
+    doCheck = false;
+    pythonImportsCheck = [ "rust_cave_001" ];
+
+    meta = with lib; {
+      description = "Rust-backed Python bindings for Caveman text compression";
+      homepage = "https://github.com/ether-btc/rust-cave-001";
+      changelog = "https://github.com/ether-btc/rust-cave-001/releases/tag/v${version}";
+      license = licenses.mit;
+      sourceProvenance = with sourceTypes; [ fromSource ];
+      maintainers = with flake.lib.maintainers; [ smdex ];
+      platforms = platforms.all;
+    };
+  };
+
+  optionalRuntimeDeps =
+    with python3.pkgs;
+    lib.optionals enableCompression [ rustCave001 ]
+    ++ lib.optionals enableFastembed [ fastembed ]
+    ++ lib.optionals enableSqliteVec [ sqlite-vec ]
+    ++ lib.optionals enableNumpy [ numpy ]
+    ++ lib.optionals enableHuggingfaceHub [ huggingface-hub ];
+in
 python3.pkgs.buildPythonApplication rec {
   pname = "mnemosyne-memory";
-  version = "3.10.1";
+  version = "3.11.1";
   pyproject = true;
 
   src = fetchFromGitHub {
-    owner = "AxDSan";
+    owner = "mnemosyne-oss";
     repo = "mnemosyne";
     tag = "v${version}";
-    hash = "sha256-hpNnKc8ZNbqcy9X4Yu/4zMGEW7TCyT9aEfRv03ffuig=";
+    hash = "sha256-DM21ZjwCUTtyzlYn5whfIrrte5BDKVQQb5zSkOV3DlY=";
   };
 
   postPatch = ''
-        substituteInPlace mnemosyne/install.py \
-          --replace-fail '    except Exception as e:
+    substituteInPlace mnemosyne/install.py \
+      --replace-fail '    except Exception as e:
             print(f"⚠️  Verification skipped: {e}")
             return False
     ' '    except ModuleNotFoundError as e:
@@ -37,8 +92,8 @@ python3.pkgs.buildPythonApplication rec {
             return False
     '
 
-        substituteInPlace mnemosyne/install.py \
-          --replace-fail '    print("🌀 Mnemosyne Hermes Installer")
+    substituteInPlace mnemosyne/install.py \
+      --replace-fail '    print("🌀 Mnemosyne Hermes Installer")
     ' '    if any(arg in ("-h", "--help") for arg in sys.argv[1:]):
             print("Usage: mnemosyne-install [--help] [--uninstall]")
             print()
@@ -66,15 +121,16 @@ python3.pkgs.buildPythonApplication rec {
     wheel
   ];
 
-  dependencies = with python3.pkgs; [
-    anyio
-    cryptography
-    fastapi
-    fastembed
-    mcp
-    sqlite-vec
-    uvicorn
-  ];
+  dependencies =
+    with python3.pkgs;
+    [
+      anyio
+      cryptography
+      fastapi
+      mcp
+      uvicorn
+    ]
+    ++ optionalRuntimeDeps;
 
   # Keep user-level Python overlays from contaminating the packaged CLI. Sergio's
   # Hermes profile may export PYTHONPATH for Hermes itself; mixing that py312
@@ -84,7 +140,14 @@ python3.pkgs.buildPythonApplication rec {
     "PYTHONPATH"
   ];
 
-  pythonImportsCheck = [ "mnemosyne" ];
+  pythonImportsCheck = [
+    "mnemosyne"
+  ]
+  ++ lib.optionals enableCompression [ "rust_cave_001" ]
+  ++ lib.optionals enableFastembed [ "fastembed" ]
+  ++ lib.optionals enableSqliteVec [ "sqlite_vec" ]
+  ++ lib.optionals enableNumpy [ "numpy" ]
+  ++ lib.optionals enableHuggingfaceHub [ "huggingface_hub" ];
 
   doInstallCheck = true;
   installCheckPhase = ''
@@ -97,17 +160,41 @@ python3.pkgs.buildPythonApplication rec {
     app = create_app(banks=["default"], default_bank="default")
     assert app.title == "Mnemosyne Browser"
     PY
+    ${lib.optionalString enableCompression ''
+      python - <<'PY'
+      from mnemosyne.core.plugins import CompressionPlugin
+      import rust_cave_001
+
+      plugin = CompressionPlugin({"enabled": True, "threshold_chars": 10})
+      compressed = plugin.compress_lines([
+          "The database needs an index because the queries are too slow and the users are waiting."
+      ])
+      assert len(compressed) == 1
+      assert isinstance(compressed[0], str)
+      assert compressed[0]
+      PY
+    ''}
     HERMES_HOME=$TMPDIR/hermes $out/bin/mnemosyne-install --help >/dev/null
     test ! -e $TMPDIR/hermes/plugins/mnemosyne
     runHook postInstallCheck
   '';
 
-  passthru.category = "AI Assistants";
+  passthru = {
+    category = "AI Assistants";
+    inherit rustCave001;
+    optionalRuntimeDependencies = {
+      compression = enableCompression;
+      fastembed = enableFastembed;
+      sqlite-vec = enableSqliteVec;
+      numpy = enableNumpy;
+      huggingface-hub = enableHuggingfaceHub;
+    };
+  };
 
   meta = with lib; {
     description = "Universal Hermes-first SQLite memory layer for AI agents with MCP, sync, and vector search support";
-    homepage = "https://github.com/AxDSan/mnemosyne";
-    changelog = "https://github.com/AxDSan/mnemosyne/releases/tag/v${version}";
+    homepage = "https://github.com/mnemosyne-oss/mnemosyne";
+    changelog = "https://github.com/mnemosyne-oss/mnemosyne/releases/tag/v${version}";
     license = licenses.mit;
     sourceProvenance = with sourceTypes; [ fromSource ];
     maintainers = with flake.lib.maintainers; [ smdex ];
