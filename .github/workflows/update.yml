@@ -2,28 +2,36 @@ name: Update Dependencies
 on:
   schedule:
     # 4x daily, outside Europe/Berlin work hours, tracking US West Coast release window.
-    # 18:00/21:00 UTC catch US morning/early-afternoon drops (evening in Berlin).
-    # 00:00/04:00 UTC sweep US end-of-day; results ready before Berlin morning.
+    # Automatic runs only consider packages added by this fork and skip packages
+    # that already exist in upstream/main.
     - cron: '0 0,4,18,21 * * *'
   workflow_dispatch:
     inputs:
       packages:
-        description: 'Specific packages to update (space-separated, empty for all)'
+        description: 'Specific packages to update (space-separated, empty for fork-added packages)'
         required: false
         default: ''
-      inputs:
-        description: 'Specific flake inputs to update (space-separated, empty for all)'
+      update_inputs:
+        description: 'Also update flake inputs'
         required: false
-        default: ''
+        type: boolean
+        default: false
+concurrency:
+  group: fork-main-maintenance
+  cancel-in-progress: false
 jobs:
   update:
     uses: ./.github/workflows/update-flake.yml
     with:
-      packages: ${{ github.event.inputs.packages }}
-      inputs: ${{ github.event.inputs.inputs }}
+      packages: ${{ github.event.inputs.packages || vars.FORK_UPDATE_PACKAGES || '' }}
+      inputs: ''
+      include-inputs: ${{ github.event.inputs.update_inputs == 'true' }}
+      added-packages-only: true
+      upstream-repository: ${{ vars.UPSTREAM_REPOSITORY || 'numtide/llm-agents.nix' }}
       pr-labels: 'dependencies,automated'
       auto-merge: true
     secrets:
+      APP_ID: ${{ secrets.APP_ID }}
       CLIENT_ID: ${{ secrets.CLIENT_ID }}
       APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
     permissions:
