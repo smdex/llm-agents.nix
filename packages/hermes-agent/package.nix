@@ -10,6 +10,13 @@
   olm,
   versionCheckHook,
   versionCheckHomeHook,
+  dependencyGroups ? [
+    "gateway"
+    "misc"
+    "audio"
+  ],
+  extraDependencyGroups ? [ ],
+  extraPythonPackages ? (_: [ ]),
 }:
 
 let
@@ -123,13 +130,13 @@ let
     };
   };
 
-  version = "2026.6.19";
+  version = "2026.7.1";
 
   src = fetchFromGitHub {
     owner = "NousResearch";
     repo = "hermes-agent";
     rev = "v${version}";
-    hash = "sha256-Oyl6Cpg2bTiX9MyBxFT5q4yVdYf3lCIptzFdiVULmjo=";
+    hash = "sha256-Wt72AQtA6Eizi7Ubj23JBhwZ7GKYcjY4mcV6upqHOaU=";
   };
 
   # Upstream moved ui-tui/ and web/ into npm workspaces with a single root
@@ -140,7 +147,7 @@ let
   hermes-frontend = buildNpmPackage {
     pname = "hermes-frontend";
     inherit version src;
-    npmDepsHash = "sha256-sKI7LhkmyIPw8cFS2efjQVOZ/dEu4ERRpeqKhAq3jzs=";
+    npmDepsHash = "sha256-qDXGL/INHPW0pTF4SRVL1dS5XVh2X85dEE4JhrAQeqU=";
 
     # The apps/desktop workspace pulls in electron; skip its binary download
     # and all install scripts — the esbuild/vite builds below don't need them.
@@ -171,6 +178,7 @@ let
       # Core
       openai
       anthropic
+      cryptography
       python-dotenv
       fire
       httpx
@@ -203,8 +211,8 @@ let
     ]
     # faster-whisper -> av SIGKILLs during import on darwin; voice is optional.
     ++ lib.optionals stdenv.hostPlatform.isLinux [ faster-whisper ]
-    ++ optionalDeps.gateway
-    ++ optionalDeps.misc;
+    ++ selectedOptionalDeps
+    ++ (extraPythonPackages python3.pkgs);
 
   # Upstream extras only warn-and-disable at runtime when missing (#4175), so
   # ship every extra nixpkgs has. Not yet packaged: honcho, daytona, dingtalk,
@@ -252,9 +260,6 @@ let
       ptyprocess
       # [acp]
       agent-client-protocol
-      # [voice]
-      sounddevice
-      numpy
       # [tts-premium]
       elevenlabs
       # [mistral]
@@ -264,7 +269,18 @@ let
       # [modal]
       modal
     ];
+    audio = [
+      # [voice] / desktop microphone and speaker I/O
+      sounddevice
+      numpy
+    ];
   };
+
+  enabledDependencyGroups = lib.unique (dependencyGroups ++ extraDependencyGroups);
+
+  unknownDependencyGroups = lib.subtractLists (builtins.attrNames optionalDeps) enabledDependencyGroups;
+
+  selectedOptionalDeps = lib.concatMap (group: optionalDeps.${group}) enabledDependencyGroups;
 
   # The TUI spawns `$HERMES_PYTHON -m tui_gateway.entry`; sys.executable is the
   # bare interpreter, so give it an env with the runtime deps. The dashboard
@@ -272,6 +288,9 @@ let
   # resolves the gateway import root from HERMES_PYTHON_SRC_ROOT.
   pythonEnv = python3.withPackages (_: hermesDeps);
 in
+assert lib.assertMsg (
+  unknownDependencyGroups == [ ]
+) "hermes-agent: unknown dependency groups: ${lib.concatStringsSep ", " unknownDependencyGroups}";
 python3.pkgs.buildPythonApplication {
   pname = "hermes-agent";
   inherit version src;
@@ -334,6 +353,7 @@ python3.pkgs.buildPythonApplication {
     "packaging"
     "urllib3"
     "websockets"
+    "cryptography"
   ];
 
   pythonImportsCheck = [
@@ -372,7 +392,12 @@ python3.pkgs.buildPythonApplication {
 
   passthru = {
     category = "AI Assistants";
-    inherit hermes-frontend;
+    inherit
+      hermes-frontend
+      dependencyGroups
+      extraDependencyGroups
+      enabledDependencyGroups
+      ;
   };
 
   meta = with lib; {
