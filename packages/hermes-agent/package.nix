@@ -10,6 +10,13 @@
   olm,
   versionCheckHook,
   versionCheckHomeHook,
+  dependencyGroups ? [
+    "gateway"
+    "misc"
+    "audio"
+  ],
+  extraDependencyGroups ? [ ],
+  extraPythonPackages ? (_: [ ]),
 }:
 
 let
@@ -171,6 +178,7 @@ let
       # Core
       openai
       anthropic
+      cryptography
       python-dotenv
       fire
       httpx
@@ -204,8 +212,8 @@ let
     ]
     # faster-whisper -> av SIGKILLs during import on darwin; voice is optional.
     ++ lib.optionals stdenv.hostPlatform.isLinux [ faster-whisper ]
-    ++ optionalDeps.gateway
-    ++ optionalDeps.misc;
+    ++ selectedOptionalDeps
+    ++ (extraPythonPackages python3.pkgs);
 
   # Upstream extras only warn-and-disable at runtime when missing (#4175), so
   # ship every extra nixpkgs has. Not yet packaged: honcho, daytona, dingtalk,
@@ -253,9 +261,6 @@ let
       ptyprocess
       # [acp]
       agent-client-protocol
-      # [voice]
-      sounddevice
-      numpy
       # [tts-premium]
       elevenlabs
       # [mistral]
@@ -265,7 +270,18 @@ let
       # [modal]
       modal
     ];
+    audio = [
+      # [voice] / desktop microphone and speaker I/O
+      sounddevice
+      numpy
+    ];
   };
+
+  enabledDependencyGroups = lib.unique (dependencyGroups ++ extraDependencyGroups);
+
+  unknownDependencyGroups = lib.subtractLists (builtins.attrNames optionalDeps) enabledDependencyGroups;
+
+  selectedOptionalDeps = lib.concatMap (group: optionalDeps.${group}) enabledDependencyGroups;
 
   # The TUI spawns `$HERMES_PYTHON -m tui_gateway.entry`; sys.executable is the
   # bare interpreter, so give it an env with the runtime deps. The dashboard
@@ -273,6 +289,9 @@ let
   # resolves the gateway import root from HERMES_PYTHON_SRC_ROOT.
   pythonEnv = python3.withPackages (_: hermesDeps);
 in
+assert lib.assertMsg (
+  unknownDependencyGroups == [ ]
+) "hermes-agent: unknown dependency groups: ${lib.concatStringsSep ", " unknownDependencyGroups}";
 python3.pkgs.buildPythonApplication {
   pname = "hermes-agent";
   inherit version src;
@@ -336,6 +355,7 @@ python3.pkgs.buildPythonApplication {
     "packaging"
     "urllib3"
     "websockets"
+    "cryptography"
   ];
 
   pythonImportsCheck = [
@@ -374,7 +394,12 @@ python3.pkgs.buildPythonApplication {
 
   passthru = {
     category = "AI Assistants";
-    inherit hermes-frontend;
+    inherit
+      hermes-frontend
+      dependencyGroups
+      extraDependencyGroups
+      enabledDependencyGroups
+      ;
   };
 
   meta = with lib; {
