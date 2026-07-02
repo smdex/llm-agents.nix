@@ -161,13 +161,53 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
-<summary><strong>goose-cli</strong> - CLI for Goose - a local, extensible, open source AI agent that automates engineering tasks</summary>
+<summary><strong>goose</strong> - Server for Goose, a local extensible AI agent</summary>
+
+- **Source**: source
+- **License**: Apache-2.0
+- **Homepage**: https://github.com/aaif-goose/goose
+- **Usage**: `nix run github:numtide/llm-agents.nix#goose -- --help`
+- **Nix**: [packages/goose/package.nix](packages/goose/package.nix)
+
+</details>
+<details>
+<summary><strong>goose-cli</strong> - Legacy Rust CLI for Goose, a local extensible AI agent</summary>
 
 - **Source**: source
 - **License**: Apache-2.0
 - **Homepage**: https://github.com/aaif-goose/goose
 - **Usage**: `nix run github:numtide/llm-agents.nix#goose-cli -- --help`
 - **Nix**: [packages/goose-cli/package.nix](packages/goose-cli/package.nix)
+
+</details>
+<details>
+<summary><strong>goose-desktop</strong> - Legacy Electron desktop app for Goose, a local extensible AI agent</summary>
+
+- **Source**: binary
+- **License**: Apache-2.0
+- **Homepage**: https://github.com/aaif-goose/goose
+- **Usage**: `nix run github:numtide/llm-agents.nix#goose-desktop -- --help`
+- **Nix**: [packages/goose-desktop/package.nix](packages/goose-desktop/package.nix)
+
+</details>
+<details>
+<summary><strong>goose-tui</strong> - TypeScript terminal UI for Goose</summary>
+
+- **Source**: source
+- **License**: Apache-2.0
+- **Homepage**: https://github.com/aaif-goose/goose/tree/main/ui/text
+- **Usage**: `nix run github:numtide/llm-agents.nix#goose-tui -- --help`
+- **Nix**: [packages/goose-tui/package.nix](packages/goose-tui/package.nix)
+
+</details>
+<details>
+<summary><strong>goose2</strong> - Goose 2 Tauri desktop app for Goose, a local extensible AI agent</summary>
+
+- **Source**: binary
+- **License**: Apache-2.0
+- **Homepage**: https://github.com/aaif-goose/goose
+- **Usage**: `nix run github:numtide/llm-agents.nix#goose2 -- --help`
+- **Nix**: [packages/goose2/package.nix](packages/goose2/package.nix)
 
 </details>
 <details>
@@ -271,6 +311,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>oh-my-codex-smdex</strong> - Multi-agent orchestration layer for OpenAI Codex CLI</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/smdex/oh-my-codex
+- **Usage**: `nix run github:numtide/llm-agents.nix#oh-my-codex-smdex -- --help`
+- **Nix**: [packages/oh-my-codex-smdex/package.nix](packages/oh-my-codex-smdex/package.nix)
+
+</details>
+<details>
 <summary><strong>oh-my-opencode</strong> - The Best AI Agent Harness - Multi-Model Orchestration for OpenCode</summary>
 
 - **Source**: source
@@ -351,6 +401,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>ruflo</strong> - Agentic orchestration CLI with ruv-FANN neural capabilities</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/ruvnet/ruflo
+- **Usage**: `nix run github:numtide/llm-agents.nix#ruflo -- --help`
+- **Nix**: [packages/ruflo/package.nix](packages/ruflo/package.nix)
+
+</details>
+<details>
 <summary><strong>vix</strong> - Sleek, Fast and Token Efficient AI Coding Agent</summary>
 
 - **Source**: source
@@ -358,6 +418,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/get-vix/vix
 - **Usage**: `nix run github:numtide/llm-agents.nix#vix -- --help`
 - **Nix**: [packages/vix/package.nix](packages/vix/package.nix)
+
+</details>
+<details>
+<summary><strong>vtcode</strong> - Terminal-native coding agent CLI</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/vinhnx/vtcode
+- **Usage**: `nix run github:numtide/llm-agents.nix#vtcode -- --help`
+- **Nix**: [packages/vtcode/package.nix](packages/vtcode/package.nix)
 
 </details>
 
@@ -371,6 +441,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/iOfficeAI/AionUi
 - **Usage**: `nix run github:numtide/llm-agents.nix#aionui -- --help`
 - **Nix**: [packages/aionui/package.nix](packages/aionui/package.nix)
+
+</details>
+<details>
+<summary><strong>cowagent</strong> - AI agent platform with a command-line interface</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/zhayujie/CowAgent
+- **Usage**: `nix run github:numtide/llm-agents.nix#cowagent -- --help`
+- **Nix**: [packages/cowagent/package.nix](packages/cowagent/package.nix)
 
 </details>
 <details>
@@ -404,6 +484,26 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>hermes-hudui</strong> - Web UI consciousness monitor for Hermes</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/joeynyc/hermes-hudui
+- **Usage**: `nix run github:numtide/llm-agents.nix#hermes-hudui -- --help`
+- **Nix**: [packages/hermes-hudui/package.nix](packages/hermes-hudui/package.nix)
+
+</details>
+<details>
+<summary><strong>hermes-webui</strong> - Browser-based control panel for Hermes Agent</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/nesquena/hermes-webui
+- **Usage**: `nix run github:numtide/llm-agents.nix#hermes-webui -- --help`
+- **Nix**: [packages/hermes-webui/package.nix](packages/hermes-webui/package.nix)
+
+</details>
+<details>
 <summary><strong>localgpt</strong> - Local AI assistant with persistent markdown memory, autonomous tasks, and semantic search</summary>
 
 - **Source**: source
@@ -411,6 +511,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/localgpt-app/localgpt
 - **Usage**: `nix run github:numtide/llm-agents.nix#localgpt -- --help`
 - **Nix**: [packages/localgpt/package.nix](packages/localgpt/package.nix)
+
+</details>
+<details>
+<summary><strong>mnemosyne-memory</strong> - Universal Hermes-first SQLite memory layer for AI agents with MCP, sync, and vector search support</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/AxDSan/mnemosyne
+- **Usage**: `nix run github:numtide/llm-agents.nix#mnemosyne-memory -- --help`
+- **Nix**: [packages/mnemosyne-memory/package.nix](packages/mnemosyne-memory/package.nix)
 
 </details>
 <details>
@@ -571,6 +681,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/entireio/cli
 - **Usage**: `nix run github:numtide/llm-agents.nix#entire -- --help`
 - **Nix**: [packages/entire/package.nix](packages/entire/package.nix)
+
+</details>
+<details>
+<summary><strong>tokscale</strong> - CLI and TUI for AI token usage analytics</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/junhoyeo/tokscale
+- **Usage**: `nix run github:numtide/llm-agents.nix#tokscale -- --help`
+- **Nix**: [packages/tokscale/package.nix](packages/tokscale/package.nix)
 
 </details>
 
