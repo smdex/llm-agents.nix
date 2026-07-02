@@ -208,7 +208,6 @@ let
       edge-tts
       # Skills Hub
       pyjwt
-      cryptography
     ]
     # faster-whisper -> av SIGKILLs during import on darwin; voice is optional.
     ++ lib.optionals stdenv.hostPlatform.isLinux [ faster-whisper ]
@@ -226,10 +225,18 @@ let
     };
   });
 
+  # pyramid dropped its pkg_resources shim on Python 3.14, so slack-bolt's
+  # pyramid adapter tests fail during collection with ModuleNotFoundError.
+  slack-bolt' = python3.pkgs.slack-bolt.overridePythonAttrs (old: {
+    disabledTestPaths = (old.disabledTestPaths or [ ]) ++ [
+      "tests/adapter_tests/pyramid/"
+    ];
+  });
+
   optionalDeps = with python3.pkgs; {
     gateway = [
       # [messaging] / [slack]
-      slack-bolt
+      slack-bolt'
       slack-sdk
       python-telegram-bot
       discordpy
