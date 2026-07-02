@@ -2,6 +2,13 @@
   pkgs,
   perSystem,
   flake,
+  dependencyGroups ? [
+    "gateway"
+    "misc"
+    "audio"
+  ],
+  extraDependencyGroups ? [ ],
+  extraPythonPackages ? (_: [ ]),
   ...
 }:
 let
@@ -25,6 +32,12 @@ let
   };
 in
 pkgs.callPackage ./package.nix {
-  inherit flake python3;
+  inherit
+    flake
+    python3
+    dependencyGroups
+    extraDependencyGroups
+    extraPythonPackages
+    ;
   inherit (perSystem.self) versionCheckHomeHook;
 }
