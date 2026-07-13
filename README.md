@@ -434,6 +434,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>multica-desktop</strong> - Native desktop client for the Multica platform</summary>
+
+- **Source**: binary
+- **License**: unfree
+- **Homepage**: https://github.com/multica-ai/multica
+- **Usage**: `nix run github:numtide/llm-agents.nix#multica-desktop -- --help`
+- **Nix**: [packages/multica-desktop/package.nix](packages/multica-desktop/package.nix)
+
+</details>
+<details>
 <summary><strong>openclaw</strong> - Your own personal AI assistant. Any OS. Any Platform. The lobster way</summary>
 
 - **Source**: source
