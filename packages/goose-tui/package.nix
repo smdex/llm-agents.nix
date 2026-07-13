@@ -16,13 +16,13 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "goose-tui";
-  version = "1.41.0";
+  version = "1.42.0";
 
   src = fetchFromGitHub {
     owner = "aaif-goose";
     repo = "goose";
-    rev = "v1.41.0";
-    hash = "sha256-6hTjZnrTyFOhWLTLN/sa7IAXQVcQ/08gWz21KEGANAE=";
+    rev = "v1.42.0";
+    hash = "sha256-bll1T95dMV7klw9Z7Jg/N3azUCjHC/QkbeQghJ7GMK0=";
   };
 
   sourceRoot = "${finalAttrs.src.name}/ui";
@@ -89,7 +89,7 @@ stdenv.mkDerivation (finalAttrs: {
   meta = with lib; {
     description = "TypeScript terminal UI for Goose";
     homepage = "https://github.com/aaif-goose/goose/tree/main/ui/text";
-    changelog = "https://github.com/aaif-goose/goose/releases/tag/v1.41.0";
+    changelog = "https://github.com/aaif-goose/goose/releases/tag/v1.42.0";
     license = licenses.asl20;
     sourceProvenance = with sourceTypes; [ fromSource ];
     mainProgram = "goose-tui";
