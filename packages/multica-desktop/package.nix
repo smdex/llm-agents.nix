@@ -156,6 +156,12 @@ stdenvNoCC.mkDerivation {
     cp -a ${appimageContents}/. $out/lib/multica-desktop/
     chmod -R u+w $out/lib/multica-desktop
 
+    # The desktop app bundles the static Go CLI. Expose it as a stable Nix
+    # program so daemons and systemd units never download a second copy.
+    install -Dm755 \
+      $out/lib/multica-desktop/resources/app.asar.unpacked/resources/bin/multica \
+      $out/bin/multica
+
     # Nix owns updates. Removing this release's updater config prevents the
     # bundled electron-updater from downloading a second, unmanaged copy.
     rm -f $out/lib/multica-desktop/resources/app-update.yml
