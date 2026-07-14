@@ -60,6 +60,10 @@ let
         arch = "x86_64";
         hash = "sha256-3q4Ejo3OV+cpBkyZB8GK1uMIICy+Wd3QDPSCD529NBs=";
       };
+      aarch64-linux = {
+        arch = "arm64";
+        hash = "sha256-/GaBx4+CqsN84/7dgIeEJrWvTl7LAISpkqLwZ7pko6Q=";
+      };
     }
     .${platform} or (throw "${pname}: unsupported system ${platform}");
 
@@ -165,7 +169,7 @@ stdenvNoCC.mkDerivation {
       --suffix PATH : ${lib.makeBinPath [ xdg-utils ]} \
       --prefix XDG_DATA_DIRS : "$XDG_ICON_DIRS:$GSETTINGS_SCHEMAS_PATH" \
       --run 'if [ -z "''${ELECTRON_RUN_AS_NODE:-}" ]; then
-        set -- --no-sandbox "$@"
+        set -- --disable-setuid-sandbox "$@"
         if [ -n "''${NIXOS_OZONE_WL:-}" ] && [ -n "''${WAYLAND_DISPLAY:-}" ]; then
           set -- --ozone-platform-hint=auto --enable-features=WaylandWindowDecorations --enable-wayland-ime=true "$@"
         fi
@@ -208,7 +212,10 @@ stdenvNoCC.mkDerivation {
     license = flake.lib.licenses.unfree;
     sourceProvenance = with sourceTypes; [ binaryNativeCode ];
     maintainers = with flake.lib.maintainers; [ smdex ];
-    platforms = [ "x86_64-linux" ];
+    platforms = [
+      "x86_64-linux"
+      "aarch64-linux"
+    ];
     mainProgram = "multica-desktop";
   };
 }
