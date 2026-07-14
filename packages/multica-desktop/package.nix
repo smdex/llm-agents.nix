@@ -51,14 +51,14 @@
 
 let
   pname = "multica-desktop";
-  version = "0.4.0";
+  version = "0.4.1";
 
   platform = stdenvNoCC.hostPlatform.system;
   platformInfo =
     {
       x86_64-linux = {
         arch = "x86_64";
-        hash = "sha256-3q4Ejo3OV+cpBkyZB8GK1uMIICy+Wd3QDPSCD529NBs=";
+        hash = "sha256-v0lAhiV3Jd6FLofG++WVR94+i6u/36SC9JhqiWnCtRU=";
       };
       aarch64-linux = {
         arch = "arm64";
