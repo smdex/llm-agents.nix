@@ -73,35 +73,17 @@ python3.pkgs.buildPythonApplication rec {
   };
 
   postPatch = ''
-    substituteInPlace mnemosyne/install.py \
-      --replace-fail '    except Exception as e:
-            print(f"⚠️  Verification skipped: {e}")
-            return False
-    ' '    except ModuleNotFoundError as e:
-            if e.name == "plugins":
-                target = hermes_home / "plugins" / "mnemosyne"
-                if target.exists():
-                    print("⚠️  Hermes Python modules are not importable from this installer process.")
-                    print(f"   Plugin link verified: {target} -> {target.resolve()}")
-                    print("   Run `hermes memory status` after install to verify inside Hermes itself.")
-                    return True
-            print(f"⚠️  Verification skipped: {e}")
-            return False
-        except Exception as e:
-            print(f"⚠️  Verification skipped: {e}")
-            return False
-    '
-
-    substituteInPlace mnemosyne/install.py \
-      --replace-fail '    print("🌀 Mnemosyne Hermes Installer")
-    ' '    if any(arg in ("-h", "--help") for arg in sys.argv[1:]):
+        # The entry point calls install() directly, so upstream argparse is bypassed
+        # for mnemosyne-install. Handle command-line flags before it mutates a
+        # user's Hermes configuration.
+        substituteInPlace mnemosyne/install.py \
+          --replace-fail 'def install():
+        """Run the full Mnemosyne Hermes installation."""
+        print("🌀 Mnemosyne Hermes Installer")
+    ' 'def install():
+        """Run the full Mnemosyne Hermes installation."""
+        if any(arg in ("-h", "--help") for arg in sys.argv[1:]):
             print("Usage: mnemosyne-install [--help] [--uninstall]")
-            print()
-            print("Install Mnemosyne as a Hermes memory provider.")
-            print()
-            print("Options:")
-            print("  -h, --help     Show this help message and exit")
-            print("  --uninstall    Remove the Mnemosyne Hermes plugin link and reset config")
             return
         if "--uninstall" in sys.argv[1:]:
             uninstall()
@@ -109,11 +91,32 @@ python3.pkgs.buildPythonApplication rec {
         unknown = [arg for arg in sys.argv[1:] if arg != "--uninstall"]
         if unknown:
             print(f"Unknown option: {unknown[0]}", file=sys.stderr)
-            print("Run `mnemosyne-install --help` for usage.", file=sys.stderr)
             sys.exit(2)
 
         print("🌀 Mnemosyne Hermes Installer")
     '
+
+        # Upstream 3.12.2 renders PAGE_HTML through str.format(), so CSS blocks
+        # such as "{ --bg: ... }" are parsed as replacement fields and the index
+        # route raises KeyError. Replace only the declared template markers.
+            python -c '
+        from pathlib import Path
+        path = Path("mnemosyne/integrations/memory_browser.py")
+        source = path.read_text()
+        start = source.index("    return PAGE_HTML.format(")
+        end = source.index("\n\n\n# ── FastAPI App", start)
+        replacement = """    return (
+                PAGE_HTML
+                .replace("{query}", query)
+                .replace("{source_options}", source_opts)
+                .replace("{sel_working}", "selected" if tier == "working" else "")
+                .replace("{sel_episodic}", "selected" if tier == "episodic" else "")
+                .replace("{sel_recent}", "selected" if sort == "recent" else "")
+                .replace("{sel_importance}", "selected" if sort == "importance" else "")
+                .replace("{results_html}", results)
+            )"""
+        path.write_text(source[:start] + replacement + source[end:])
+        '
   '';
 
   build-system = with python3.pkgs; [
@@ -155,8 +158,12 @@ python3.pkgs.buildPythonApplication rec {
     MNEMOSYNE_DATA_DIR=$TMPDIR/mnemosyne $out/bin/mnemosyne --help >/dev/null
     MNEMOSYNE_DATA_DIR=$TMPDIR/mnemosyne $out/bin/mnemosyne stats >/dev/null
     MNEMOSYNE_DATA_DIR=$TMPDIR/mnemosyne python - <<'PY'
-    from mnemosyne.integrations.memory_browser import create_app
+    from mnemosyne.integrations.memory_browser import _build_html, create_app
 
+    html = _build_html([], query="test")
+    assert "No memories found." in html
+    assert "--bg" in html
+    assert 'value="test"' in html
     app = create_app(banks=["default"], default_bank="default")
     assert app.title == "Mnemosyne Browser"
     PY
