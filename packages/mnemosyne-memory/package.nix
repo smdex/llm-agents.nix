@@ -62,14 +62,14 @@ let
 in
 python3.pkgs.buildPythonApplication rec {
   pname = "mnemosyne-memory";
-  version = "3.12.2";
+  version = "3.14.0";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "mnemosyne-oss";
     repo = "mnemosyne";
     tag = "v${version}";
-    hash = "sha256-SczjGMESWXw6AvPlgWfSZwSTGZ82zQSzuSvBcimwo9M=";
+    hash = "sha256-knAygCU7MdMsZMs92Jw1G8XcAAW/vS/I7UAMLm2112c=";
   };
 
   postPatch = ''
