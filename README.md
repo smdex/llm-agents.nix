@@ -657,6 +657,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>lazyskills</strong> - Mission control for agent skills</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://lazyskills.sh
+- **Usage**: `nix run github:numtide/llm-agents.nix#lazyskills -- --help`
+- **Nix**: [packages/lazyskills/package.nix](packages/lazyskills/package.nix)
+
+</details>
+<details>
 <summary><strong>oh-my-claudecode</strong> - Multi-agent orchestration system for Claude Code</summary>
 
 - **Source**: source
