@@ -16,13 +16,13 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "goose-tui";
-  version = "1.42.0";
+  version = "1.43.0";
 
   src = fetchFromGitHub {
     owner = "aaif-goose";
     repo = "goose";
-    rev = "v1.42.0";
-    hash = "sha256-bll1T95dMV7klw9Z7Jg/N3azUCjHC/QkbeQghJ7GMK0=";
+    rev = "v1.43.0";
+    hash = "sha256-lmeS+iOyZ262H9NykK3GFIEA7ipOnqnurRKPY8xbwKw=";
   };
 
   sourceRoot = "${finalAttrs.src.name}/ui";
@@ -31,6 +31,9 @@ stdenv.mkDerivation (finalAttrs: {
     packages:
       - sdk
       - text
+    overrides:
+      react: ^19.2.4
+      react-dom: ^19.2.4
     EOF
   '';
 
@@ -44,7 +47,7 @@ stdenv.mkDerivation (finalAttrs: {
     sourceRoot = "${finalAttrs.src.name}/ui";
     inherit pnpm;
     fetcherVersion = 3;
-    hash = "sha256-1pvq4FdjqPFXbmTBrUiPvKiELiYp1XlFUrA8pvuvX5w=";
+    hash = "sha256-DTW6YmTvK95Bb8KCPC8iRfy0xCrpMdhjPGpIO3UY384=";
   };
 
   nativeBuildInputs = [
@@ -67,7 +70,16 @@ stdenv.mkDerivation (finalAttrs: {
   installPhase = ''
     runHook preInstall
     mkdir -p $out/{bin,lib/goose-tui}
-    cp -r node_modules sdk text/package.json text/dist $out/lib/goose-tui/
+    cp -rL node_modules sdk text/package.json text/dist $out/lib/goose-tui/
+    # pnpm keeps the UI's runtime dependencies in the text workspace. Merge
+    # those links into the runtime root so dist/tui.js can resolve react and
+    # the other workspace-local dependencies after installation.
+    if [ -d text/node_modules ]; then
+      cp -rL text/node_modules/. $out/lib/goose-tui/node_modules/
+    fi
+    if [ -d node_modules/.pnpm/node_modules ]; then
+      cp -rL node_modules/.pnpm/node_modules/. $out/lib/goose-tui/node_modules/
+    fi
     rm -rf $out/lib/goose-tui/node_modules/@aaif/goose-sdk
     mkdir -p $out/lib/goose-tui/node_modules/@aaif
     ln -s ../../sdk $out/lib/goose-tui/node_modules/@aaif/goose-sdk
@@ -83,13 +95,16 @@ stdenv.mkDerivation (finalAttrs: {
   ];
   versionCheckProgram = "${placeholder "out"}/bin/goose-tui";
   versionCheckProgramArg = "--version";
+  preVersionCheck = ''
+    version="$(node -p "require('./text/package.json').version")"
+  '';
 
   passthru.category = "AI Coding Agents";
 
   meta = with lib; {
     description = "TypeScript terminal UI for Goose";
     homepage = "https://github.com/aaif-goose/goose/tree/main/ui/text";
-    changelog = "https://github.com/aaif-goose/goose/releases/tag/v1.42.0";
+    changelog = "https://github.com/aaif-goose/goose/releases/tag/v1.43.0";
     license = licenses.asl20;
     sourceProvenance = with sourceTypes; [ fromSource ];
     mainProgram = "goose-tui";
