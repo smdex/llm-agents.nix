@@ -564,9 +564,19 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>multica</strong> - Command-line interface for the Multica platform</summary>
+
+- **Source**: source
+- **License**: unfree
+- **Homepage**: https://github.com/multica-ai/multica
+- **Usage**: `nix run github:numtide/llm-agents.nix#multica -- --help`
+- **Nix**: [packages/multica/package.nix](packages/multica/package.nix)
+
+</details>
+<details>
 <summary><strong>multica-desktop</strong> - Native desktop client for the Multica platform</summary>
 
-- **Source**: binary
+- **Source**: source
 - **License**: unfree
 - **Homepage**: https://github.com/multica-ai/multica
 - **Usage**: `nix run github:numtide/llm-agents.nix#multica-desktop -- --help`
