@@ -1,80 +1,57 @@
 {
   lib,
   flake,
-  stdenvNoCC,
-  fetchurl,
-  appimageTools,
-  autoPatchelfHook,
+  stdenv,
+  buildGoModule,
+  fetchFromGitHub,
+  fetchPnpmDeps,
+  makeWrapper,
   copyDesktopItems,
   makeDesktopItem,
-  makeWrapper,
-  alsa-lib,
-  at-spi2-atk,
-  at-spi2-core,
-  atk,
-  cairo,
-  cups,
-  dbus,
-  dbus-glib,
-  expat,
-  gcc-unwrapped,
-  glib,
-  gtk2,
-  gtk3,
-  libdbusmenu-gtk2,
-  libdrm,
-  libgbm,
-  libX11,
-  libxcb,
-  libXcomposite,
-  libXcursor,
-  libXdamage,
-  libXext,
-  libXfixes,
-  libXrandr,
-  libxkbcommon,
-  nspr,
-  nss,
-  pango,
-  systemdLibs,
-  libglvnd,
-  libnotify,
-  libpulseaudio,
-  libsecret,
-  libayatana-appindicator,
-  pipewire,
-  wayland,
-  xdg-utils,
-  adwaita-icon-theme,
-  gsettings-desktop-schemas,
+  nodejs,
+  pnpm_10,
+  pnpmConfigHook,
+  electron_41,
+  go_1_26,
+  ...
 }:
 
 let
   pname = "multica-desktop";
-  version = "0.4.4";
-
-  platform = stdenvNoCC.hostPlatform.system;
-  platformInfo =
-    {
-      x86_64-linux = {
-        arch = "x86_64";
-        hash = "sha256-2vN4HeNopSS1o954HTSSURUA7wTlIL2Uq0D6es6frG4=";
-      };
-      aarch64-linux = {
-        arch = "arm64";
-        hash = "sha256-/GaBx4+CqsN84/7dgIeEJrWvTl7LAISpkqLwZ7pko6Q=";
-      };
-    }
-    .${platform} or (throw "${pname}: unsupported system ${platform}");
-
-  src = fetchurl {
-    url = "https://github.com/multica-ai/multica/releases/download/v${version}/multica-desktop-${version}-linux-${platformInfo.arch}.AppImage";
-    inherit (platformInfo) hash;
+  version = "0.4.12";
+  src = fetchFromGitHub {
+    owner = "multica-ai";
+    repo = "multica";
+    tag = "v${version}";
+    hash = "sha256-kQNdW2Ly9QQ9KxdRFx5MxRbFIBNB55WDdfk2rYyluKc=";
   };
 
-  appimageContents = appimageTools.extractType2 {
-    inherit pname version src;
+  multica-cli = buildGoModule.override { go = go_1_26; } {
+    pname = "multica-cli";
+    inherit version;
+    src = "${src}/server";
+    sourceRoot = "server";
+    vendorHash = "sha256-SL//NLuzLV+faAjD7SR9f9j0AaDHel2haZajLJpsj5s=";
+    subPackages = [ "cmd/multica" ];
+    ldflags = [
+      "-X main.version=v${version}"
+      "-X main.commit=nix"
+      "-X main.date=unknown"
+    ];
   };
+
+  pnpm = pnpm_10;
+  pnpmDeps = fetchPnpmDeps {
+    inherit
+      pname
+      version
+      src
+      pnpm
+      ;
+    hash = "sha256-kQNdW2Ly9QQ9KxdRFx5MxRbFIBNB55WDdfk2rYyluKc=";
+    fetcherVersion = 3;
+  };
+  electron = electron_41;
 
   desktopItem = makeDesktopItem {
     name = pname;
@@ -88,113 +65,74 @@ let
     mimeTypes = [ "x-scheme-handler/multica" ];
   };
 in
-stdenvNoCC.mkDerivation {
-  inherit pname version src;
+stdenv.mkDerivation {
+  inherit
+    pname
+    version
+    src
+    pnpmDeps
+    ;
 
   nativeBuildInputs = [
-    autoPatchelfHook
-    copyDesktopItems
+    nodejs
+    pnpm
+    pnpmConfigHook
     makeWrapper
+    copyDesktopItems
   ];
 
-  # Direct Electron links discovered from the upstream AppImage.
-  buildInputs = [
-    adwaita-icon-theme
-    alsa-lib
-    at-spi2-atk
-    at-spi2-core
-    atk
-    cairo
-    cups
-    dbus
-    dbus-glib
-    expat
-    gcc-unwrapped.lib
-    glib
-    gsettings-desktop-schemas
-    gtk2
-    gtk3
-    libdbusmenu-gtk2
-    libdrm
-    libgbm
-    libX11
-    libxcb
-    libXcomposite
-    libXcursor
-    libXdamage
-    libXext
-    libXfixes
-    libXrandr
-    libxkbcommon
-    nspr
-    nss
-    pango
-    systemdLibs
-  ];
+  env = {
+    ELECTRON_SKIP_BINARY_DOWNLOAD = "1";
+    npm_config_electron_skip_binary_download = "1";
+  };
 
-  runtimeDependencies = [
-    libayatana-appindicator
-    libglvnd
-    libnotify
-    libpulseaudio
-    libsecret
-    pipewire
-    wayland
-  ];
+  buildPhase = ''
+    runHook preBuild
 
-  desktopItems = [ desktopItem ];
+    # Upstream pins Electron 39; use the maintained nixpkgs major and fail if
+    # upstream ever moves beyond the ABI we have selected.
+    upstream_electron=$(node -p "require('./apps/desktop/package.json').devDependencies.electron")
+    upstream_major=''${upstream_electron#^}
+    upstream_major=''${upstream_major%%.*}
+    nix_major=${lib.versions.major electron.version}
+    if (( upstream_major > nix_major )); then
+      echo "error: upstream expects Electron $upstream_electron but we provide ${electron.version}"
+      exit 1
+    fi
 
-  dontUnpack = true;
-  dontConfigure = true;
-  dontBuild = true;
-  dontStrip = true;
+    mkdir -p apps/desktop/resources/bin
+    cp ${multica-cli}/bin/multica apps/desktop/resources/bin/multica
+    chmod 755 apps/desktop/resources/bin/multica
+    pnpm --filter @multica/desktop build
+    runHook postBuild
+  '';
 
   installPhase = ''
     runHook preInstall
 
-    mkdir -p $out/lib/multica-desktop $out/share/icons
-    cp -a ${appimageContents}/. $out/lib/multica-desktop/
-    chmod -R u+w $out/lib/multica-desktop
+    app=$out/share/${pname}
+    mkdir -p "$app" "$out/bin"
+    # Keep workspace links valid at runtime; pnpm links @multica packages back
+    # into the root apps/ and packages/ directories.
+    cp -a apps packages "$app/"
+    rm -rf "$app/apps/desktop/out" "$app/apps/desktop/resources"
+    cp -a apps/desktop/out apps/desktop/resources "$app/apps/desktop/"
+    cp -a node_modules "$app/node_modules"
 
-    # The desktop app bundles the static Go CLI. Expose it as a stable Nix
-    # program so daemons and systemd units never download a second copy.
-    install -Dm755 \
-      $out/lib/multica-desktop/resources/app.asar.unpacked/resources/bin/multica \
-      $out/bin/multica
+    install -Dm644 apps/desktop/build/icon.png \
+      $out/share/icons/hicolor/512x512/apps/multica.png
 
-    # Nix owns updates. Removing this release's updater config prevents the
-    # bundled electron-updater from downloading a second, unmanaged copy.
-    rm -f $out/lib/multica-desktop/resources/app-update.yml
+    makeWrapper ${electron}/bin/electron $out/bin/multica-desktop \
+      --add-flags "$app/apps/desktop/out/main/index.js" \
+      --add-flags "--no-sandbox" \
+      --add-flags ''${NIXOS_OZONE_WL:+''${WAYLAND_DISPLAY:+--ozone-platform-hint=auto --enable-features=WaylandWindowDecorations}} \
+      --inherit-argv0
 
-    # Retain upstream-provided icon sizes for normal desktop-shell lookup.
-    cp -a $out/lib/multica-desktop/usr/share/icons $out/share/
-
-    makeWrapper $out/lib/multica-desktop/multica $out/bin/multica-desktop \
-      --set APPDIR $out/lib/multica-desktop \
-      --prefix LD_LIBRARY_PATH : $out/lib/multica-desktop \
-      --suffix PATH : ${lib.makeBinPath [ xdg-utils ]} \
-      --prefix XDG_DATA_DIRS : "$XDG_ICON_DIRS:$GSETTINGS_SCHEMAS_PATH" \
-      --run 'if [ -z "''${ELECTRON_RUN_AS_NODE:-}" ]; then
-        set -- --disable-setuid-sandbox "$@"
-        if [ -n "''${NIXOS_OZONE_WL:-}" ] && [ -n "''${WAYLAND_DISPLAY:-}" ]; then
-          set -- --ozone-platform-hint=auto --enable-features=WaylandWindowDecorations --enable-wayland-ime=true "$@"
-        fi
-      fi'
-
-
+    copyDesktopItems
     runHook postInstall
   '';
 
-  doInstallCheck = true;
-  installCheckPhase = ''
-    runHook preInstallCheck
-
-    ELECTRON_RUN_AS_NODE=1 $out/bin/multica-desktop -e \
-      "console.log(require('$out/lib/multica-desktop/resources/app.asar/package.json').version)" \
-      | grep -F '${version}'
-
-    runHook postInstallCheck
-  '';
+  desktopItems = [ desktopItem ];
 
   passthru = {
     category = "AI Assistants";
@@ -213,15 +151,10 @@ stdenvNoCC.mkDerivation {
     description = "Native desktop client for the Multica platform";
     homepage = "https://github.com/multica-ai/multica";
     changelog = "https://github.com/multica-ai/multica/releases/tag/v${version}";
-    # Upstream marks the desktop application UNLICENSED and ships a modified
-    # Apache-2.0 grant, so it must not be represented as Apache-2.0.
     license = flake.lib.licenses.unfree;
-    sourceProvenance = with sourceTypes; [ binaryNativeCode ];
+    sourceProvenance = with sourceTypes; [ fromSource ];
     maintainers = with flake.lib.maintainers; [ smdex ];
-    platforms = [
-      "x86_64-linux"
-      "aarch64-linux"
-    ];
+    platforms = platforms.linux;
     mainProgram = "multica-desktop";
   };
 }
