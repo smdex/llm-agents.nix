@@ -9,13 +9,13 @@
 
 buildGoModule.override { go = go_1_26; } rec {
   pname = "lazyskills";
-  version = "1.0.1";
+  version = "1.0.2";
 
   src = fetchFromGitHub {
     owner = "alvinunreal";
     repo = "lazyskills";
     tag = "v${version}";
-    hash = "sha256-BzNVE35hgEFNVce2TrhcoNsS/qcX/k6zQRA/iY3QXCk=";
+    hash = "sha256-zIOUKi5bfVTukItudUcQ44Mgh2Pze+MM6d0W/pj+UdY=";
   };
 
   vendorHash = "sha256-P8bweTw1Htc3HFWPOJJNSIKlp62LWfKzK3MVAC98Svs=";
