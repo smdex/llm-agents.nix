@@ -8,13 +8,13 @@
 
 (buildGoModule.override { go = go_1_26; }) rec {
   pname = "multica";
-  version = "0.4.9";
+  version = "0.4.11";
 
   src = fetchFromGitHub {
     owner = "multica-ai";
     repo = "multica";
     tag = "v${version}";
-    hash = "sha256-Hqmb72c6GRg36+Yc/+xMhMN/653KypHdltLmu4eiJMA=";
+    hash = "sha256-KOuKUTwWL+xlNYeyKyxzkqWSg7jsJc+y5UJtreGInuw=";
   };
 
   sourceRoot = "source/server";
