@@ -18,12 +18,12 @@
 
 let
   pname = "multica-desktop";
-  version = "0.4.9";
+  version = "0.4.11";
   src = fetchFromGitHub {
     owner = "multica-ai";
     repo = "multica";
     tag = "v${version}";
-    hash = "sha256-80KolxwtEFNElofbncC/FPF1FiZbB/7q0JfyX4qQ4OY=";
+    hash = "sha256-KOuKUTwWL+xlNYeyKyxzkqWSg7jsJc+y5UJtreGInuw=";
   };
 
   multica-cli = buildGoModule.override { go = go_1_26; } {
@@ -48,7 +48,7 @@ let
       src
       pnpm
       ;
-    hash = "sha256-80KolxwtEFNElofbncC/FPF1FiZbB/7q0JfyX4qQ4OY=";
+    hash = "sha256-KOuKUTwWL+xlNYeyKyxzkqWSg7jsJc+y5UJtreGInuw=";
     fetcherVersion = 3;
   };
   electron = electron_41;
