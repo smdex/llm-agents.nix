@@ -23,7 +23,7 @@ let
     owner = "multica-ai";
     repo = "multica";
     tag = "v${version}";
-    hash = "sha256-KOuKUTwWL+xlNYeyKyxzkqWSg7jsJc+y5UJtreGInuw=";
+    hash = "sha256-80KolxwtEFNElofbncC/FPF1FiZbB/7q0JfyX4qQ4OY=";
   };
 
   multica-cli = buildGoModule.override { go = go_1_26; } {
@@ -48,7 +48,7 @@ let
       src
       pnpm
       ;
-    hash = "sha256-KOuKUTwWL+xlNYeyKyxzkqWSg7jsJc+y5UJtreGInuw=";
+    hash = "sha256-80KolxwtEFNElofbncC/FPF1FiZbB/7q0JfyX4qQ4OY=";
     fetcherVersion = 3;
   };
   electron = electron_41;
