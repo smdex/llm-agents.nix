@@ -534,13 +534,13 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
-<summary><strong>mnemosyne-memory</strong> - Universal Hermes-first SQLite memory layer for AI agents with MCP, sync, and vector search support</summary>
+<summary><strong>mnemosyne</strong> - Universal Hermes-first SQLite memory layer for AI agents with MCP, sync, and vector search support</summary>
 
 - **Source**: source
 - **License**: MIT
 - **Homepage**: https://github.com/mnemosyne-oss/mnemosyne
-- **Usage**: `nix run github:numtide/llm-agents.nix#mnemosyne-memory -- --help`
-- **Nix**: [packages/mnemosyne-memory/package.nix](packages/mnemosyne-memory/package.nix)
+- **Usage**: `nix run github:numtide/llm-agents.nix#mnemosyne -- --help`
+- **Nix**: [packages/mnemosyne/package.nix](packages/mnemosyne/package.nix)
 
 </details>
 <details>
