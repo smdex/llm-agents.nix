@@ -2,7 +2,6 @@
   lib,
   flake,
   stdenv,
-  buildGoModule,
   fetchFromGitHub,
   fetchPnpmDeps,
   makeWrapper,
@@ -12,7 +11,7 @@
   pnpm_10,
   pnpmConfigHook,
   electron_41,
-  go_1_26,
+  multica,
   ...
 }:
 
@@ -26,20 +25,6 @@ let
     hash = "sha256-kQNdW2Ly9QQ9KxdRFx5MxRbFIBNB55WDdfk2rYyluKc=";
   };
 
-  multica-cli = buildGoModule.override { go = go_1_26; } {
-    pname = "multica-cli";
-    inherit version;
-    src = "${src}/server";
-    sourceRoot = "server";
-    vendorHash = "sha256-SL//NLuzLV+faAjD7SR9f9j0AaDHel2haZajLJpsj5s=";
-    subPackages = [ "cmd/multica" ];
-    ldflags = [
-      "-X main.version=v${version}"
-      "-X main.commit=nix"
-      "-X main.date=unknown"
-    ];
-  };
-
   pnpm = pnpm_10;
   pnpmDeps = fetchPnpmDeps {
     inherit
@@ -48,7 +33,7 @@ let
       src
       pnpm
       ;
-    hash = "sha256-kQNdW2Ly9QQ9KxdRFx5MxRbFIBNB55WDdfk2rYyluKc=";
+    hash = "sha256-80KolxwtEFNElofbncC/FPF1FiZbB/7q0JfyX4qQ4OY=";
     fetcherVersion = 3;
   };
   electron = electron_41;
@@ -101,8 +86,7 @@ stdenv.mkDerivation {
     fi
 
     mkdir -p apps/desktop/resources/bin
-    cp ${multica-cli}/bin/multica apps/desktop/resources/bin/multica
-    chmod 755 apps/desktop/resources/bin/multica
+    ln -s ${multica}/bin/multica apps/desktop/resources/bin/multica
     pnpm --filter @multica/desktop build
     runHook postBuild
   '';
