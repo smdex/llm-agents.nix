@@ -9,12 +9,14 @@
   dbus,
   versionCheckHook,
   cacert,
-  librusty_v8,
+  callPackage,
+  mkRustyV8Archive ? callPackage ../../lib/rusty-v8.nix { },
+  versionData ? builtins.fromJSON (builtins.readFile ../goose-cli/hashes.json),
+  librusty_v8 ? mkRustyV8Archive {
+    inherit (versionData.librustyV8) version hashes;
+  },
 }:
 
-let
-  versionData = builtins.fromJSON (builtins.readFile ../goose-cli/hashes.json);
-in
 rustPlatform.buildRustPackage rec {
   pname = "goose";
   inherit (versionData) version cargoHash;
