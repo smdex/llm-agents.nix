@@ -9,14 +9,14 @@
 
 python3.pkgs.buildPythonApplication rec {
   pname = "cowagent";
-  version = "2.1.3";
+  version = "2.1.4";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "zhayujie";
     repo = "CowAgent";
     tag = version;
-    hash = "sha256-ZMsYUGPmODYx1kBxJGpKvtdfVFN2CXnV7u+0DIyNsUM=";
+    hash = "sha256-1J6shTx+asmzM1hh2hHxrgM/xFB5TwJrEgoDmIns9Yk=";
   };
 
   postPatch = ''
