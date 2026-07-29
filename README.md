@@ -381,6 +381,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>opendev</strong> - Open-Source Coding Agent in the terminal</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/opendev-to/opendev
+- **Usage**: `nix run github:numtide/llm-agents.nix#opendev -- --help`
+- **Nix**: [packages/opendev/package.nix](packages/opendev/package.nix)
+
+</details>
+<details>
 <summary><strong>openfang</strong> - Open-source Agent OS built in Rust — CLI for the OpenFang platform</summary>
 
 - **Source**: source
@@ -765,6 +775,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 ### Workflow & Project Management
 
+<details>
+<summary><strong>adversarial-spec</strong> - Multi-model adversarial debate for refining product and technical specifications</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/zscole/adversarial-spec
+- **Usage**: `nix run github:numtide/llm-agents.nix#adversarial-spec -- --help`
+- **Nix**: [packages/adversarial-spec/package.nix](packages/adversarial-spec/package.nix)
+
+</details>
 <details>
 <summary><strong>agent-deck</strong> - Your AI agent command center</summary>
 
