@@ -29,6 +29,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>caveman-code</strong> - Open-source coding agent with a terminal UI</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://caveman.so/
+- **Usage**: `nix run github:numtide/llm-agents.nix#caveman-code -- --help`
+- **Nix**: [packages/caveman-code/package.nix](packages/caveman-code/package.nix)
+
+</details>
+<details>
 <summary><strong>claude-code</strong> - Agentic coding tool that lives in your terminal, understands your codebase, and helps you code faster</summary>
 
 - **Source**: binary
@@ -554,16 +564,6 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
-<summary><strong>mnemosyne-memory</strong> - Universal Hermes-first SQLite memory layer for AI agents with MCP, sync, and vector search support</summary>
-
-- **Source**: source
-- **License**: MIT
-- **Homepage**: https://github.com/mnemosyne-oss/mnemosyne
-- **Usage**: `nix run github:numtide/llm-agents.nix#mnemosyne-memory -- --help`
-- **Nix**: [packages/mnemosyne-memory/package.nix](packages/mnemosyne-memory/package.nix)
-
-</details>
-<details>
 <summary><strong>multica</strong> - Command-line interface for the Multica platform</summary>
 
 - **Source**: source
@@ -581,6 +581,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/multica-ai/multica
 - **Usage**: `nix run github:numtide/llm-agents.nix#multica-desktop -- --help`
 - **Nix**: [packages/multica-desktop/package.nix](packages/multica-desktop/package.nix)
+
+</details>
+<details>
+<summary><strong>openagent</strong> - Personal AI assistant with RAG, agent loops, computer/browser-use and coding agent</summary>
+
+- **Source**: source
+- **License**: Apache-2.0
+- **Homepage**: https://www.openagentai.org/
+- **Usage**: `nix run github:numtide/llm-agents.nix#openagent -- --help`
+- **Nix**: [packages/openagent/package.nix](packages/openagent/package.nix)
 
 </details>
 <details>
@@ -1372,6 +1382,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/vercel-labs/agent-browser
 - **Usage**: `nix run github:numtide/llm-agents.nix#agent-browser -- --help`
 - **Nix**: [packages/agent-browser/package.nix](packages/agent-browser/package.nix)
+
+</details>
+<details>
+<summary><strong>ai-memory</strong> - Long-term memory and cross-vendor handoff for AI coding agents</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/akitaonrails/ai-memory
+- **Usage**: `nix run github:numtide/llm-agents.nix#ai-memory -- --help`
+- **Nix**: [packages/ai-memory/package.nix](packages/ai-memory/package.nix)
 
 </details>
 <details>
