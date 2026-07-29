@@ -986,6 +986,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>vibecode-pro-max-kit</strong> - Spec-driven coding harness kit (agents, skills, hooks) for Claude Code and Codex</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/withkynam/vibecode-pro-max-kit
+- **Usage**: `nix run github:numtide/llm-agents.nix#vibecode-pro-max-kit -- --help`
+- **Nix**: [packages/vibecode-pro-max-kit/package.nix](packages/vibecode-pro-max-kit/package.nix)
+
+</details>
+<details>
 <summary><strong>workmux</strong> - Git worktrees + tmux windows for zero-friction parallel dev</summary>
 
 - **Source**: source
