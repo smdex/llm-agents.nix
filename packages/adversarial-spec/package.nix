@@ -14,7 +14,7 @@ let
 in
 stdenvNoCC.mkDerivation rec {
   pname = "adversarial-spec";
-  version = "1.0.0-unstable-2026-01-22";
+  version = "0-unstable-2026-01-22";
 
   src = fetchFromGitHub {
     owner = "zscole";
