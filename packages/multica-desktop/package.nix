@@ -17,12 +17,12 @@
 
 let
   pname = "multica-desktop";
-  version = "0.4.15";
+  version = "0.4.16";
   src = fetchFromGitHub {
     owner = "multica-ai";
     repo = "multica";
     tag = "v${version}";
-    hash = "sha256-OceOgu+e7muKgWV/cGp84ulqcBcd/qczCej6XixYvyE=";
+    hash = "sha256-mgC1WxeYyDgfE8gBbwGVQCzT0Y8C6DjKYfUM/2bkHbs=";
   };
 
   pnpm = pnpm_10;
