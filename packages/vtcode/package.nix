@@ -13,16 +13,16 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "vtcode";
-  version = "0.141.8";
+  version = "0.141.9";
 
   src = fetchFromGitHub {
     owner = "vinhnx";
     repo = "vtcode";
     tag = version;
-    hash = "sha256-GUMf5U5ReTWJW+wiPDHsL/lvVZXCLXff5Xb9/dwZn5g=";
+    hash = "sha256-54XVPs5Mgcevq05wk18dnACYoOT8nlBmIy0/xf/Xp70=";
   };
 
-  cargoHash = "sha256-7CXF1D81GPm0l6Q59smBy3+Ku5d5tRZWYcOzw01YOhA=";
+  cargoHash = "sha256-iFJX+WlA1wUPHfWGITBmqavNu7T4SPZqQen7s/UfZP4=";
 
   cargoBuildFlags = [
     "--bin"
