@@ -9,16 +9,16 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "ai-memory";
-  version = "1.23.0";
+  version = "1.24.0";
 
   src = fetchFromGitHub {
     owner = "akitaonrails";
     repo = "ai-memory";
     tag = "v${version}";
-    hash = "sha256-Ld5NBLC/9YuAakEoLmmjgbwRztZRPv2+z+EQ47GGPd0=";
+    hash = "sha256-ivP2TZM+OvNd1KcYolc7s+Ut++Mf8nA+xnjSUpGCOKI=";
   };
 
-  cargoHash = "sha256-ZtvXEauu5VgyDX/f7DfWPBy4TBZ/h5YhTc7xqwU8r94=";
+  cargoHash = "sha256-7PfpFhLa3dIn7sjt2UhdK0BGfRy7PJWBm5GUUxaJXQw=";
 
   # Workspace ships many crates (web, mcp server, evals harness, ...). We only
   # need the user-facing CLI binary, so build just that target.
