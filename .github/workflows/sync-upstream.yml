@@ -117,12 +117,16 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - name: Merge upstream/main
+      - name: Rebase fork commits onto upstream/main
         id: sync
         if: steps.upstream.outputs.has-upstream == 'true' && steps.upstream-update.outputs.ready == 'true'
         env:
           UPSTREAM_REPOSITORY: ${{ steps.upstream.outputs.repository }}
         run: |
+          set -euo pipefail
+          export GIT_EDITOR=true
+          export GIT_SEQUENCE_EDITOR=true
+
           git remote add upstream "https://github.com/${UPSTREAM_REPOSITORY}.git"
           git fetch upstream main
 
@@ -132,25 +136,46 @@ jobs:
             exit 0
           fi
 
-          if ! git merge --no-ff --no-commit upstream/main; then
-            conflicts="$(git diff --name-only --diff-filter=U)"
-            if [ "$conflicts" != 'README.md' ]; then
-              echo "::error::Upstream merge has non-generated conflicts: ${conflicts:-<none>}"
-              git merge --abort
+          fork_base="$(git merge-base upstream/main HEAD)"
+          if ! git rebase --onto upstream/main "$fork_base"; then
+            if ! test -d .git/rebase-merge && ! test -d .git/rebase-apply; then
+              echo '::error::Upstream rebase failed before reporting a conflict.'
               exit 1
             fi
 
-            # README's package section is generated. Start from upstream, then
-            # regenerate it from the merged package tree below.
-            git checkout --theirs README.md
-            git add README.md
+            while test -d .git/rebase-merge || test -d .git/rebase-apply; do
+              conflicts="$(git diff --name-only --diff-filter=U)"
+              if [ "$conflicts" != 'README.md' ]; then
+                echo "::error::Upstream rebase has non-generated conflicts: ${conflicts:-<none>}"
+                git rebase --abort
+                exit 1
+              fi
+
+              # During a rebase, --ours is upstream/main. README's package
+              # section is generated, so take upstream then regenerate below.
+              git checkout --ours README.md
+              git add README.md
+
+              if git rebase --continue; then
+                break
+              fi
+            done
+
+            if test -d .git/rebase-merge || test -d .git/rebase-apply; then
+              echo '::error::Upstream rebase stopped without a resolvable README.md conflict.'
+              git rebase --abort
+              exit 1
+            fi
           fi
 
           ./scripts/generate-package-docs.py
           git add README.md
-          git commit -m "sync: merge upstream/main"
-          git push origin HEAD:main
-          echo "result=merged" >> "$GITHUB_OUTPUT"
+          if ! git diff --cached --quiet; then
+            git commit -m "sync: regenerate README after upstream rebase"
+          fi
+
+          git push --force-with-lease=refs/heads/main origin HEAD:main
+          echo "result=rebased" >> "$GITHUB_OUTPUT"
       - name: Trigger fork package updates
         id: trigger-updates
         if: steps.upstream.outputs.has-upstream == 'true' && steps.upstream-update.outputs.ready == 'true' && steps.sync.outcome == 'success'
@@ -184,12 +209,12 @@ jobs:
           fi
 
           if [ "${{ steps.sync.outcome }}" = 'failure' ]; then
-            echo "Failed to merge main with upstream/main from ${{ steps.upstream.outputs.repository }}." >> "$GITHUB_STEP_SUMMARY"
+            echo "Failed to rebase fork commits onto upstream/main from ${{ steps.upstream.outputs.repository }}." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
           if [ "${{ steps.trigger-updates.outcome }}" = 'failure' ]; then
-            echo "Synced main with ${{ steps.upstream.outputs.repository }}, but failed to trigger fork package updates." >> "$GITHUB_STEP_SUMMARY"
+            echo "Rebased fork commits onto upstream/main from ${{ steps.upstream.outputs.repository }}, but failed to trigger fork package updates." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
@@ -198,4 +223,4 @@ jobs:
             exit 0
           fi
 
-          echo "Merged upstream/main from ${{ steps.upstream.outputs.repository }}. Fork package updates were triggered." >> "$GITHUB_STEP_SUMMARY"
+          echo "Rebased fork commits onto upstream/main from ${{ steps.upstream.outputs.repository }}. Fork package updates were triggered." >> "$GITHUB_STEP_SUMMARY"
