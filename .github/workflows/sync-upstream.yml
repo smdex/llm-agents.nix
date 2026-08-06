@@ -105,12 +105,19 @@ jobs:
           ref: main
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
+      - name: Set up Nix
+        if: steps.upstream.outputs.has-upstream == 'true' && steps.upstream-update.outputs.ready == 'true'
+        uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            extra-substituters = https://cache.numtide.com
+            extra-trusted-public-keys = niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g=
       - name: Set up git
         if: steps.upstream.outputs.has-upstream == 'true' && steps.upstream-update.outputs.ready == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - name: Rebase main onto upstream/main
+      - name: Merge upstream/main
         id: sync
         if: steps.upstream.outputs.has-upstream == 'true' && steps.upstream-update.outputs.ready == 'true'
         env:
@@ -125,9 +132,25 @@ jobs:
             exit 0
           fi
 
-          git rebase upstream/main
-          git push --force-with-lease origin HEAD:main
-          echo "result=rebased" >> "$GITHUB_OUTPUT"
+          if ! git merge --no-ff --no-commit upstream/main; then
+            conflicts="$(git diff --name-only --diff-filter=U)"
+            if [ "$conflicts" != 'README.md' ]; then
+              echo "::error::Upstream merge has non-generated conflicts: ${conflicts:-<none>}"
+              git merge --abort
+              exit 1
+            fi
+
+            # README's package section is generated. Start from upstream, then
+            # regenerate it from the merged package tree below.
+            git checkout --theirs README.md
+            git add README.md
+          fi
+
+          ./scripts/generate-package-docs.py
+          git add README.md
+          git commit -m "sync: merge upstream/main"
+          git push origin HEAD:main
+          echo "result=merged" >> "$GITHUB_OUTPUT"
       - name: Trigger fork package updates
         id: trigger-updates
         if: steps.upstream.outputs.has-upstream == 'true' && steps.upstream-update.outputs.ready == 'true' && steps.sync.outcome == 'success'
@@ -161,7 +184,7 @@ jobs:
           fi
 
           if [ "${{ steps.sync.outcome }}" = 'failure' ]; then
-            echo "Failed to rebase main onto upstream/main from ${{ steps.upstream.outputs.repository }}." >> "$GITHUB_STEP_SUMMARY"
+            echo "Failed to merge main with upstream/main from ${{ steps.upstream.outputs.repository }}." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
@@ -175,4 +198,4 @@ jobs:
             exit 0
           fi
 
-          echo "Rebased main onto upstream/main from ${{ steps.upstream.outputs.repository }}. Fork package updates were triggered." >> "$GITHUB_STEP_SUMMARY"
+          echo "Merged upstream/main from ${{ steps.upstream.outputs.repository }}. Fork package updates were triggered." >> "$GITHUB_STEP_SUMMARY"
