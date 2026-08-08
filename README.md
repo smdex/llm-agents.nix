@@ -573,6 +573,7 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Nix**: [packages/ironclaw/package.nix](packages/ironclaw/package.nix)
 
 </details>
+<details>
 <summary><strong>localgpt</strong> - Local AI assistant with persistent markdown memory, autonomous tasks, and semantic search</summary>
 
 - **Source**: source
