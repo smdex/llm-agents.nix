@@ -1376,6 +1376,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 ### Memory & Code Intelligence
 
 <details>
+<summary><strong>cass</strong> - Search local coding agent session history across providers</summary>
+
+- **Source**: source
+- **License**: unfree
+- **Homepage**: https://github.com/Dicklesworthstone/coding_agent_session_search
+- **Usage**: `nix run github:numtide/llm-agents.nix#cass -- --help`
+- **Nix**: [packages/cass/package.nix](packages/cass/package.nix)
+
+</details>
+<details>
 <summary><strong>ck</strong> - Local first semantic and hybrid BM25 grep / search tool for use by AI and humans!</summary>
 
 - **Source**: source
