@@ -39,6 +39,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>caveman-code</strong> - Open-source coding agent with a terminal UI</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://caveman.so/
+- **Usage**: `nix run github:numtide/llm-agents.nix#caveman-code -- --help`
+- **Nix**: [packages/caveman-code/package.nix](packages/caveman-code/package.nix)
+
+</details>
+<details>
 <summary><strong>chatgpt</strong> - Desktop application for ChatGPT and Codex</summary>
 
 - **Source**: binary
@@ -211,13 +221,53 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
-<summary><strong>goose-cli</strong> - CLI for Goose - a local, extensible, open source AI agent that automates engineering tasks</summary>
+<summary><strong>goose</strong> - Server for Goose, a local extensible AI agent</summary>
+
+- **Source**: source
+- **License**: Apache-2.0
+- **Homepage**: https://github.com/aaif-goose/goose
+- **Usage**: `nix run github:numtide/llm-agents.nix#goose -- --help`
+- **Nix**: [packages/goose/package.nix](packages/goose/package.nix)
+
+</details>
+<details>
+<summary><strong>goose-cli</strong> - Legacy Rust CLI for Goose, a local extensible AI agent</summary>
 
 - **Source**: source
 - **License**: Apache-2.0
 - **Homepage**: https://github.com/aaif-goose/goose
 - **Usage**: `nix run github:numtide/llm-agents.nix#goose-cli -- --help`
 - **Nix**: [packages/goose-cli/package.nix](packages/goose-cli/package.nix)
+
+</details>
+<details>
+<summary><strong>goose-desktop</strong> - Legacy Electron desktop app for Goose, a local extensible AI agent</summary>
+
+- **Source**: binary
+- **License**: Apache-2.0
+- **Homepage**: https://github.com/aaif-goose/goose
+- **Usage**: `nix run github:numtide/llm-agents.nix#goose-desktop -- --help`
+- **Nix**: [packages/goose-desktop/package.nix](packages/goose-desktop/package.nix)
+
+</details>
+<details>
+<summary><strong>goose-tui</strong> - TypeScript terminal UI for Goose</summary>
+
+- **Source**: source
+- **License**: Apache-2.0
+- **Homepage**: https://github.com/aaif-goose/goose/tree/main/ui/text
+- **Usage**: `nix run github:numtide/llm-agents.nix#goose-tui -- --help`
+- **Nix**: [packages/goose-tui/package.nix](packages/goose-tui/package.nix)
+
+</details>
+<details>
+<summary><strong>goose2</strong> - Goose 2 Tauri desktop app for Goose, a local extensible AI agent</summary>
+
+- **Source**: binary
+- **License**: Apache-2.0
+- **Homepage**: https://github.com/aaif-goose/goose
+- **Usage**: `nix run github:numtide/llm-agents.nix#goose2 -- --help`
+- **Nix**: [packages/goose2/package.nix](packages/goose2/package.nix)
 
 </details>
 <details>
@@ -321,6 +371,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>oh-my-codex-smdex</strong> - Multi-agent orchestration layer for OpenAI Codex CLI</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/smdex/oh-my-codex
+- **Usage**: `nix run github:numtide/llm-agents.nix#oh-my-codex-smdex -- --help`
+- **Nix**: [packages/oh-my-codex-smdex/package.nix](packages/oh-my-codex-smdex/package.nix)
+
+</details>
+<details>
 <summary><strong>oh-my-opencode</strong> - The Best AI Agent Harness - Multi-Model Orchestration for OpenCode</summary>
 
 - **Source**: source
@@ -358,6 +418,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://opencode.ai
 - **Usage**: `nix run github:numtide/llm-agents.nix#opencode2 -- --help`
 - **Nix**: [packages/opencode2/package.nix](packages/opencode2/package.nix)
+
+</details>
+<details>
+<summary><strong>opendev</strong> - Open-Source Coding Agent in the terminal</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/opendev-to/opendev
+- **Usage**: `nix run github:numtide/llm-agents.nix#opendev -- --help`
+- **Nix**: [packages/opendev/package.nix](packages/opendev/package.nix)
 
 </details>
 <details>
@@ -431,6 +501,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>ruflo</strong> - Agentic orchestration CLI with ruv-FANN neural capabilities</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/ruvnet/ruflo
+- **Usage**: `nix run github:numtide/llm-agents.nix#ruflo -- --help`
+- **Nix**: [packages/ruflo/package.nix](packages/ruflo/package.nix)
+
+</details>
+<details>
 <summary><strong>t3code</strong> - Control surface for coding agents</summary>
 
 - **Source**: source
@@ -458,6 +538,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/get-vix/vix
 - **Usage**: `nix run github:numtide/llm-agents.nix#vix -- --help`
 - **Nix**: [packages/vix/package.nix](packages/vix/package.nix)
+
+</details>
+<details>
+<summary><strong>vtcode</strong> - Terminal-native coding agent CLI</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/vinhnx/vtcode
+- **Usage**: `nix run github:numtide/llm-agents.nix#vtcode -- --help`
+- **Nix**: [packages/vtcode/package.nix](packages/vtcode/package.nix)
 
 </details>
 <details>
@@ -494,6 +584,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>cowagent</strong> - AI agent platform with a command-line interface</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/zhayujie/CowAgent
+- **Usage**: `nix run github:numtide/llm-agents.nix#cowagent -- --help`
+- **Nix**: [packages/cowagent/package.nix](packages/cowagent/package.nix)
+
+</details>
+<details>
 <summary><strong>hermes-agent</strong> - Self-improving AI agent by Nous Research — creates skills from experience and runs anywhere</summary>
 
 - **Source**: source
@@ -524,6 +624,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>hermes-hudui</strong> - Web UI consciousness monitor for Hermes</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/joeynyc/hermes-hudui
+- **Usage**: `nix run github:numtide/llm-agents.nix#hermes-hudui -- --help`
+- **Nix**: [packages/hermes-hudui/package.nix](packages/hermes-hudui/package.nix)
+
+</details>
+<details>
 <summary><strong>hermes-one</strong> - Hermes One, community desktop companion for Hermes Agent</summary>
 
 - **Source**: source
@@ -531,6 +641,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/fathah/hermes-desktop
 - **Usage**: `nix run github:numtide/llm-agents.nix#hermes-one -- --help`
 - **Nix**: [packages/hermes-one/package.nix](packages/hermes-one/package.nix)
+
+</details>
+<details>
+<summary><strong>hermes-webui</strong> - Browser-based control panel for Hermes Agent</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/nesquena/hermes-webui
+- **Usage**: `nix run github:numtide/llm-agents.nix#hermes-webui -- --help`
+- **Nix**: [packages/hermes-webui/package.nix](packages/hermes-webui/package.nix)
 
 </details>
 <details>
@@ -551,6 +671,36 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/localgpt-app/localgpt
 - **Usage**: `nix run github:numtide/llm-agents.nix#localgpt -- --help`
 - **Nix**: [packages/localgpt/package.nix](packages/localgpt/package.nix)
+
+</details>
+<details>
+<summary><strong>multica</strong> - Command-line interface for the Multica platform</summary>
+
+- **Source**: source
+- **License**: unfree
+- **Homepage**: https://github.com/multica-ai/multica
+- **Usage**: `nix run github:numtide/llm-agents.nix#multica -- --help`
+- **Nix**: [packages/multica/package.nix](packages/multica/package.nix)
+
+</details>
+<details>
+<summary><strong>multica-desktop</strong> - Native desktop client for the Multica platform</summary>
+
+- **Source**: source
+- **License**: unfree
+- **Homepage**: https://github.com/multica-ai/multica
+- **Usage**: `nix run github:numtide/llm-agents.nix#multica-desktop -- --help`
+- **Nix**: [packages/multica-desktop/package.nix](packages/multica-desktop/package.nix)
+
+</details>
+<details>
+<summary><strong>openagent</strong> - Personal AI assistant with RAG, agent loops, computer/browser-use and coding agent</summary>
+
+- **Source**: source
+- **License**: Apache-2.0
+- **Homepage**: https://www.openagentai.org/
+- **Usage**: `nix run github:numtide/llm-agents.nix#openagent -- --help`
+- **Nix**: [packages/openagent/package.nix](packages/openagent/package.nix)
 
 </details>
 <details>
@@ -647,6 +797,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>lazyskills</strong> - Mission control for agent skills</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://lazyskills.sh
+- **Usage**: `nix run github:numtide/llm-agents.nix#lazyskills -- --help`
+- **Nix**: [packages/lazyskills/package.nix](packages/lazyskills/package.nix)
+
+</details>
+<details>
 <summary><strong>oh-my-claudecode</strong> - Multi-agent orchestration system for Claude Code</summary>
 
 - **Source**: source
@@ -722,9 +882,29 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Nix**: [packages/mindwalk/package.nix](packages/mindwalk/package.nix)
 
 </details>
+<details>
+<summary><strong>tokscale</strong> - CLI and TUI for AI token usage analytics</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/junhoyeo/tokscale
+- **Usage**: `nix run github:numtide/llm-agents.nix#tokscale -- --help`
+- **Nix**: [packages/tokscale/package.nix](packages/tokscale/package.nix)
+
+</details>
 
 ### Workflow & Project Management
 
+<details>
+<summary><strong>adversarial-spec</strong> - Multi-model adversarial debate for refining product and technical specifications</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/zscole/adversarial-spec
+- **Usage**: `nix run github:numtide/llm-agents.nix#adversarial-spec -- --help`
+- **Nix**: [packages/adversarial-spec/package.nix](packages/adversarial-spec/package.nix)
+
+</details>
 <details>
 <summary><strong>agent-deck</strong> - Your AI agent command center</summary>
 
@@ -993,6 +1173,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/BloopAI/vibe-kanban
 - **Usage**: `nix run github:numtide/llm-agents.nix#vibe-kanban -- --help`
 - **Nix**: [packages/vibe-kanban/package.nix](packages/vibe-kanban/package.nix)
+
+</details>
+<details>
+<summary><strong>vibecode-pro-max-kit</strong> - Spec-driven coding harness kit (agents, skills, hooks) for Claude Code and Codex</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/withkynam/vibecode-pro-max-kit
+- **Usage**: `nix run github:numtide/llm-agents.nix#vibecode-pro-max-kit -- --help`
+- **Nix**: [packages/vibecode-pro-max-kit/package.nix](packages/vibecode-pro-max-kit/package.nix)
 
 </details>
 <details>
@@ -1372,6 +1562,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/vercel-labs/agent-browser
 - **Usage**: `nix run github:numtide/llm-agents.nix#agent-browser -- --help`
 - **Nix**: [packages/agent-browser/package.nix](packages/agent-browser/package.nix)
+
+</details>
+<details>
+<summary><strong>ai-memory</strong> - Long-term memory and cross-vendor handoff for AI coding agents</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/akitaonrails/ai-memory
+- **Usage**: `nix run github:numtide/llm-agents.nix#ai-memory -- --help`
+- **Nix**: [packages/ai-memory/package.nix](packages/ai-memory/package.nix)
 
 </details>
 <details>
