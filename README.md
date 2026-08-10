@@ -461,6 +461,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>ruflo</strong> - Agentic orchestration CLI with ruv-FANN neural capabilities</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/ruvnet/ruflo
+- **Usage**: `nix run github:numtide/llm-agents.nix#ruflo -- --help`
+- **Nix**: [packages/ruflo/package.nix](packages/ruflo/package.nix)
+
+</details>
+<details>
 <summary><strong>t3code</strong> - Control surface for coding agents</summary>
 
 - **Source**: source
@@ -478,16 +488,6 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://t3.codes
 - **Usage**: `nix run github:numtide/llm-agents.nix#t3code-desktop -- --help`
 - **Nix**: [packages/t3code-desktop/package.nix](packages/t3code-desktop/package.nix)
-
-</details>
-<details>
-<summary><strong>ruflo</strong> - Agentic orchestration CLI with ruv-FANN neural capabilities</summary>
-
-- **Source**: source
-- **License**: MIT
-- **Homepage**: https://github.com/ruvnet/ruflo
-- **Usage**: `nix run github:numtide/llm-agents.nix#ruflo -- --help`
-- **Nix**: [packages/ruflo/package.nix](packages/ruflo/package.nix)
 
 </details>
 <details>
@@ -603,6 +603,7 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Nix**: [packages/ironclaw/package.nix](packages/ironclaw/package.nix)
 
 </details>
+<details>
 <summary><strong>localgpt</strong> - Local AI assistant with persistent markdown memory, autonomous tasks, and semantic search</summary>
 
 - **Source**: source
