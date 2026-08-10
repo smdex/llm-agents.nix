@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -70,6 +71,68 @@ def companion_packages() -> set[str]:
             if (stripped := line.strip()) and not stripped.startswith("#")
         )
     return companions
+
+
+
+def parse_bool(value: str | None, *, default: bool = False) -> bool:
+    """Parse common CI boolean spellings."""
+    if value is None or value == "":
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def run_git(args: list[str]) -> subprocess.CompletedProcess[str]:
+    """Run a git command and capture output for discovery decisions."""
+    return subprocess.run(
+        ["git", *args],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def upstream_package_names(upstream_ref: str) -> set[str]:
+    """Return package directory names present at the upstream ref."""
+    result = run_git(["ls-tree", "-d", "--name-only", f"{upstream_ref}:packages"])
+    if result.returncode != 0:
+        log.error(
+            "::error::failed to list packages at %s: %s",
+            upstream_ref,
+            result.stderr.strip(),
+        )
+        sys.exit(1)
+    return {line.strip() for line in result.stdout.splitlines() if line.strip()}
+
+
+def filter_added_packages(
+    packages: list[str] | None,
+    *,
+    upstream_ref: str,
+) -> list[str] | None:
+    """Keep only packages whose directory is absent from upstream/main."""
+    upstream_packages = upstream_package_names(upstream_ref)
+
+    if packages is None:
+        local_packages = sorted(
+            path.name
+            for path in Path("packages").iterdir()
+            if path.is_dir() and path.name not in upstream_packages
+        )
+        log.info(
+            "Restricting package discovery to %d fork-added package(s)",
+            len(local_packages),
+        )
+        for name in local_packages:
+            log.info("Fork-added package: %s", name)
+        return local_packages
+
+    added_packages = []
+    for name in packages:
+        if name in upstream_packages:
+            log.info("Skipping %s (present in upstream)", name)
+            continue
+        added_packages.append(name)
+    return added_packages
 
 
 def discover_packages(
