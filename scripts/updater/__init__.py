@@ -48,6 +48,7 @@ from .platforms import calculate_platform_hashes
 # Version fetching
 from .version import (
     fetch_github_latest_release,
+    fetch_github_latest_release_matching,
     fetch_npm_version,
     fetch_version_from_text,
     should_update,
@@ -61,6 +62,7 @@ __all__ = [
     "clone_and_generate_bun_nix",
     "extract_or_generate_lockfile",
     "fetch_github_latest_release",
+    "fetch_github_latest_release_matching",
     "fetch_json",
     "fetch_npm_version",
     "fetch_text",
