@@ -56,7 +56,7 @@ in
 buildNpmPackage rec {
   npmDepsFetcherVersion = 2;
   pname = "ruflo";
-  version = "adr-378-380-agntcy-outshift-integration";
+  version = "3.38.12";
 
   src = fetchFromGitHub {
     owner = "ruvnet";
