@@ -1,5 +1,6 @@
 {
   lib,
+  flake,
   fetchFromGitHub,
   rustPlatform,
   pkg-config,
@@ -88,6 +89,8 @@ rustPlatform.buildRustPackage rec {
     changelog = "https://github.com/aaif-goose/goose/releases/tag/v${version}";
     license = licenses.asl20;
     sourceProvenance = with sourceTypes; [ fromSource ];
+    maintainers = with flake.lib.maintainers; [ smdex ];
     mainProgram = "goose";
+    platforms = builtins.attrNames versionData.librustyV8.hashes;
   };
 }
