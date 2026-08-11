@@ -1,5 +1,6 @@
 {
   lib,
+  flake,
   fetchFromGitHub,
   rustPlatform,
   pkg-config,
@@ -10,22 +11,21 @@
   versionCheckHook,
   cacert,
   callPackage,
-  mkRustyV8Archive ? callPackage ../../lib/rusty-v8.nix { },
-  versionData ? builtins.fromJSON (builtins.readFile ../goose-cli/hashes.json),
-  librusty_v8 ? mkRustyV8Archive {
-    inherit (versionData.librustyV8) version hashes;
+  librusty_v8 ? callPackage ../goose-cli/librusty_v8.nix {
+    inherit (callPackage ../goose-cli/fetchers.nix { }) fetchLibrustyV8;
   },
 }:
 
 rustPlatform.buildRustPackage rec {
-  pname = "goose";
-  inherit (versionData) version cargoHash;
+  pname = "goosed";
+  version = "1.41.0";
+  cargoHash = "sha256-dnqj+aE/wu3vtt6yMJM9+mY+XHfbKA8KtlJnj0AsTIA=";
 
   src = fetchFromGitHub {
     owner = "aaif-goose";
     repo = "goose";
-    rev = "v${version}";
-    inherit (versionData) hash;
+    tag = "v${version}";
+    hash = "sha256-6hTjZnrTyFOhWLTLN/sa7IAXQVcQ/08gWz21KEGANAE=";
   };
 
   nativeBuildInputs = [
@@ -43,7 +43,6 @@ rustPlatform.buildRustPackage rec {
   ];
 
   nativeCheckInputs = [ cacert ];
-
   env.RUSTY_V8_ARCHIVE = librusty_v8;
 
   cargoBuildFlags = [
@@ -59,12 +58,14 @@ rustPlatform.buildRustPackage rec {
 
   passthru.category = "AI Coding Agents";
 
-  meta = with lib; {
-    description = "Server for Goose, a local extensible AI agent";
+  meta = {
+    description = "Legacy Goose server for the Electron desktop integration";
     homepage = "https://github.com/aaif-goose/goose";
     changelog = "https://github.com/aaif-goose/goose/releases/tag/v${version}";
-    license = licenses.asl20;
-    sourceProvenance = with sourceTypes; [ fromSource ];
+    license = lib.licenses.asl20;
+    sourceProvenance = [ lib.sourceTypes.fromSource ];
+    maintainers = with flake.lib.maintainers; [ smdex ];
     mainProgram = "goosed";
+    platforms = [ "x86_64-linux" ];
   };
 }

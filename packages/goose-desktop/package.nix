@@ -1,119 +1,129 @@
 {
   lib,
-  stdenv,
   flake,
+  stdenv,
+  fetchFromGitHub,
+  fetchPnpmDeps,
   fetchurl,
-  autoPatchelfHook,
+  runCommand,
   makeWrapper,
-  binutils,
-  alsa-lib,
-  at-spi2-atk,
-  at-spi2-core,
-  atk,
-  cairo,
-  cups,
-  dbus,
-  expat,
-  glib,
-  gtk3,
-  libdrm,
-  libgbm,
-  libxkbcommon,
-  mesa,
-  nspr,
-  nss,
-  pango,
-  zstd,
-  libx11,
-  libxscrnsaver,
-  libxcomposite,
-  libxcursor,
-  libxdamage,
-  libxext,
-  libxfixes,
-  libxi,
-  libxrandr,
-  libxrender,
-  libxtst,
-  libxcb,
+  nodejs,
+  pnpm_10,
+  pnpmConfigHook,
+  electron_41,
+  goose-cli,
 }:
 
+let
+  pnpm = pnpm_10;
+  electron = electron_41;
+  electronVersion = "41.0.0";
+  electronZip = fetchurl {
+    url = "https://github.com/electron/electron/releases/download/v${electronVersion}/electron-v${electronVersion}-linux-x64.zip";
+    hash = "sha256-oo1atjj6BlhTyA1fJ+qdfsf4Yh2SQiAPdHeYxe0xk9Q=";
+  };
+  electronZipDir = runCommand "electron-${electronVersion}-zip-dir" { } ''
+    mkdir -p $out
+    ln -s ${electronZip} $out/electron-v${electronVersion}-linux-x64.zip
+  '';
+in
 stdenv.mkDerivation (finalAttrs: {
   pname = "goose-desktop";
   version = "1.45.0";
 
-  src = fetchurl {
-    url = "https://github.com/aaif-goose/goose/releases/download/v${finalAttrs.version}/goose_${finalAttrs.version}_amd64.deb";
-    hash = "sha256-C4hr+rwP3rBQ/GSzY2u7828YNIERIGEWQaMo0vUSLQE=";
+  src = fetchFromGitHub {
+    owner = "aaif-goose";
+    repo = "goose";
+    tag = "v${finalAttrs.version}";
+    hash = "sha256-B7SjNAc+EmRtKf6Lp7OtjKARo+OWd6A6tRkp7VlAkDU=";
   };
 
+  sourceRoot = "${finalAttrs.src.name}/ui";
+  pnpmDeps = fetchPnpmDeps {
+    inherit (finalAttrs) pname version src;
+    sourceRoot = "${finalAttrs.src.name}/ui";
+    inherit pnpm;
+    fetcherVersion = 3;
+    hash = "sha256-fkWf0CBPo4+0GF+v2nEAOSP719Y72nLxzISzsnJmtfU=";
+  };
+
+  postPatch = ''
+    substituteInPlace desktop/forge.config.ts \
+      --replace-fail 'rebuildConfig: {},' 'rebuildConfig: { onlyModules: [] },' \
+      --replace-fail 'packagerConfig: cfg,' 'packagerConfig: { ...cfg, electronZipDir: "${electronZipDir}" },'
+  '';
+
   nativeBuildInputs = [
-    autoPatchelfHook
-    binutils
     makeWrapper
-    zstd
+    nodejs
+    pnpm
+    pnpmConfigHook
   ];
 
-  buildInputs = [
-    alsa-lib
-    at-spi2-atk
-    at-spi2-core
-    atk
-    cairo
-    cups
-    dbus
-    expat
-    glib
-    gtk3
-    libdrm
-    libgbm
-    libxkbcommon
-    mesa
-    nspr
-    nss
-    pango
-    stdenv.cc.cc.lib
-    libx11
-    libxscrnsaver
-    libxcomposite
-    libxcursor
-    libxdamage
-    libxext
-    libxfixes
-    libxi
-    libxrandr
-    libxrender
-    libxtst
-    libxcb
-  ];
+  # electron-forge's packager is given the exact npm-pinned Electron archive
+  # from the Nix store. This avoids @electron/get network access in the build
+  # sandbox. The final application runtime is the Nix Electron distribution.
+  env = {
+    ELECTRON_SKIP_BINARY_DOWNLOAD = "1";
+    npm_config_runtime = "electron";
+    npm_config_target = electronVersion;
+    npm_config_nodedir = electron.headers;
+    ELECTRON_SKIP_REBUILD = "1";
+  };
 
-  runtimeDependencies = finalAttrs.buildInputs;
+  dontStrip = true;
 
-  unpackPhase = ''
-    runHook preUnpack
-    ar x $src
-    tar --no-same-owner --no-same-permissions -xf data.tar.*
-    runHook postUnpack
+  buildPhase = ''
+    runHook preBuild
+
+    set +e
+    pnpm --filter @aaif/goose-sdk exec tsc --pretty false --diagnostics
+    tscStatus=$?
+    echo "SDK TypeScript status: $tscStatus"
+    set -e
+    test "$tscStatus" -eq 0
+
+    # Forge's extraResource rule copies src/bin into resources/bin. Keep the
+    # source-built ACP executable as a store symlink; the packaged app uses
+    # this exact path for `goose serve`.
+    mkdir -p desktop/src/bin
+    rm -f desktop/src/bin/goose
+    ln -s ${lib.getExe goose-cli} desktop/src/bin/goose
+    test -L desktop/src/bin/goose
+    test "$(realpath desktop/src/bin/goose)" = "${lib.getExe goose-cli}"
+    echo "Staged Goose ACP binary: $(realpath desktop/src/bin/goose)"
+
+    # The electron npm package is present in the offline pnpm tree, but its
+    # postinstall cannot download a runtime. Give it the Nix runtime path so
+    # Forge can load the package while its packager uses electronZipDir above.
+    electronPackage=node_modules/electron
+    echo "Electron package: $electronPackage"
+    test -e "$electronPackage"
+    rm -rf "$electronPackage/dist"
+    mkdir -p "$electronPackage/dist"
+    ln -s ${electron}/bin/electron "$electronPackage/dist/electron"
+    printf 'electron\n' > "$electronPackage/path.txt"
+
+    cd desktop
+    pnpm run i18n:compile
+    pnpm exec electron-forge package --platform=linux --arch=x64
+    cd ..
+
+    runHook postBuild
   '';
 
   installPhase = ''
     runHook preInstall
 
-    mkdir -p $out/bin $out/lib $out/share
-    cp -r usr/lib/goose $out/lib/goose
-    if [ -d usr/share/applications ]; then
-      mkdir -p $out/share/applications
-      cp -r usr/share/applications/. $out/share/applications/
-      substituteInPlace $out/share/applications/goose.desktop \
-        --replace-fail "/usr/lib/goose/Goose" "goose-desktop" \
-        --replace-fail "/usr/share/pixmaps/goose.png" "goose-desktop"
-    fi
-    if [ -f usr/share/pixmaps/goose.png ]; then
-      install -Dm644 usr/share/pixmaps/goose.png \
-        $out/share/icons/hicolor/512x512/apps/goose-desktop.png
-    fi
+    appDir=$(find desktop/out -mindepth 1 -maxdepth 1 -type d -name 'Goose-linux-*' | head -1)
+    test -n "$appDir"
+    mkdir -p $out/libexec/goose-desktop $out/bin
+    cp -a "$appDir/." $out/libexec/goose-desktop/
+    cp -a ${electron.dist}/. $out/libexec/goose-desktop/
 
-    makeWrapper $out/lib/goose/Goose $out/bin/goose-desktop \
+    install -Dm644 desktop/src/images/icon.png \
+      $out/share/icons/hicolor/512x512/apps/goose-desktop.png
+    makeWrapper $out/libexec/goose-desktop/Goose $out/bin/goose-desktop \
       --add-flags "--no-sandbox"
 
     runHook postInstall
@@ -123,7 +133,10 @@ stdenv.mkDerivation (finalAttrs: {
   installCheckPhase = ''
     runHook preInstallCheck
     test -x $out/bin/goose-desktop
-    test -f $out/lib/goose/resources/app.asar
+    test -x $out/libexec/goose-desktop/Goose
+    test -f $out/libexec/goose-desktop/resources/app.asar
+    test -L $out/libexec/goose-desktop/resources/bin/goose
+    test "$(realpath $out/libexec/goose-desktop/resources/bin/goose)" = "${lib.getExe goose-cli}"
     runHook postInstallCheck
   '';
 
@@ -134,7 +147,7 @@ stdenv.mkDerivation (finalAttrs: {
     homepage = "https://github.com/aaif-goose/goose";
     changelog = "https://github.com/aaif-goose/goose/releases/tag/v${finalAttrs.version}";
     license = lib.licenses.asl20;
-    sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
+    sourceProvenance = [ lib.sourceTypes.fromSource ];
     maintainers = with flake.lib.maintainers; [ smdex ];
     mainProgram = "goose-desktop";
     platforms = [ "x86_64-linux" ];
