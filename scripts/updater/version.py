@@ -30,6 +30,42 @@ def fetch_github_latest_release(owner: str, repo: str) -> str:
     return tag.lstrip("v")
 
 
+def fetch_github_latest_release_matching(
+    owner: str, repo: str, pattern: str, *, per_page: int = 100
+) -> str:
+    """Fetch the newest non-prerelease GitHub release matching ``pattern``.
+
+    GitHub's ``releases/latest`` endpoint can point at another release line
+    (Goose 2 currently hides the latest Goose 1 release), so callers that
+    track a legacy line must filter the release list explicitly.
+    """
+    url = f"https://api.github.com/repos/{owner}/{repo}/releases?per_page={per_page}"
+    data = fetch_json(url)
+    if not isinstance(data, list):
+        msg = f"Expected list from GitHub API, got {type(data)}"
+        raise TypeError(msg)
+
+    candidates: list[str] = []
+    compiled = re.compile(pattern)
+    for release in data:
+        if (
+            not isinstance(release, dict)
+            or release.get("draft")
+            or release.get("prerelease")
+        ):
+            continue
+        tag = release.get("tag_name")
+        if isinstance(tag, str):
+            version = tag.lstrip("v")
+            if compiled.fullmatch(version):
+                candidates.append(version)
+
+    if not candidates:
+        msg = f"No release matching {pattern!r} for {owner}/{repo}"
+        raise ValueError(msg)
+    return max(candidates, key=parse_version)
+
+
 def fetch_npm_version(package: str, *, tag: str = "latest") -> str:
     """Fetch the version associated with an npm dist-tag.
 
