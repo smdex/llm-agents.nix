@@ -231,7 +231,7 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
-<summary><strong>goose</strong> - Server for Goose, a local extensible AI agent</summary>
+<summary><strong>goose</strong> - Legacy Goose server for the Electron desktop integration</summary>
 
 - **Source**: source
 - **License**: Apache-2.0
@@ -253,7 +253,7 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 <details>
 <summary><strong>goose-desktop</strong> - Legacy Electron desktop app for Goose, a local extensible AI agent</summary>
 
-- **Source**: binary
+- **Source**: source
 - **License**: Apache-2.0
 - **Homepage**: https://github.com/aaif-goose/goose
 - **Usage**: `nix run github:numtide/llm-agents.nix#goose-desktop -- --help`
@@ -271,9 +271,9 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
-<summary><strong>goose2</strong> - Goose 2 Tauri desktop app for Goose, a local extensible AI agent</summary>
+<summary><strong>goose2</strong> - Goose 2 Tauri desktop app built from source</summary>
 
-- **Source**: binary
+- **Source**: source
 - **License**: Apache-2.0
 - **Homepage**: https://github.com/aaif-goose/goose
 - **Usage**: `nix run github:numtide/llm-agents.nix#goose2 -- --help`
