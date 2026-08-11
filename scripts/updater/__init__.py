@@ -64,6 +64,7 @@ from .store import HashesJsonStore, StateStore
 # Version fetching
 from .version import (
     fetch_github_latest_release,
+    fetch_github_latest_release_matching,
     fetch_npm_version,
     fetch_version_from_text,
     should_update,
@@ -86,6 +87,7 @@ __all__ = [
     "default_deps",
     "extract_or_generate_lockfile",
     "fetch_github_latest_release",
+    "fetch_github_latest_release_matching",
     "fetch_json",
     "fetch_npm_version",
     "fetch_text",
