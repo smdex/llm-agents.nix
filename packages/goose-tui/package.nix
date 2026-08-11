@@ -1,5 +1,6 @@
 {
   lib,
+  flake,
   stdenv,
   fetchFromGitHub,
   fetchPnpmDeps,
@@ -9,6 +10,7 @@
   pnpmConfigHook,
   versionCheckHook,
   versionCheckHomeHook,
+  goose-cli,
 }:
 
 let
@@ -21,7 +23,7 @@ stdenv.mkDerivation (finalAttrs: {
   src = fetchFromGitHub {
     owner = "aaif-goose";
     repo = "goose";
-    rev = "v1.45.0";
+    tag = "v${finalAttrs.version}";
     hash = "sha256-B7SjNAc+EmRtKf6Lp7OtjKARo+OWd6A6tRkp7VlAkDU=";
   };
 
@@ -70,21 +72,15 @@ stdenv.mkDerivation (finalAttrs: {
   installPhase = ''
     runHook preInstall
     mkdir -p $out/{bin,lib/goose-tui}
-    cp -rL node_modules sdk text/package.json text/dist $out/lib/goose-tui/
-    # pnpm keeps the UI's runtime dependencies in the text workspace. Merge
-    # those links into the runtime root so dist/tui.js can resolve react and
-    # the other workspace-local dependencies after installation.
-    if [ -d text/node_modules ]; then
-      cp -rL text/node_modules/. $out/lib/goose-tui/node_modules/
-    fi
-    if [ -d node_modules/.pnpm/node_modules ]; then
-      cp -rL node_modules/.pnpm/node_modules/. $out/lib/goose-tui/node_modules/
-    fi
-    rm -rf $out/lib/goose-tui/node_modules/@aaif/goose-sdk
-    mkdir -p $out/lib/goose-tui/node_modules/@aaif
-    ln -s ../../sdk $out/lib/goose-tui/node_modules/@aaif/goose-sdk
+    # Preserve pnpm's symlink graph: flattening its hoisted dependencies can
+    # pair CommonJS packages with incompatible ESM dependency versions.
+    cp -rP node_modules sdk text $out/lib/goose-tui/
+    # Keep the shared Goose executable as a store link instead of copying it
+    # into the TUI output.
+    ln -s ${lib.getExe goose-cli} $out/lib/goose-tui/goose
     makeWrapper ${nodejs}/bin/node $out/bin/goose-tui \
-      --add-flags "$out/lib/goose-tui/dist/tui.js"
+      --add-flags "$out/lib/goose-tui/text/dist/tui.js" \
+      --set-default GOOSE_BINARY $out/lib/goose-tui/goose
     runHook postInstall
   '';
 
@@ -96,6 +92,8 @@ stdenv.mkDerivation (finalAttrs: {
   versionCheckProgram = "${placeholder "out"}/bin/goose-tui";
   versionCheckProgramArg = "--version";
   preVersionCheck = ''
+    test -L $out/lib/goose-tui/goose
+    test "$(realpath $out/lib/goose-tui/goose)" = "${lib.getExe goose-cli}"
     version="$(node -p "require('./text/package.json').version")"
   '';
 
@@ -104,10 +102,17 @@ stdenv.mkDerivation (finalAttrs: {
   meta = with lib; {
     description = "TypeScript terminal UI for Goose";
     homepage = "https://github.com/aaif-goose/goose/tree/main/ui/text";
-    changelog = "https://github.com/aaif-goose/goose/releases/tag/v1.45.0";
+    changelog = "https://github.com/aaif-goose/goose/releases/tag/v${finalAttrs.version}";
     license = licenses.asl20;
     sourceProvenance = with sourceTypes; [ fromSource ];
+    maintainers = with flake.lib.maintainers; [ smdex ];
     mainProgram = "goose-tui";
-    platforms = platforms.all;
+    # Its Nix-native Goose ACP server supports only the platforms with a
+    # corresponding prebuilt librusty_v8 archive.
+    platforms = [
+      "x86_64-linux"
+      "aarch64-linux"
+      "aarch64-darwin"
+    ];
   };
 })
