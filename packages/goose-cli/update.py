@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 from updater import (
     calculate_platform_hashes,
     calculate_url_hash,
-    fetch_github_latest_release,
+    fetch_github_latest_release_matching,
     fetch_text,
     load_hashes,
     save_hashes,
@@ -80,7 +80,7 @@ def main() -> None:
     """Update the goose-cli package."""
     data = load_hashes(HASHES_FILE)
     current = data["version"]
-    latest = fetch_github_latest_release(OWNER, REPO)
+    latest = fetch_github_latest_release_matching(OWNER, REPO, r"1\.[0-9]+\.[0-9]+")
     print(f"Current: {current}, Latest: {latest}")
 
     if not should_update(current, latest):
