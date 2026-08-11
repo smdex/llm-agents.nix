@@ -1,12 +1,16 @@
-#!/usr/bin/env python3
-"""No-op updater for goose2.
+#!/usr/bin/env nix
+#! nix shell --inputs-from .# nixpkgs#python3 --command python3
 
-The Goose 2 desktop package follows preview release assets whose release tag and
-embedded package version do not move together. nix-update sees the latest Goose
-1.x release, rewrites version to that value, and then fetches a non-existent
-Goose_${version}_amd64.deb from the fixed Goose 2 preview tag.
+"""Manual updater for the Goose 2 source package.
 
-Keep this package manual until upstream publishes updateable Goose 2 releases.
+Goose 2 is pinned to a preview tag and is built from its Rust/Tauri source.
+Updating it requires one coordinated change to the upstream tag/source hash,
+Cargo vendor hash, pnpm dependency hash, builderbot Doctor revision/hash, and
+librusty_v8 input. This updater deliberately does not inspect or rewrite Goose
+1.x release tags and never refers to application deb artifacts.
 """
 
-print("goose2 is managed manually; skipping automatic update")
+print(
+    "goose2 is a manually coordinated source update; update the pinned Goose 2 "
+    "tag and all source dependency hashes together"
+)
