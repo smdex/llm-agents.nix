@@ -16,11 +16,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 
-from updater import calculate_url_hash, should_update  # noqa: E402
-from updater.hash import DUMMY_SHA256_HASH, extract_hash_from_build_error  # noqa: E402
-from updater.nix import NixCommandError, nix_build  # noqa: E402
-from updater.npm import extract_or_generate_lockfile  # noqa: E402
-from updater.version import fetch_npm_version  # noqa: E402
+from updater import calculate_url_hash, should_update
+from updater.hash import DUMMY_SHA256_HASH, extract_hash_from_build_error
+from updater.nix import NixCommandError, nix_build
+from updater.npm import extract_or_generate_lockfile
+from updater.version import fetch_npm_version
 
 PKG_DIR = Path(__file__).parent
 PACKAGE_NIX = PKG_DIR / "package.nix"
