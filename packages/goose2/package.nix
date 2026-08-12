@@ -180,8 +180,12 @@ let
 
     installPhase = ''
       runHook preInstall
-      install -Dm755 target/${stdenv.hostPlatform.rust.rustcTarget}/release/goose-tauri $out/bin/goose-tauri
-      makeWrapper $out/bin/goose-tauri $out/bin/goose2 \
+      # `goose-tauri` is an implementation binary. Keep it private: launching
+      # it directly bypasses GOOSE_BIN and makes Tauri resolve its fallback
+      # sidecar instead of the source-built Goose 2 CLI.
+      install -Dm755 target/${stdenv.hostPlatform.rust.rustcTarget}/release/goose-tauri \
+        $out/libexec/goose2/goose-tauri
+      makeWrapper $out/libexec/goose2/goose-tauri $out/bin/goose2 \
         --set GOOSE_BIN ${goose2Cli}/bin/goose \
         --prefix PATH : ${
           lib.makeBinPath [
@@ -218,7 +222,8 @@ let
     installCheckPhase = ''
       runHook preInstallCheck
       test -x $out/bin/goose2
-      test -x $out/bin/goose-tauri
+      test ! -e $out/bin/goose-tauri
+      test -x $out/libexec/goose2/goose-tauri
       wrapper=$out/bin/goose2
       test -f "$wrapper"
       grep -F -- "${goose2Cli}/bin/goose" "$out/bin/.goose2-wrapped"
