@@ -5,8 +5,8 @@
   rustPlatform,
   fetchFromGitHub,
   applyPatches,
-  callPackage,
   fetchPnpmDeps,
+  goose-cli,
   cargo-tauri,
   jq,
   moreutils,
@@ -15,7 +15,6 @@
   pnpm_10,
   pnpmConfigHook,
   pkg-config,
-  cmake,
   wrapGAppsHook3,
   makeWrapper,
   bashInteractive,
@@ -27,8 +26,6 @@
   gh,
   git-lfs,
   openssl,
-  libxcb,
-  dbus,
   gtk3,
   glib,
   glib-networking,
@@ -43,16 +40,14 @@
 
 let
   pnpm = pnpm_10;
-  fetchLibrustyV8 = (callPackage ../goose-cli/fetchers.nix { }).fetchLibrustyV8;
-  librusty_v8 = callPackage ../goose-cli/librusty_v8.nix { inherit fetchLibrustyV8; };
-  upstreamTag = "v2.0.0-rc-04-27-0";
+  sourceRevision = "612cd89d515f16c84f70b4c74247e270277fe7ba";
   version = "0.1.0";
 
   gooseSrc = fetchFromGitHub {
     owner = "aaif-goose";
     repo = "goose";
-    tag = upstreamTag;
-    hash = "sha256-BKSUjvHa9bQxE3ZeMY4ayvrIWM5/Il9E8qupu+ZQMII=";
+    rev = sourceRevision;
+    hash = "sha256-YwNpO4a32eon7gWq1FKm6NOw0ZaVQMcJ5byHBFr+5/w=";
   };
 
   builderbotPatched = applyPatches {
@@ -65,43 +60,13 @@ let
     patches = [ ./doctor-nixos.patch ];
   };
 
-  # Goose 2 expects the CLI from the same release line. This is deliberately a
-  # separate source derivation: the legacy goose-cli package is v1.45.0 and
-  # must not be silently embedded in a v2 preview application.
-  goose2Cli = rustPlatform.buildRustPackage {
-    pname = "goose2-cli";
-    inherit version;
-    src = gooseSrc;
-    cargoHash = "sha256-X1DdDiWCwD5ykkVW5A4eiv0VIswwMPdpTqMmzt1x6Cc=";
-    cargoBuildFlags = [
-      "--package"
-      "goose-cli"
-    ];
-    nativeBuildInputs = [
-      pkg-config
-      cmake
-      rustPlatform.bindgenHook
-    ];
-    dontUseCmakeConfigure = true;
-    buildInputs = [
-      openssl
-      libxcb
-      dbus
-    ];
-    env.RUSTY_V8_ARCHIVE = librusty_v8;
-    doCheck = false;
-    installPhase = ''
-      install -Dm755 target/${stdenv.hostPlatform.rust.rustcTarget}/release/goose $out/bin/goose
-    '';
-  };
-
   desktop = rustPlatform.buildRustPackage (_finalAttrs: {
     pname = "goose2";
     inherit version;
     src = gooseSrc;
 
     cargoRoot = "ui/goose2/src-tauri";
-    cargoHash = "sha256-6tZ/ue7cDeTMSm8mF9DJtL9uP8R/08Yv1JIaZKnRZFI=";
+    cargoHash = "sha256-PDa/h/l2Ck0PZqIEGhK92R27eqgegRyoqWsJ/UyfQJY=";
 
     pnpmDeps = fetchPnpmDeps {
       pname = "goose2-ui";
@@ -110,7 +75,7 @@ let
       sourceRoot = "${gooseSrc.name}/ui";
       inherit pnpm;
       fetcherVersion = 3;
-      hash = "sha256-DdLhGEKPSKJEF9LyOqBY4BR/JB/o6t9VfQGXWQmMDEI=";
+      hash = "sha256-fWt0R1x7jiAJaUJUty5BsJDb3jXJl7I1Hh0LHByTN60=";
     };
     pnpmRoot = "ui";
 
@@ -186,10 +151,10 @@ let
       install -Dm755 target/${stdenv.hostPlatform.rust.rustcTarget}/release/goose-tauri \
         $out/libexec/goose2/goose-tauri
       makeWrapper $out/libexec/goose2/goose-tauri $out/bin/goose2 \
-        --set GOOSE_BIN ${goose2Cli}/bin/goose \
+        --set GOOSE_BIN ${lib.getExe goose-cli} \
         --prefix PATH : ${
           lib.makeBinPath [
-            goose2Cli
+            goose-cli
             git
             gh
             git-lfs
@@ -210,7 +175,7 @@ let
     meta = {
       description = "Goose 2 Tauri desktop app built from source";
       homepage = "https://github.com/aaif-goose/goose";
-      changelog = "https://github.com/aaif-goose/goose/releases/tag/${upstreamTag}";
+      changelog = "https://github.com/aaif-goose/goose/releases";
       license = lib.licenses.asl20;
       sourceProvenance = with lib.sourceTypes; [ fromSource ];
       maintainers = with flake.lib.maintainers; [ smdex ];
@@ -224,11 +189,10 @@ let
       test -x $out/bin/goose2
       test ! -e $out/bin/goose-tauri
       test -x $out/libexec/goose2/goose-tauri
-      wrapper=$out/bin/goose2
-      test -f "$wrapper"
-      grep -F -- "${goose2Cli}/bin/goose" "$out/bin/.goose2-wrapped"
+      test -f "$out/bin/goose2"
+      grep -F -- "${lib.getExe goose-cli}" "$out/bin/.goose2-wrapped"
       grep -F -- "${bashInteractive}/bin/bash" "$out/bin/.goose2-wrapped"
-      grep -F -- "${goose2Cli}/bin" "$out/bin/.goose2-wrapped"
+      grep -F -- "${goose-cli}/bin" "$out/bin/.goose2-wrapped"
       runHook postInstallCheck
     '';
   });
