@@ -27,6 +27,21 @@ rustPlatform.buildRustPackage rec {
     "ai-memory"
   ];
 
+  # install-hooks reads the bundled `hooks/` tree from disk at runtime. Of the
+  # candidate paths it probes, `/usr/share/ai-memory/hooks/<agent>` is the one
+  # documented for native Linux packages, so repoint it at the Nix store and
+  # ship the tree there. (install-skills/install-instructions are compile-time
+  # embedded via include_str!, so they need no runtime resources.)
+  postPatch = ''
+    substituteInPlace crates/ai-memory-cli/src/commands/install_hooks.rs \
+      --replace-fail '/usr/share/ai-memory/hooks/' '${placeholder "out"}/share/ai-memory/hooks/'
+  '';
+
+  postInstall = ''
+    mkdir -p $out/share/ai-memory
+    cp -r hooks $out/share/ai-memory/hooks
+  '';
+
   doCheck = false;
 
   doInstallCheck = true;
