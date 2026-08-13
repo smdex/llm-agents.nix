@@ -55,7 +55,7 @@ def set_inline_attr(attr: str, value: str) -> None:
 
 
 def set_npm_deps_hash(value: str) -> None:
-    """Convenience wrapper for the npmDepsHash attribute."""
+    """Set the npmDepsHash attribute."""
     set_inline_attr("npmDepsHash", value)
 
 
