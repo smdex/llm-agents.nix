@@ -2,9 +2,11 @@ name: Sync Upstream
 on:
   schedule:
     # Upstream runs dependency updates at 00:00, 04:00, 18:00, and 21:00 UTC.
-    # Sync two hours later so merged upstream updates are likely present before
-    # fork-only package updates run.
-    - cron: '0 2,6,20,23 * * *'
+    # Sync two hours later (02:00, 06:00, 20:00, 23:00) so merged upstream
+    # updates are likely present before fork-only package updates run.
+    # Midday runs (09:00, 12:00, 15:00) close the daytime gap so ad-hoc
+    # upstream merges land within a few hours instead of waiting until 20:00.
+    - cron: '0 2,6,9,12,15,20,23 * * *'
   workflow_dispatch:
 permissions:
   actions: write
