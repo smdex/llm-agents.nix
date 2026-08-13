@@ -11,6 +11,7 @@
   pnpm_10,
   pnpmConfigHook,
   electron_41,
+  formatelf,
   multica,
   ...
 }:
@@ -64,7 +65,8 @@ stdenv.mkDerivation {
     pnpmConfigHook
     makeWrapper
     copyDesktopItems
-  ];
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isLinux [ formatelf ];
 
   env = {
     ELECTRON_SKIP_BINARY_DOWNLOAD = "1";
