@@ -158,6 +158,9 @@ def run_package_updater(name: str) -> None:
     update_script = Path(f"packages/{name}/update.py")
     if update_script.exists():
         log.info("Running update script for %s...", name)
+        # The branch preparation step can leave a tracked-100755 script without
+        # its exec bit after a conflicted rebase; guarantee it before spawning.
+        update_script.chmod(0o755)
         run_update_command(
             sandbox_wrap([str(update_script)], name),
             f"Update script failed for package {name}",
