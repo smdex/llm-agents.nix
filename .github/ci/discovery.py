@@ -73,7 +73,6 @@ def companion_packages() -> set[str]:
     return companions
 
 
-
 def parse_bool(value: str | None, *, default: bool = False) -> bool:
     """Parse common CI boolean spellings."""
     if value is None or value == "":
