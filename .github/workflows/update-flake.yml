@@ -92,14 +92,6 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Generate GitHub App Token
-        id: app-token
-        uses: actions/create-github-app-token@v3
-        with:
-          app-id: ${{ secrets.APP_ID || secrets.CLIENT_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          permission-contents: write
-          permission-pull-requests: write
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
@@ -164,7 +156,7 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
-          client-id: ${{ secrets.CLIENT_ID }}
+          client-id: ${{ secrets.CLIENT_ID || secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
       - name: Create pull request
         if: steps.update.outputs.updated == 'true'
@@ -190,14 +182,6 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Generate GitHub App Token
-        id: app-token
-        uses: actions/create-github-app-token@v3
-        with:
-          app-id: ${{ secrets.APP_ID || secrets.CLIENT_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          permission-contents: write
-          permission-pull-requests: write
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
@@ -219,7 +203,7 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
-          client-id: ${{ secrets.CLIENT_ID }}
+          client-id: ${{ secrets.CLIENT_ID || secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
       - name: Create pull request
         env:
