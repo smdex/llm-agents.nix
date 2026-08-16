@@ -127,7 +127,13 @@ jobs:
             exit 0
           fi
 
-          git rebase upstream/main
+          if ! git rebase upstream/main; then
+            git rebase --abort
+            echo "::warning::Upstream sync has conflicts; main was left unchanged."
+            echo "result=conflict" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           git push --force-with-lease origin HEAD:main
           echo "result=rebased" >> "$GITHUB_OUTPUT"
       - name: Trigger fork package updates
@@ -162,8 +168,8 @@ jobs:
             exit 0
           fi
 
-          if [ "${{ steps.sync.outcome }}" = 'failure' ]; then
-            echo "Failed to rebase main onto upstream/main from ${{ steps.upstream.outputs.repository }}." >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ steps.sync.outputs.result }}" = 'conflict' ]; then
+            echo "Upstream sync from ${{ steps.upstream.outputs.repository }} has conflicts; main was left unchanged." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
