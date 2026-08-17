@@ -150,6 +150,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>dirac</strong> - Open-source AI coding agent focused on efficiency and context curation</summary>
+
+- **Source**: source
+- **License**: Apache-2.0
+- **Homepage**: https://dirac.run
+- **Usage**: `nix run github:numtide/llm-agents.nix#dirac -- --help`
+- **Nix**: [packages/dirac/package.nix](packages/dirac/package.nix)
+
+</details>
+<details>
 <summary><strong>droid</strong> - Factory AI's Droid - AI-powered development agent for your terminal</summary>
 
 - **Source**: binary
@@ -1087,6 +1097,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>loopx</strong> - Lightweight Loop Engineering control plane for long-running agent goals</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/huangruiteng/loopx
+- **Usage**: `nix run github:numtide/llm-agents.nix#loopx -- --help`
+- **Nix**: [packages/loopx/package.nix](packages/loopx/package.nix)
+
+</details>
+<details>
 <summary><strong>mardi-gras</strong> - Terminal UI for Beads issue tracking with a parade-inspired workflow view</summary>
 
 - **Source**: source
@@ -1683,6 +1703,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/activeing123/mcptoon
 - **Usage**: `nix run github:numtide/llm-agents.nix#mcptoon -- --help`
 - **Nix**: [packages/mcptoon/package.nix](packages/mcptoon/package.nix)
+
+</details>
+<details>
+<summary><strong>memsearch</strong> - Persistent, unified semantic memory layer for AI agents (Milvus-backed vector search)</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/zilliztech/memsearch
+- **Usage**: `nix run github:numtide/llm-agents.nix#memsearch -- --help`
+- **Nix**: [packages/memsearch/package.nix](packages/memsearch/package.nix)
 
 </details>
 <details>
