@@ -12,6 +12,7 @@
   pnpmConfigHook,
   electron_41,
   formatelf,
+  gcc-unwrapped,
   multica,
   ...
 }:
@@ -67,6 +68,8 @@ stdenv.mkDerivation {
     copyDesktopItems
   ]
   ++ lib.optionals stdenv.hostPlatform.isLinux [ formatelf ];
+
+  buildInputs = lib.optionals stdenv.hostPlatform.isLinux [ gcc-unwrapped.lib ];
 
   env = {
     ELECTRON_SKIP_BINARY_DOWNLOAD = "1";
