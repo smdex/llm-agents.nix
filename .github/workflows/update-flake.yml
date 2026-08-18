@@ -16,7 +16,7 @@ on:
         description: 'Include flake inputs in the update matrix'
         required: false
         type: boolean
-        default: true
+        default: false
       added-packages-only:
         description: 'Only update packages that are not present in upstream/main'
         required: false
