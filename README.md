@@ -9,6 +9,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 ### AI Coding Agents
 
 <details>
+<summary><strong>agentty</strong> - AI pair programming in your terminal — a C++26 Claude Code alternative with sub-millisecond startup</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/1ay1/agentty
+- **Usage**: `nix run github:numtide/llm-agents.nix#agentty -- --help`
+- **Nix**: [packages/agentty/package.nix](packages/agentty/package.nix)
+
+</details>
+<details>
 <summary><strong>amp</strong> - CLI for Amp, an agentic coding tool in research preview from Sourcegraph</summary>
 
 - **Source**: binary
@@ -150,6 +160,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>dirac</strong> - Open-source AI coding agent focused on efficiency and context curation</summary>
+
+- **Source**: source
+- **License**: Apache-2.0
+- **Homepage**: https://dirac.run
+- **Usage**: `nix run github:numtide/llm-agents.nix#dirac -- --help`
+- **Nix**: [packages/dirac/package.nix](packages/dirac/package.nix)
+
+</details>
+<details>
 <summary><strong>droid</strong> - Factory AI's Droid - AI-powered development agent for your terminal</summary>
 
 - **Source**: binary
@@ -177,6 +197,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/editor-code-assistant/eca
 - **Usage**: `nix run github:numtide/llm-agents.nix#eca -- --help`
 - **Nix**: [packages/eca/package.nix](packages/eca/package.nix)
+
+</details>
+<details>
+<summary><strong>empryo</strong> - Graph-powered code intelligence — multi-agent coding with codebase-aware AI (formerly SoulForge)</summary>
+
+- **Source**: source
+- **License**: BUSL-1.1
+- **Homepage**: https://empryo.com
+- **Usage**: `nix run github:numtide/llm-agents.nix#empryo -- --help`
+- **Nix**: [packages/empryo/package.nix](packages/empryo/package.nix)
 
 </details>
 <details>
@@ -531,6 +561,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>tura</strong> - Local AI coding system - Rust CLI and backend services</summary>
+
+- **Source**: source
+- **License**: AGPL-3.0-or-later
+- **Homepage**: https://turaai.net
+- **Usage**: `nix run github:numtide/llm-agents.nix#tura -- --help`
+- **Nix**: [packages/tura/package.nix](packages/tura/package.nix)
+
+</details>
+<details>
 <summary><strong>vix</strong> - Sleek, Fast and Token Efficient AI Coding Agent</summary>
 
 - **Source**: source
@@ -711,6 +751,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://openclaw.ai
 - **Usage**: `nix run github:numtide/llm-agents.nix#openclaw -- --help`
 - **Nix**: [packages/openclaw/package.nix](packages/openclaw/package.nix)
+
+</details>
+<details>
+<summary><strong>openhuman</strong> - Personal AI super intelligence: local-first memory, agent fleet orchestration, and deep research</summary>
+
+- **Source**: source
+- **License**: GPL-3.0-only
+- **Homepage**: https://github.com/tinyhumansai/openhuman
+- **Usage**: `nix run github:numtide/llm-agents.nix#openhuman -- --help`
+- **Nix**: [packages/openhuman/package.nix](packages/openhuman/package.nix)
 
 </details>
 <details>
@@ -1087,6 +1137,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>loopx</strong> - Lightweight Loop Engineering control plane for long-running agent goals</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/huangruiteng/loopx
+- **Usage**: `nix run github:numtide/llm-agents.nix#loopx -- --help`
+- **Nix**: [packages/loopx/package.nix](packages/loopx/package.nix)
+
+</details>
+<details>
 <summary><strong>mardi-gras</strong> - Terminal UI for Beads issue tracking with a parade-inspired workflow view</summary>
 
 - **Source**: source
@@ -1349,7 +1409,7 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 <summary><strong>cass</strong> - Search local coding agent session history across providers</summary>
 
 - **Source**: source
-- **License**: unfree
+- **License**: MIT
 - **Homepage**: https://github.com/Dicklesworthstone/coding_agent_session_search
 - **Usage**: `nix run github:numtide/llm-agents.nix#cass -- --help`
 - **Nix**: [packages/cass/package.nix](packages/cass/package.nix)
@@ -1686,6 +1746,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>memsearch</strong> - Persistent, unified semantic memory layer for AI agents (Milvus-backed vector search)</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/zilliztech/memsearch
+- **Usage**: `nix run github:numtide/llm-agents.nix#memsearch -- --help`
+- **Nix**: [packages/memsearch/package.nix](packages/memsearch/package.nix)
+
+</details>
+<details>
 <summary><strong>officecli</strong> - CLI for creating and editing Office Open XML documents</summary>
 
 - **Source**: source
@@ -1726,6 +1796,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>ruvector</strong> - High-performance Rust vector database with CLI and MCP server</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/ruvnet/RuVector
+- **Usage**: `nix run github:numtide/llm-agents.nix#ruvector -- --help`
+- **Nix**: [packages/ruvector/package.nix](packages/ruvector/package.nix)
+
+</details>
+<details>
 <summary><strong>showboat</strong> - Create executable demo documents showing and proving an agent's work</summary>
 
 - **Source**: source
@@ -1753,6 +1833,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/toon-format/toon-rust
 - **Usage**: `nix run github:numtide/llm-agents.nix#toon -- --help`
 - **Nix**: [packages/toon/package.nix](packages/toon/package.nix)
+
+</details>
+<details>
+<summary><strong>waggle</strong> - Attributed, resolvable artifact references for agent handoffs — a ~30-byte token instead of pasted context, MCP-native</summary>
+
+- **Source**: source
+- **License**: MIT / Apache-2.0
+- **Homepage**: https://github.com/modiqo/waggle
+- **Usage**: `nix run github:numtide/llm-agents.nix#waggle -- --help`
+- **Nix**: [packages/waggle/package.nix](packages/waggle/package.nix)
 
 </details>
 <!-- END GENERATED PACKAGE DOCS -->
