@@ -4,27 +4,33 @@
   buildGoModule,
   fetchFromGitHub,
   go_1_26,
+  unpinGoModVersionHook,
 }:
 
+# v0.4.30 pins go 1.26.6 in server/go.mod but nixpkgs go_1_26 is 1.26.5.
+# Relax the go.mod constraint until nixpkgs reaches 1.26.6, then drop the hook.
 (buildGoModule.override { go = go_1_26; }) rec {
   pname = "multica";
-  version = "0.4.26";
+  version = "0.4.30";
 
   src = fetchFromGitHub {
     owner = "multica-ai";
     repo = "multica";
     tag = "v${version}";
-    hash = "sha256-D3v9eBbfbtnNMt7F9wiz9WpV1NK6VsgGF1UnBRgb+5E=";
+    hash = "sha256-bSnVsXvxoldNmnvmJp9BzfjX+Qqd/D6Dhbg4EM0V8hU=";
   };
 
   sourceRoot = "source/server";
   subPackages = [ "cmd/multica" ];
-  vendorHash = "sha256-SL//NLuzLV+faAjD7SR9f9j0AaDHel2haZajLJpsj5s=";
+
+  nativeBuildInputs = [ unpinGoModVersionHook ];
+
+  vendorHash = "sha256-kc26gQOEPRba8WKpCZLFpjLTNHNoIkGX9/AwENW8sGs=";
 
   ldflags = [
     "-X main.version=${version}"
-    "-X main.commit=8ca30e794"
-    "-X main.date=2026-07-17T10:04:06Z"
+    "-X main.commit=d563bfbc0"
+    "-X main.date=2026-08-19T10:03:12Z"
   ];
 
   doCheck = false;
