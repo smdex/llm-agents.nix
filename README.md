@@ -1545,6 +1545,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Nix**: [packages/toon/package.nix](packages/toon/package.nix)
 
 </details>
+<details>
+<summary><strong>waggle</strong> - Attributed, resolvable artifact references for agent handoffs — a ~30-byte token instead of pasted context, MCP-native</summary>
+
+- **Source**: source
+- **License**: MIT / Apache-2.0
+- **Homepage**: https://github.com/modiqo/waggle
+- **Usage**: `nix run github:numtide/llm-agents.nix#waggle -- --help`
+- **Nix**: [packages/waggle/package.nix](packages/waggle/package.nix)
+
+</details>
 <!-- END GENERATED PACKAGE DOCS -->
 
 ## Installation
