@@ -11,8 +11,6 @@
   pnpm_10,
   pnpmConfigHook,
   electron_41,
-  formatelf,
-  gcc-unwrapped,
   multica,
   ...
 }:
@@ -40,6 +38,11 @@ let
   };
   electron = electron_41;
 
+  # Deterministic prune of the workspace install down to the runtime
+  # closure of the built main/preload bundles (see the script header for
+  # why `pnpm deploy` is not used).
+  pruneRuntimeDeps = ./prune-runtime-deps.mjs;
+
   desktopItem = makeDesktopItem {
     name = pname;
     desktopName = "Multica";
@@ -66,10 +69,7 @@ stdenv.mkDerivation {
     pnpmConfigHook
     makeWrapper
     copyDesktopItems
-  ]
-  ++ lib.optionals stdenv.hostPlatform.isLinux [ formatelf ];
-
-  buildInputs = lib.optionals stdenv.hostPlatform.isLinux [ gcc-unwrapped.lib ];
+  ];
 
   env = {
     ELECTRON_SKIP_BINARY_DOWNLOAD = "1";
@@ -90,8 +90,6 @@ stdenv.mkDerivation {
       exit 1
     fi
 
-    mkdir -p apps/desktop/resources/bin
-    ln -s ${multica}/bin/multica apps/desktop/resources/bin/multica
     pnpm --filter @multica/desktop build
     runHook postBuild
   '';
@@ -100,25 +98,53 @@ stdenv.mkDerivation {
     runHook preInstall
 
     app=$out/share/${pname}
-    mkdir -p "$app" "$out/bin"
-    # Keep workspace links valid at runtime; pnpm links @multica packages back
-    # into the root apps/ and packages/ directories.
-    cp -a apps packages "$app/"
-    rm -rf "$app/apps/desktop/out" "$app/apps/desktop/resources"
-    cp -a apps/desktop/out apps/desktop/resources "$app/apps/desktop/"
-    cp -a node_modules "$app/node_modules"
+    desktop=$app/apps/desktop
+    mkdir -p "$desktop" "$out/bin"
+
+    # Runtime payloads only. electron-vite bundles the renderer fully; the
+    # main/preload bundles keep their dependencies external, resolved from a
+    # pruned node_modules installed next to them.
+    cp -a apps/desktop/out "$desktop/"
+
+    # bundle-cli.mjs wipes resources/bin when Go is unavailable, so the CLI
+    # symlink can only be planted after the build step above.
+    mkdir -p apps/desktop/resources/bin
+    ln -s ${multica}/bin/multica apps/desktop/resources/bin/multica
+    cp -a apps/desktop/resources "$desktop/"
+    # Started directly on the bundle, app.getAppPath() is out/main; the
+    # daemon manager resolves the bundled CLI as <appPath>/resources/bin.
+    ln -s ../../resources "$desktop/out/main/resources"
+
+    node ${pruneRuntimeDeps} . apps/desktop/out \
+      "$desktop/node_modules"
 
     install -Dm644 apps/desktop/build/icon.png \
       $out/share/icons/hicolor/512x512/apps/multica.png
 
     makeWrapper ${electron}/bin/electron $out/bin/multica-desktop \
-      --add-flags "$app/apps/desktop/out/main/index.js" \
+      --add-flags "$desktop/out/main/index.js" \
       --add-flags "--no-sandbox" \
       --add-flags ''${NIXOS_OZONE_WL:+''${WAYLAND_DISPLAY:+--ozone-platform-hint=auto --enable-features=WaylandWindowDecorations}} \
       --inherit-argv0
 
     copyDesktopItems
     runHook postInstall
+  '';
+
+  doInstallCheck = true;
+  # Plain node cannot load the electron builtin, but require.resolve of the
+  # bundled externals from the installed app dir proves the pruned runtime
+  # node_modules is self-contained.
+  installCheckPhase = ''
+    runHook preInstallCheck
+    cd $out/share/${pname}/apps/desktop
+    for dep in @electron-toolkit/utils @electron-toolkit/preload electron-updater fix-path; do
+      node -e 'require.resolve(process.argv[1])' "$dep" || {
+        echo "error: runtime dependency $dep not resolvable in installed app"
+        exit 1
+      }
+    done
+    runHook postInstallCheck
   '';
 
   desktopItems = [ desktopItem ];
