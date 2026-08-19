@@ -764,6 +764,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>openhuman</strong> - Personal AI super intelligence: local-first memory, agent fleet orchestration, and deep research</summary>
+
+- **Source**: source
+- **License**: GPL-3.0-only
+- **Homepage**: https://github.com/tinyhumansai/openhuman
+- **Usage**: `nix run github:numtide/llm-agents.nix#openhuman -- --help`
+- **Nix**: [packages/openhuman/package.nix](packages/openhuman/package.nix)
+
+</details>
+<details>
 <summary><strong>paperclip</strong> - Open-source control plane for managing teams of AI agents</summary>
 
 - **Source**: bytecode
