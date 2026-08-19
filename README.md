@@ -9,6 +9,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 ### AI Coding Agents
 
 <details>
+<summary><strong>agentty</strong> - AI pair programming in your terminal — a C++26 Claude Code alternative with sub-millisecond startup</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/1ay1/agentty
+- **Usage**: `nix run github:numtide/llm-agents.nix#agentty -- --help`
+- **Nix**: [packages/agentty/package.nix](packages/agentty/package.nix)
+
+</details>
+<details>
 <summary><strong>amp</strong> - CLI for Amp, an agentic coding tool in research preview from Sourcegraph</summary>
 
 - **Source**: binary
