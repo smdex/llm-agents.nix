@@ -190,6 +190,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>empryo</strong> - Graph-powered code intelligence — multi-agent coding with codebase-aware AI (formerly SoulForge)</summary>
+
+- **Source**: source
+- **License**: BUSL-1.1
+- **Homepage**: https://empryo.com
+- **Usage**: `nix run github:numtide/llm-agents.nix#empryo -- --help`
+- **Nix**: [packages/empryo/package.nix](packages/empryo/package.nix)
+
+</details>
+<details>
 <summary><strong>forgecode</strong> - AI-Enhanced Terminal Development Environment - A comprehensive coding agent that integrates AI capabilities with your development environment</summary>
 
 - **Source**: binary
