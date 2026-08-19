@@ -451,6 +451,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>tura</strong> - Local AI coding system - Rust CLI and backend services</summary>
+
+- **Source**: source
+- **License**: AGPL-3.0-or-later
+- **Homepage**: https://turaai.net
+- **Usage**: `nix run github:numtide/llm-agents.nix#tura -- --help`
+- **Nix**: [packages/tura/package.nix](packages/tura/package.nix)
+
+</details>
+<details>
 <summary><strong>vix</strong> - Sleek, Fast and Token Efficient AI Coding Agent</summary>
 
 - **Source**: source
