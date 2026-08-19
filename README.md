@@ -1516,6 +1516,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>ruvector</strong> - High-performance Rust vector database with CLI and MCP server</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/ruvnet/RuVector
+- **Usage**: `nix run github:numtide/llm-agents.nix#ruvector -- --help`
+- **Nix**: [packages/ruvector/package.nix](packages/ruvector/package.nix)
+
+</details>
+<details>
 <summary><strong>showboat</strong> - Create executable demo documents showing and proving an agent's work</summary>
 
 - **Source**: source
