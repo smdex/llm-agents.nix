@@ -1,0 +1,63 @@
+{
+  "version": "0.63.12",
+  "hash": "sha256-t0gjsRTLBt/IOOfz5Ne4KkgyXMtbNA/ukcnqo5mEXOQ=",
+  "pnpmDeps": "sha256-Dbfi+USAyn0Zc9aCbWVDs6ss/mpzLMVrxZeTYyOMdLk=",
+  "cargoCliDeps": "sha256-oowbvX0Oje33joYwqP6tPzJQDW4RPWmCfVi9fGEo4Ks=",
+  "cargoAppDeps": "sha256-gU4r3yDNytYxW4Ys0+sJiQDverDlTXANwGkBuopQckg=",
+  "cef": {
+    "crateVersion": "146.4.1+146.0.9",
+    "cefVersion": "146.0.9",
+    "archives": {
+      "linux64": {
+        "name": "cef_binary_146.0.9+g3ca6a87+chromium-146.0.7680.165_linux64_minimal.tar.bz2",
+        "sha1": "dd4c8ffa698cd093ba8dc9a1a3ac8f1facd972ec",
+        "tarballHash": "sha256-vwr7dg6jw/1bn0D+r0a34+5f7iRhLbi5RjUt8Mj6oBs=",
+        "distHash": "sha256-0ZMHJcbLOh2Dp11Pe0wbuZHS/v+t8jGcYnsiNDIqcGU="
+      },
+      "linuxarm64": {
+        "name": "cef_binary_146.0.9+g3ca6a87+chromium-146.0.7680.165_linuxarm64_minimal.tar.bz2",
+        "sha1": "12ee024099084b636c37745e3a1e35e91a8a3206",
+        "tarballHash": "sha256-Yc3XuesuQKbcoOqK+Dy6yAMFeoOMCv+yyp4j6rGcodI=",
+        "distHash": "sha256-Zy+BnyP8Zl9u5PUmbZb1dqurgPr7RVbchjRyJILs4jE="
+      }
+    }
+  },
+  "submodules": {
+    "tauri-cef": {
+      "rev": "455b47debb9d1f5d0f1527266e48af1670ad4bc5",
+      "hash": "sha256-aXhE8xCwcxJbLY4+7PA9mKxTfEtPW8U86HGSvyYIVbU="
+    },
+    "tauri-plugin-notification": {
+      "rev": "5f619690188c6dbad58ceb170e9a86d61971c334",
+      "hash": "sha256-e/7WVVBPLRtFpIOR6TXi51ouVkL8FgwUdPDVKdzaLdU="
+    },
+    "tinyagents": {
+      "rev": "3e1dbea5b5cb8cba9b8307408b34e8ce9ed5ec4e",
+      "hash": "sha256-OW22OSK3ymPRz56sdjYJJ0FkSOBlpJZctcpptcIy/Yo="
+    },
+    "tinyflows": {
+      "rev": "80546469ee5d76eb68ceecf45642c247e962724e",
+      "hash": "sha256-N+MTgwJ6MJ4X8d803+lbad84VQ+wzszOvo80RmDDQrs="
+    },
+    "tinycortex": {
+      "rev": "5fabcf18d9e3907d6b26b59528ad49cebfc1c271",
+      "hash": "sha256-qeMe6oYUI9yiZjA+hX08S0AJGVhKhCI/mYPj7cpLKQc="
+    },
+    "tinyjuice": {
+      "rev": "e6848ed87d5d661073e9eab87b6b385c3373ee38",
+      "hash": "sha256-iTfGt9J/SC3/ZZwc6bDunhN/aosdesaForm75JfNBpg="
+    },
+    "tinychannels": {
+      "rev": "1eacf2397306d7e52208ca935d225988f2e9106e",
+      "hash": "sha256-7JKr+n3FJvAoVL4JxFDZ2xBK6qaHnFF0W3KDE+qTKDE="
+    },
+    "tinyplace": {
+      "rev": "d254505439d79c5d3b35a08fdd97ae921f6852a9",
+      "hash": "sha256-tqawB7Zpuz8Vc493EDtmOQBSeg6tl4vFvN3qFXf+lfY="
+    },
+    "tinyhumans-sdk": {
+      "rev": "a2f26f4825481033d0ddc558bc8226c4624c796c",
+      "hash": "sha256-UGz61cyRDfV0nY3cyPi/gGkMrzWc8WGuOALeP2dscbQ="
+    }
+  }
+}
