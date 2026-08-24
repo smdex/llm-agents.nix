@@ -130,6 +130,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>codex-chatgpt-web</strong> - Use ChatGPT Web (including Pro) as native Codex models with context, tools, streaming and images</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/miuuyy/codex-chatgpt-web
+- **Usage**: `nix run github:numtide/llm-agents.nix#codex-chatgpt-web -- --help`
+- **Nix**: [packages/codex-chatgpt-web/package.nix](packages/codex-chatgpt-web/package.nix)
+
+</details>
+<details>
 <summary><strong>copilot-cli</strong> - GitHub Copilot CLI brings the power of Copilot coding agent directly to your terminal.</summary>
 
 - **Source**: binary
