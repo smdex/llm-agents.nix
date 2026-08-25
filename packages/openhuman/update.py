@@ -12,10 +12,14 @@ distribution.  This script:
 2. prefetches the main tarball and every gitlink recorded in the tag's tree
    (``.gitmodules`` maps each path to its GitHub repo; submodules upstream
    adds or removes are followed, not hard-failed),
-3. re-pins the CEF dist: crate version from the tag's ``Cargo.lock``,
-   archive name/sha1 from the Spotify CDN index, tarball hash by prefetch,
+3. re-pins the CEF dist when the tag's ``Cargo.lock`` still carries
+   ``cef-dll-sys`` (upstream dropped the CEF engine after 0.63.12; a
+   lockfile without it retires the whole section): crate version from the
+   lock, archive name/sha1 from the Spotify CDN index, tarball hash by
+   prefetch,
 4. recomputes the fixed-output hashes (pnpm deps, both cargo vendor sets,
-   both CEF dist repackages) via the dummy-hash build loop.
+   and, while CEF is pinned, both CEF dist repackages) via the dummy-hash
+   build loop.
 
 Only ``hashes.json`` is touched; ``package.nix`` reads everything from it.
 """
@@ -160,7 +164,7 @@ def gitlink_revs(tag: str) -> dict[str, str]:
 
 
 def submodule_pins(tag: str) -> dict[str, dict[str, str]]:
-    """The tag's submodule set: path -> {owner, repo, rev}.
+    """Build the tag's submodule set: path -> {owner, repo, rev}.
 
     The gitlink tree is the source of truth for the set (and the revs);
     ``.gitmodules`` only supplies where each path is fetched from.
@@ -186,11 +190,13 @@ def prefetch_github_archive(slug: str, rev: str) -> str:
     )
 
 
-def cef_pins(tag: str) -> tuple[str, dict[str, dict[str, str]]]:
+def cef_pins(tag: str) -> tuple[str, dict[str, dict[str, str]]] | None:
     """CEF crate version + per-platform {name, sha1} for the tag.
 
     Returns the crate version (``146.4.1+146.0.9``) and, per platform in
-    ``linux64``/``linuxarm64``, the CDN archive name and sha1.
+    ``linux64``/``linuxarm64``, the CDN archive name and sha1 — or None
+    when the tag's lockfile carries no cef-dll-sys (that release does not
+    ship the CEF engine; the pin is retired).
     """
     lock = fetch_text(
         f"https://raw.githubusercontent.com/{OWNER}/{REPO}/{tag}/app/src-tauri/Cargo.lock",
@@ -199,8 +205,7 @@ def cef_pins(tag: str) -> tuple[str, dict[str, dict[str, str]]]:
         r'^\s*name = "cef-dll-sys"\n\s*version = "([^"]+)"', lock, re.MULTILINE
     )
     if not m:
-        msg = f"cef-dll-sys not found in {tag} app Cargo.lock"
-        raise ValueError(msg)
+        return None
     crate_version = m.group(1)
     cef_version = crate_version.split("+", 1)[1]
 
@@ -241,6 +246,66 @@ def cef_pins(tag: str) -> tuple[str, dict[str, dict[str, str]]]:
     return crate_version, pins
 
 
+def update_submodules(tag: str, data: dict[str, Any]) -> None:
+    """Re-pin the hashes.json submodule set to the tag's gitlink tree.
+
+    The set is derived from the tree, so upstream additions and removals
+    are followed: new pins are prefetched, stale entries dropped.
+    """
+    old_submodules = data["submodules"]
+    new_submodules: dict[str, Any] = {}
+    for path, pin in sorted(submodule_pins(tag).items()):
+        prev = old_submodules.get(path, {})
+        if prev.get("rev") == pin["rev"] and prev.get("hash"):
+            # Same commit; keep the pinned hash, refresh the repo location.
+            prev["owner"], prev["repo"] = pin["owner"], pin["repo"]
+            new_submodules[path] = prev
+            print(f"submodule {path}: unchanged at {pin['rev']}")
+            continue
+        print(f"submodule {path}: {prev.get('rev', '?')} -> {pin['rev']}")
+        new_submodules[path] = {
+            "owner": pin["owner"],
+            "repo": pin["repo"],
+            "rev": pin["rev"],
+            "hash": prefetch_github_archive(
+                f"{pin['owner']}/{pin['repo']}", pin["rev"]
+            ),
+        }
+    for gone in sorted(set(old_submodules) - set(new_submodules)):
+        print(f"submodule {gone}: dropped (not in the tag's tree)")
+    data["submodules"] = new_submodules
+    save_hashes(HASHES_FILE, data)
+
+
+def update_cef_pin(tag: str, data: dict[str, Any]) -> None:
+    """Re-pin the CEF dist section, or retire it for a CEF-less tag."""
+    cef = cef_pins(tag)
+    if cef is None:
+        if "cef" in data:
+            print("CEF: dropped upstream (no cef-dll-sys in app Cargo.lock)")
+            del data["cef"]
+            save_hashes(HASHES_FILE, data)
+        return
+
+    crate_version, pins = cef
+    print(f"CEF: crate {crate_version}")
+    data["cef"]["crateVersion"] = crate_version
+    data["cef"]["cefVersion"] = crate_version.split("+", 1)[1]
+    for platform, pin in pins.items():
+        archive = data["cef"]["archives"][platform]
+        if archive.get("name") == pin["name"]:
+            archive["sha1"] = pin["sha1"]
+            continue
+        print(f"CEF {platform}: {archive.get('name', '?')} -> {pin['name']}")
+        archive["name"] = pin["name"]
+        archive["sha1"] = pin["sha1"]
+        archive["tarballHash"] = calculate_url_hash(
+            f"https://cef-builds.spotifycdn.com/{pin['name']}",
+        )
+        archive["distHash"] = DUMMY_SHA256_HASH
+    save_hashes(HASHES_FILE, data)
+
+
 def main() -> None:
     """Update hashes.json to the latest upstream tag."""
     data = load_hashes(HASHES_FILE)
@@ -261,62 +326,27 @@ def main() -> None:
     data["hash"] = prefetch_github_archive(f"{OWNER}/{REPO}", f"v{latest}")
     save_hashes(HASHES_FILE, data)
 
-    # 2) Submodules: the set comes from the tag's gitlink tree, so upstream
-    # additions and removals are followed (new pins prefetched, stale
-    # entries dropped).
-    old_submodules = data["submodules"]
-    new_submodules: dict[str, Any] = {}
-    for path, pin in sorted(submodule_pins(f"v{latest}").items()):
-        prev = old_submodules.get(path, {})
-        if prev.get("rev") == pin["rev"] and prev.get("hash"):
-            # Same commit; keep the pinned hash, refresh the repo location.
-            prev["owner"], prev["repo"] = pin["owner"], pin["repo"]
-            new_submodules[path] = prev
-            print(f"submodule {path}: unchanged at {pin['rev']}")
-            continue
-        print(f"submodule {path}: {prev.get('rev', '?')} -> {pin['rev']}")
-        new_submodules[path] = {
-            "owner": pin["owner"],
-            "repo": pin["repo"],
-            "rev": pin["rev"],
-            "hash": prefetch_github_archive(
-                f"{pin['owner']}/{pin['repo']}", pin["rev"]
-            ),
-        }
-    for gone in sorted(set(old_submodules) - set(new_submodules)):
-        print(f"submodule {gone}: dropped (not in {latest} tree)")
-    data["submodules"] = new_submodules
-    save_hashes(HASHES_FILE, data)
+    # 2) Submodules from the tag's gitlink tree.
+    update_submodules(f"v{latest}", data)
 
-    # 3) CEF pin.
-    crate_version, pins = cef_pins(f"v{latest}")
-    print(f"CEF: crate {crate_version}")
-    data["cef"]["crateVersion"] = crate_version
-    data["cef"]["cefVersion"] = crate_version.split("+", 1)[1]
-    for platform, pin in pins.items():
-        archive = data["cef"]["archives"][platform]
-        if archive.get("name") == pin["name"]:
-            archive["sha1"] = pin["sha1"]
-            continue
-        print(f"CEF {platform}: {archive.get('name', '?')} -> {pin['name']}")
-        archive["name"] = pin["name"]
-        archive["sha1"] = pin["sha1"]
-        archive["tarballHash"] = calculate_url_hash(
-            f"https://cef-builds.spotifycdn.com/{pin['name']}",
-        )
-        archive["distHash"] = DUMMY_SHA256_HASH
-    save_hashes(HASHES_FILE, data)
+    # 3) CEF pin — only while the tag still ships the CEF engine.
+    update_cef_pin(f"v{latest}", data)
 
     # 4) Fixed-output hashes via the dummy-hash build loop. pnpmDeps first
     # (independent of the tree), then the cargo sets (need fullSrc = main +
-    # submodules correct), then the CEF dist repackage.
-    for key, attr in (
+    # submodules correct), then the CEF dist repackage (only while CEF is
+    # pinned).
+    hash_jobs = [
         ("pnpmDeps", ".#openhuman.pnpmDeps"),
         ("cargoCliDeps", ".#openhuman.cargoDepsCli"),
         ("cargoAppDeps", ".#openhuman.cargoDepsApp"),
-        ("cef.archives.linux64.distHash", ".#openhuman.cefDist"),
-        ("cef.archives.linuxarm64.distHash", ".#openhuman.cefDistArm64"),
-    ):
+    ]
+    if "cef" in data:
+        hash_jobs += [
+            ("cef.archives.linux64.distHash", ".#openhuman.cefDist"),
+            ("cef.archives.linuxarm64.distHash", ".#openhuman.cefDistArm64"),
+        ]
+    for key, attr in hash_jobs:
         print(f"Hashing {key} via {attr}...")
         DepHasher(store, attr, build=nix_build).hash(key)
 

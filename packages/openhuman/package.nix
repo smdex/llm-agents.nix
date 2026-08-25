@@ -58,10 +58,20 @@
   pango,
   systemd,
   wayland,
+  webkitgtk_4_1,
+  libsoup_3,
 }:
 
 let
   data = builtins.fromJSON (builtins.readFile ./hashes.json);
+
+  # Upstream dropped the CEF desktop engine after 0.63.12 (the app lockfile
+  # no longer carries cef-dll-sys and the tauri-cef vendor submodule is
+  # gone). The updater retires the "cef" section from hashes.json once the
+  # pinned tag crosses that boundary; while it is present — as for the
+  # currently pinned 0.63.12 — the CEF path below stays in force unchanged
+  # and the stock tauri webkitgtk shell is built without it.
+  hasCef = data ? cef;
 
   pnpm = pnpm_10;
 
@@ -316,6 +326,11 @@ stdenv.mkDerivation (finalAttrs: {
     libxext
     libxfixes
     libxcb
+  ]
+  ++ lib.optionals (!hasCef) [
+    # Stock tauri webview once the CEF engine is dropped upstream.
+    webkitgtk_4_1
+    libsoup_3
   ];
 
   inherit pnpmDeps;
@@ -362,19 +377,24 @@ stdenv.mkDerivation (finalAttrs: {
       --manifest-path "$PWD/Cargo.toml" \
       --bin openhuman-core
 
-    # 3) Desktop shell (app/src-tauri cargo world). custom-protocol embeds
-    #    app/dist; cef-dll-sys reads CEF_PATH (never downloads) and copies
-    #    the Chromium runtime next to the produced binary. rpath-link lets
-    #    the final executable link resolve the prebuilt libcef.so's full
-    #    NEEDED closure from the store.
+    # 3) Desktop shell (app/src-tauri cargo world). While CEF is pinned,
+    #    custom-protocol embeds app/dist; cef-dll-sys reads CEF_PATH (never
+    #    downloads) and copies the Chromium runtime next to the produced
+    #    binary, and rpath-link lets the final executable link resolve the
+    #    prebuilt libcef.so's full NEEDED closure from the store. Once CEF
+    #    is dropped it is the stock tauri webkitgtk shell.
     export CARGO_HOME="$NIX_BUILD_TOP/cargo-home-app"
-    export CEF_PATH="${cefDist}"
-    export RUSTFLAGS="-C link-arg=-Wl,--rpath-link=${runtimeLibPath}"
+    shellFeatures=""
+    ${lib.optionalString hasCef ''
+      export CEF_PATH="${cefDist}"
+      export RUSTFLAGS="-C link-arg=-Wl,--rpath-link=${runtimeLibPath}"
+      shellFeatures="--features custom-protocol"
+    ''}
     cargo build \
       --release --locked --offline \
       --manifest-path "$PWD/app/src-tauri/Cargo.toml" \
-      --features custom-protocol \
-      --bin OpenHuman
+      --bin OpenHuman \
+      $shellFeatures
 
     runHook postBuild
   '';
@@ -387,40 +407,42 @@ stdenv.mkDerivation (finalAttrs: {
     # ── CLI ──
     install -Dm555 "$target/openhuman-core" "$out/bin/openhuman-core"
 
-    # ── Desktop shell + CEF runtime ──
+    # ── Desktop shell (+ CEF runtime while the engine is pinned) ──
     # The CEF runtime payload is installed from the pinned dist itself
     # (canonical, deterministic — independent of what cef-dll-sys copies
     # into the target dir); we mirror the upstream .deb layout: everything
     # beside the executable, en-US locale only.
     appdir="$out/lib/OpenHuman"
-    cefdir="${cefDist}/${data.cef.cefVersion}/${cefOsArch}"
-    mkdir -p "$appdir/locales"
+    mkdir -p "$appdir"
     install -m755 "$target/OpenHuman" "$appdir/OpenHuman"
-    for f in \
-      libcef.so icudtl.dat v8_context_snapshot.bin snapshot_blob.bin \
-      chrome_100_percent.pak chrome_200_percent.pak resources.pak \
-      libEGL.so libGLESv2.so libvk_swiftshader.so vk_swiftshader_icd.json \
-      libvulkan.so.1
-    do
-      if [ -f "$cefdir/$f" ]; then
-        install -m755 "$cefdir/$f" "$appdir/$f"
-      fi
-    done
-    install -Dm444 "$cefdir/locales/en-US.pak" "$appdir/locales/en-US.pak"
+    ${lib.optionalString hasCef ''
+      cefdir="${cefDist}/${data.cef.cefVersion}/${cefOsArch}"
+      mkdir -p "$appdir/locales"
+      for f in \
+        libcef.so icudtl.dat v8_context_snapshot.bin snapshot_blob.bin \
+        chrome_100_percent.pak chrome_200_percent.pak resources.pak \
+        libEGL.so libGLESv2.so libvk_swiftshader.so vk_swiftshader_icd.json \
+        libvulkan.so.1
+      do
+        if [ -f "$cefdir/$f" ]; then
+          install -m755 "$cefdir/$f" "$appdir/$f"
+        fi
+      done
+      install -Dm444 "$cefdir/locales/en-US.pak" "$appdir/locales/en-US.pak"
 
-    # Point the prebuilt CEF payload at the Nix store for its own NEEDED
-    # libs; drop the cefDist store path the linker baked into the shell's
-    # rpath so the closure does not carry the runtime twice.
-    for elf in "$appdir"/libcef.so "$appdir"/libEGL.so "$appdir"/libGLESv2.so \
-      "$appdir"/libvk_swiftshader.so "$appdir"/libvulkan.so.1
-    do
-      [ -f "$elf" ] && patchelf --set-rpath "$appdir:${runtimeLibPath}" "$elf"
-    done
-    # Replace the linker-baked rpath ($ORIGIN + the cefDist store path) with
-    # the install dir plus the Nix store library set, so the closure does not
-    # carry the whole CEF runtime and every direct/indirect NEEDED resolves.
-    patchelf --set-rpath "$appdir:${runtimeLibPath}" "$appdir/OpenHuman"
-
+      # Point the prebuilt CEF payload at the Nix store for its own NEEDED
+      # libs; drop the cefDist store path the linker baked into the shell's
+      # rpath so the closure does not carry the runtime twice.
+      for elf in "$appdir"/libcef.so "$appdir"/libEGL.so "$appdir"/libGLESv2.so \
+        "$appdir"/libvk_swiftshader.so "$appdir"/libvulkan.so.1
+      do
+        [ -f "$elf" ] && patchelf --set-rpath "$appdir:${runtimeLibPath}" "$elf"
+      done
+      # Replace the linker-baked rpath ($ORIGIN + the cefDist store path) with
+      # the install dir plus the Nix store library set, so the closure does not
+      # carry the whole CEF runtime and every direct/indirect NEEDED resolves.
+      patchelf --set-rpath "$appdir:${runtimeLibPath}" "$appdir/OpenHuman"
+    ''}
     ln -s ../lib/OpenHuman/OpenHuman "$out/bin/OpenHuman"
 
     # ── Desktop entry + icons (from the tauri bundle metadata) ──
@@ -461,8 +483,10 @@ stdenv.mkDerivation (finalAttrs: {
     echo "$app_version" | grep -F '"${finalAttrs.version}"' > /dev/null
 
     test -x "$out/lib/OpenHuman/OpenHuman"
-    test -f "$out/lib/OpenHuman/libcef.so"
-    test -f "$out/lib/OpenHuman/icudtl.dat"
+    ${lib.optionalString hasCef ''
+      test -f "$out/lib/OpenHuman/libcef.so"
+      test -f "$out/lib/OpenHuman/icudtl.dat"
+    ''}
     test -f "$out/share/applications/OpenHuman.desktop"
     test -f "$out/share/icons/hicolor/128x128/apps/OpenHuman.png"
 
@@ -471,7 +495,13 @@ stdenv.mkDerivation (finalAttrs: {
 
   passthru = {
     category = "AI Assistants";
-    inherit cefDist cargoDepsCli cargoDepsApp;
+    inherit cargoDepsCli cargoDepsApp;
+  }
+  // lib.optionalAttrs hasCef {
+    cefDist = cefDistFor {
+      platform = cefPlatform;
+      osArch = cefOsArch;
+    };
     cefDistArm64 = cefDistFor {
       platform = "linuxarm64";
       osArch = "cef_linux_aarch64";
@@ -485,10 +515,12 @@ stdenv.mkDerivation (finalAttrs: {
     # 404s until they catch up, so point at the releases page.
     changelog = "https://github.com/tinyhumansai/openhuman/releases";
     license = lib.licenses.gpl3Only;
-    sourceProvenance = with lib.sourceTypes; [
-      fromSource
-      binaryNativeCode # CEF (Chromium) runtime from the pinned binary dist
-    ];
+    sourceProvenance =
+      with lib.sourceTypes;
+      [ fromSource ]
+      ++ lib.optionals hasCef [
+        binaryNativeCode # CEF (Chromium) runtime from the pinned binary dist
+      ];
     maintainers = with flake.lib.maintainers; [ smdex ];
     mainProgram = "openhuman-core";
     platforms = [
