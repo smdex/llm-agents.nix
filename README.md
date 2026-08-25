@@ -604,6 +604,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>rookery</strong> - Local inference command center: manage llama-server and vLLM backends, hot-swap models, monitor GPU, and run agents from one daemon + CLI + live dashboard</summary>
+
+- **Source**: source
+- **License**: MIT / Apache-2.0
+- **Homepage**: https://github.com/lance0/rookery
+- **Usage**: `nix run github:numtide/llm-agents.nix#rookery -- --help`
+- **Nix**: [packages/rookery/package.nix](packages/rookery/package.nix)
+
+</details>
+<details>
 <summary><strong>vessel-browser</strong> - Agent-oriented browser with durable state and MCP control</summary>
 
 - **Source**: source

@@ -189,6 +189,11 @@ inputs."nixpkgs".lib.extend (
         githubId = 6793260;
         name = "Jayadeep KM";
       };
+      lance0 = {
+        github = "lance0";
+        githubId = 3323861;
+        name = "lance";
+      };
       ahacop = {
         github = "ahacop";
         githubId = 1678968;
