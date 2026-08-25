@@ -66,12 +66,14 @@ let
   pnpm = pnpm_10;
 
   # ── Upstream source ─────────────────────────────────────────────────────
-  # The tag tree records nine git submodules (gitlinks); fetchFromGitHub
-  # archives do not carry them, so each is fetched separately at the exact
-  # recorded rev and overlaid onto the main tree in fullSrc. `.gitmodules`
-  # names the repo per path; nested submodules below the vendor/* crates are
-  # either docs-only wikis or unpopulated at these pins (verified), so one
-  # level is enough.
+  # The tag's tree records the repo's git submodules as gitlinks;
+  # fetchFromGitHub archives do not carry them, so each is fetched
+  # separately at the exact recorded rev and overlaid onto the main tree in
+  # fullSrc. The updater derives the set from the tag's gitlink tree plus
+  # `.gitmodules` and records path -> {owner, repo, rev, hash} in
+  # hashes.json, so upstream submodule churn needs no edits here; nested
+  # submodules below the vendor/* crates are either docs-only wikis or
+  # unpopulated at these pins (verified), so one level is enough.
   src = fetchFromGitHub {
     owner = "tinyhumansai";
     repo = "openhuman";
@@ -79,56 +81,14 @@ let
     hash = data.hash;
   };
 
-  submoduleRepos = {
-    "app/src-tauri/vendor/tauri-cef" = {
-      owner = "tinyhumansai";
-      repo = "tauri-cef";
-    };
-    "app/src-tauri/vendor/tauri-plugin-notification" = {
-      owner = "tinyhumansai";
-      repo = "tauri-plugin-notification";
-    };
-    "vendor/tinyagents" = {
-      owner = "tinyhumansai";
-      repo = "tinyagents";
-    };
-    "vendor/tinyflows" = {
-      owner = "tinyhumansai";
-      repo = "tinyflows";
-    };
-    "vendor/tinycortex" = {
-      owner = "tinyhumansai";
-      repo = "tinycortex";
-    };
-    "vendor/tinyjuice" = {
-      owner = "tinyhumansai";
-      repo = "tinyjuice";
-    };
-    "vendor/tinychannels" = {
-      owner = "tinyhumansai";
-      repo = "tinychannels";
-    };
-    "vendor/tinyplace" = {
-      owner = "tinyhumansai";
-      repo = "tiny.place";
-    };
-    "vendor/tinyhumans-sdk" = {
-      owner = "tinyhumansai";
-      repo = "sdk";
-    };
-  };
-
-  submoduleName = path: builtins.baseNameOf path;
-
   submoduleSource =
-    path:
-    fetchFromGitHub (
-      submoduleRepos.${path}
-      // {
-        name = "openhuman-submodule-${submoduleName path}";
-        inherit (data.submodules.${submoduleName path}) rev hash;
-      }
-    );
+    path: meta:
+    fetchFromGitHub {
+      owner = meta.owner;
+      repo = meta.repo;
+      name = "openhuman-submodule-${builtins.baseNameOf path}";
+      inherit (meta) rev hash;
+    };
 
   # Main tree + submodules at their pinned revs, exactly what
   # `git clone --recursive` at the tag would produce (modulo .git). A plain
@@ -137,10 +97,10 @@ let
     cp -TR ${src} $out
     chmod -R u+w $out
     ${lib.concatStrings (
-      lib.mapAttrsToList (path: _repo: ''
+      lib.mapAttrsToList (path: meta: ''
         mkdir -p $out/$(dirname ${path})
-        cp -TR ${submoduleSource path} $out/${path}
-      '') submoduleRepos
+        cp -TR ${submoduleSource path meta} $out/${path}
+      '') data.submodules
     )}
   '';
 

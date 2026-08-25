@@ -1,0 +1,39 @@
+# Fork-only variant of upstream's update.yml. Kept under a fork-unique
+# filename so update.yml can track upstream verbatim (zero fork diff) while
+# dispatches from sync-upstream.yml target this file instead.
+name: Update Fork Packages
+on:
+  schedule:
+    # 4x daily, outside Europe/Berlin work hours, tracking US West Coast release window.
+    # Automatic runs only consider packages added by this fork and skip packages
+    # that already exist in upstream/main.
+    - cron: '0 0,4,18,21 * * *'
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: 'Specific packages to update (space-separated, empty for fork-added packages)'
+        required: false
+        default: ''
+concurrency:
+  group: fork-main-maintenance
+  cancel-in-progress: false
+jobs:
+  update:
+    uses: ./.github/workflows/update-flake.yml
+    with:
+      packages: ${{ github.event.inputs.packages || vars.FORK_UPDATE_PACKAGES || '' }}
+      inputs: ''
+      # Flake inputs are synchronized from upstream by sync-upstream.yml.
+      include-inputs: false
+      added-packages-only: true
+      upstream-repository: ${{ vars.UPSTREAM_REPOSITORY || 'numtide/llm-agents.nix' }}
+      pr-labels: 'dependencies,automated'
+      auto-merge: true
+    secrets:
+      APP_ID: ${{ secrets.APP_ID }}
+      CLIENT_ID: ${{ secrets.CLIENT_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+    # Write access comes from the App token, minted inside the called
+    # workflow after updater code has run.
+    permissions:
+      contents: read

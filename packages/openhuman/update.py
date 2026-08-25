@@ -3,12 +3,15 @@
 
 """Update script for the openhuman package.
 
-Upstream is a pnpm monorepo with two cargo worlds and nine git submodules,
-and the desktop shell embeds a pinned CEF binary distribution.  This script:
+Upstream is a pnpm monorepo with two cargo worlds and a changing set of
+git submodules, and the desktop shell embeds a pinned CEF binary
+distribution.  This script:
 
 1. resolves the latest ``v<semver>`` tag (tags regularly outrun GitHub
    releases here),
-2. prefetches the main tarball and every gitlink recorded in the tag's tree,
+2. prefetches the main tarball and every gitlink recorded in the tag's tree
+   (``.gitmodules`` maps each path to its GitHub repo; submodules upstream
+   adds or removes are followed, not hard-failed),
 3. re-pins the CEF dist: crate version from the tag's ``Cargo.lock``,
    archive name/sha1 from the Spotify CDN index, tarball hash by prefetch,
 4. recomputes the fixed-output hashes (pnpm deps, both cargo vendor sets,
@@ -40,20 +43,6 @@ from updater.version import compare_versions
 HASHES_FILE = Path(__file__).parent / "hashes.json"
 OWNER = "tinyhumansai"
 REPO = "openhuman"
-
-# path-in-tree -> GitHub repo (mirrors ``submoduleRepos`` in package.nix;
-# the hashes.json key is the path's basename).
-SUBMODULE_REPOS: dict[str, str] = {
-    "app/src-tauri/vendor/tauri-cef": "tauri-cef",
-    "app/src-tauri/vendor/tauri-plugin-notification": "tauri-plugin-notification",
-    "vendor/tinyagents": "tinyagents",
-    "vendor/tinyflows": "tinyflows",
-    "vendor/tinycortex": "tinycortex",
-    "vendor/tinyjuice": "tinyjuice",
-    "vendor/tinychannels": "tinychannels",
-    "vendor/tinyplace": "tiny.place",
-    "vendor/tinyhumans-sdk": "sdk",
-}
 
 CEF_INDEX = "https://cef-builds.spotifycdn.com/index.json"
 
@@ -126,8 +115,34 @@ def latest_tag() -> str:
     return max(versions, key=cmp_to_key(compare_versions))
 
 
+def parse_gitmodules(tag: str) -> dict[str, str]:
+    """Map submodule path -> ``owner/repo`` slug from the tag's .gitmodules."""
+    text = fetch_text(
+        f"https://raw.githubusercontent.com/{OWNER}/{REPO}/{tag}/.gitmodules",
+    )
+    sections = re.split(r"(?m)^\s*\[submodule\s+\"[^\"]+\"\]", text)[1:]
+    slugs: dict[str, str] = {}
+    for section in sections:
+        path = re.search(r"(?m)^\s*path\s*=\s*(\S+)", section)
+        url = re.search(r"(?m)^\s*url\s*=\s*(\S+)", section)
+        if path is None or url is None:
+            msg = f".gitmodules section lacks path/url at {tag}"
+            raise ValueError(msg)
+        m = re.fullmatch(
+            r"https://github\.com/([^/\s]+)/([^/\s]+?)(?:\.git)?/?", url.group(1)
+        )
+        if m is None:
+            msg = f"submodule {path.group(1)} URL is not a plain GitHub repo: {url.group(1)}"
+            raise ValueError(msg)
+        slugs[path.group(1)] = f"{m.group(1)}/{m.group(2)}"
+    if not slugs:
+        msg = f"no submodule sections parsed from {tag} .gitmodules"
+        raise ValueError(msg)
+    return slugs
+
+
 def gitlink_revs(tag: str) -> dict[str, str]:
-    """Map submodule path -> pinned rev, from the tag's (recursive) tree."""
+    """Map gitlink path -> pinned rev, from the tag's (recursive) tree."""
     tree = fetch_json(
         f"https://api.github.com/repos/{OWNER}/{REPO}/git/trees/{tag}?recursive=1",
     )
@@ -137,22 +152,36 @@ def gitlink_revs(tag: str) -> dict[str, str]:
     if tree.get("truncated"):
         msg = "tree listing truncated; per-subtree queries needed"
         raise ValueError(msg)
-    revs = {
+    return {
         str(entry["path"]): str(entry["sha"])
         for entry in tree["tree"]
         if entry.get("mode") == "160000"
     }
-    missing = set(SUBMODULE_REPOS) - set(revs)
-    if missing:
-        msg = f"tag {tag} is missing expected gitlinks: {sorted(missing)}"
+
+
+def submodule_pins(tag: str) -> dict[str, dict[str, str]]:
+    """The tag's submodule set: path -> {owner, repo, rev}.
+
+    The gitlink tree is the source of truth for the set (and the revs);
+    ``.gitmodules`` only supplies where each path is fetched from.
+    """
+    revs = gitlink_revs(tag)
+    slugs = parse_gitmodules(tag)
+    orphans = set(revs) - set(slugs)
+    if orphans:
+        msg = f"tag {tag} has gitlinks missing from .gitmodules: {sorted(orphans)}"
         raise ValueError(msg)
-    return revs
+    pins: dict[str, dict[str, str]] = {}
+    for path, rev in revs.items():
+        owner, repo = slugs[path].split("/", 1)
+        pins[path] = {"owner": owner, "repo": repo, "rev": rev}
+    return pins
 
 
-def prefetch_github_archive(repo: str, rev: str) -> str:
-    """fetchFromGitHub-compatible SRI hash of a tag/commit tarball."""
+def prefetch_github_archive(slug: str, rev: str) -> str:
+    """fetchFromGitHub-compatible SRI hash of a ``owner/repo`` tarball."""
     return calculate_url_hash(
-        f"https://github.com/{OWNER}/{repo}/archive/{rev}.tar.gz",
+        f"https://github.com/{slug}/archive/{rev}.tar.gz",
         unpack=True,
     )
 
@@ -229,23 +258,34 @@ def main() -> None:
     # 1) Main source.
     print(f"Prefetching {REPO} v{latest}...")
     data["version"] = latest
-    data["hash"] = prefetch_github_archive(REPO, f"v{latest}")
+    data["hash"] = prefetch_github_archive(f"{OWNER}/{REPO}", f"v{latest}")
     save_hashes(HASHES_FILE, data)
 
-    # 2) Submodules at the tag's gitlinks.
-    revs = gitlink_revs(f"v{latest}")
-    for path, repo in SUBMODULE_REPOS.items():
-        name = path.rsplit("/", 1)[-1]
-        rev = revs[path]
-        old = data["submodules"].get(name, {})
-        if old.get("rev") == rev and old.get("hash"):
-            print(f"submodule {name}: unchanged at {rev}")
+    # 2) Submodules: the set comes from the tag's gitlink tree, so upstream
+    # additions and removals are followed (new pins prefetched, stale
+    # entries dropped).
+    old_submodules = data["submodules"]
+    new_submodules: dict[str, Any] = {}
+    for path, pin in sorted(submodule_pins(f"v{latest}").items()):
+        prev = old_submodules.get(path, {})
+        if prev.get("rev") == pin["rev"] and prev.get("hash"):
+            # Same commit; keep the pinned hash, refresh the repo location.
+            prev["owner"], prev["repo"] = pin["owner"], pin["repo"]
+            new_submodules[path] = prev
+            print(f"submodule {path}: unchanged at {pin['rev']}")
             continue
-        print(f"submodule {name}: {old.get('rev', '?')} -> {rev}")
-        data["submodules"][name] = {
-            "rev": rev,
-            "hash": prefetch_github_archive(repo, rev),
+        print(f"submodule {path}: {prev.get('rev', '?')} -> {pin['rev']}")
+        new_submodules[path] = {
+            "owner": pin["owner"],
+            "repo": pin["repo"],
+            "rev": pin["rev"],
+            "hash": prefetch_github_archive(
+                f"{pin['owner']}/{pin['repo']}", pin["rev"]
+            ),
         }
+    for gone in sorted(set(old_submodules) - set(new_submodules)):
+        print(f"submodule {gone}: dropped (not in {latest} tree)")
+    data["submodules"] = new_submodules
     save_hashes(HASHES_FILE, data)
 
     # 3) CEF pin.

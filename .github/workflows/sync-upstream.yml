@@ -147,11 +147,10 @@ jobs:
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'update.yml',
+              workflow_id: 'update-fork.yml',
               ref: 'main',
               inputs: {
                 packages: process.env.FORK_UPDATE_PACKAGES || '',
-                update_inputs: 'false',
               },
             });
       - name: Write summary
