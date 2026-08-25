@@ -130,7 +130,7 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
-<summary><strong>codex-chatgpt-web</strong> - Use ChatGPT Web (including Pro) as native Codex models with context, tools, streaming and images</summary>
+<summary><strong>codex-chatgpt-web</strong> - Electron launcher for codex-chatgpt-web: use ChatGPT Web (including Pro) as native Codex models</summary>
 
 - **Source**: source
 - **License**: MIT
@@ -140,13 +140,13 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
-<summary><strong>codex-chatgpt-web-desktop</strong> - Electron launcher for codex-chatgpt-web: use ChatGPT Web (including Pro) as native Codex models</summary>
+<summary><strong>codex-chatgpt-web-cli</strong> - Use ChatGPT Web (including Pro) as native Codex models with context, tools, streaming and images</summary>
 
 - **Source**: source
 - **License**: MIT
 - **Homepage**: https://github.com/miuuyy/codex-chatgpt-web
-- **Usage**: `nix run github:numtide/llm-agents.nix#codex-chatgpt-web-desktop -- --help`
-- **Nix**: [packages/codex-chatgpt-web-desktop/package.nix](packages/codex-chatgpt-web-desktop/package.nix)
+- **Usage**: `nix run github:numtide/llm-agents.nix#codex-chatgpt-web-cli -- --help`
+- **Nix**: [packages/codex-chatgpt-web-cli/package.nix](packages/codex-chatgpt-web-cli/package.nix)
 
 </details>
 <details>
