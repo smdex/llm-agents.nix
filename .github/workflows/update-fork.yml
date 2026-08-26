@@ -1,0 +1,35 @@
+# Fork-only package updater. Calls the upstream update-flake.yml verbatim
+# (zero fork diff on shared CI files) with an explicit fork-package list.
+#
+# - Fork packages live in the FORK_UPDATE_PACKAGES repo variable; add new
+#   fork-added packages there (space-separated).
+# - `inputs: none` is a sentinel: upstream discovery skips unknown input
+#   names, so the flake-input matrix stays empty. Flake inputs are synced
+#   from upstream by sync-upstream.yml instead.
+# - CLIENT_ID is passed from APP_ID: the App's client ID is stored under
+#   that secret name in this fork (see update-flake.yml history).
+name: Update Fork Packages
+on:
+  schedule:
+    # 4x daily, outside Europe/Berlin work hours, tracking US West Coast release window.
+    - cron: '0 0,4,18,21 * * *'
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: 'Specific packages to update (space-separated, empty for the fork package list)'
+        required: false
+        default: ''
+concurrency:
+  group: fork-main-maintenance
+  cancel-in-progress: false
+jobs:
+  update:
+    uses: ./.github/workflows/update-flake.yml
+    with:
+      packages: ${{ github.event.inputs.packages || vars.FORK_UPDATE_PACKAGES || '' }}
+      inputs: none
+      pr-labels: 'dependencies,automated'
+      auto-merge: true
+    secrets:
+      CLIENT_ID: ${{ secrets.APP_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}

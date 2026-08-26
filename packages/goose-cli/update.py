@@ -9,6 +9,7 @@ Cargo.lock. Everything is driven through hashes.json because nix-update
 cannot handle the extra librusty_v8 fixed-output derivation.
 """
 
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -18,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 from updater import (
     calculate_platform_hashes,
     calculate_url_hash,
-    fetch_github_latest_release,
+    fetch_json,
     fetch_text,
     load_hashes,
     save_hashes,
@@ -26,6 +27,7 @@ from updater import (
     update_dependency_hash,
 )
 from updater.hash import DUMMY_SHA256_HASH
+from updater.version import parse_version
 
 HASHES_FILE = Path(__file__).parent / "hashes.json"
 # Upstream moved from block/goose to aaif-goose/goose.
@@ -37,6 +39,40 @@ PLATFORMS = {
     "aarch64-linux": "aarch64-unknown-linux-gnu",
     "aarch64-darwin": "aarch64-apple-darwin",
 }
+
+
+def fetch_latest_release_matching(pattern: str, *, per_page: int = 100) -> str:
+    """Fetch the newest non-prerelease GitHub release matching ``pattern``.
+
+    GitHub's ``releases/latest`` endpoint can point at another release line
+    (Goose 2 currently hides the latest Goose 1 release), so callers that
+    track a legacy line must filter the release list explicitly.
+    """
+    url = f"https://api.github.com/repos/{OWNER}/{REPO}/releases?per_page={per_page}"
+    data = fetch_json(url)
+    if not isinstance(data, list):
+        msg = f"Expected list from GitHub API, got {type(data)}"
+        raise TypeError(msg)
+
+    candidates: list[str] = []
+    compiled = re.compile(pattern)
+    for release in data:
+        if (
+            not isinstance(release, dict)
+            or release.get("draft")
+            or release.get("prerelease")
+        ):
+            continue
+        tag = release.get("tag_name")
+        if isinstance(tag, str):
+            version = tag.lstrip("v")
+            if compiled.fullmatch(version):
+                candidates.append(version)
+
+    if not candidates:
+        msg = f"No release matching {pattern!r} for {OWNER}/{REPO}"
+        raise ValueError(msg)
+    return max(candidates, key=parse_version)
 
 
 def fetch_v8_version_from_cargo_lock(goose_version: str) -> str:
@@ -80,7 +116,7 @@ def main() -> None:
     """Update the goose-cli package."""
     data = load_hashes(HASHES_FILE)
     current = data["version"]
-    latest = fetch_github_latest_release(OWNER, REPO)
+    latest = fetch_latest_release_matching(r"1\.[0-9]+\.[0-9]+")
     print(f"Current: {current}, Latest: {latest}")
 
     if not should_update(current, latest):
