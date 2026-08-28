@@ -35,7 +35,7 @@ stdenv.mkDerivation (finalAttrs: {
     owner = "aaif-goose";
     repo = "goose";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-G75s5PqHQontrQSqkLneB1DGEmODHbMS8WUVNa3oTfo=";
+    hash = "sha256-8tKAAQdP9Rx7X0hEuCmSQ9sQQSYiXVMhJc2EQqIjaOY=";
   };
 
   sourceRoot = "${finalAttrs.src.name}/ui";
@@ -44,7 +44,7 @@ stdenv.mkDerivation (finalAttrs: {
     sourceRoot = "${finalAttrs.src.name}/ui";
     inherit pnpm;
     fetcherVersion = 3;
-    hash = "sha256-1AQa2K/4GLOV4m7y7b8bZQlW9PpT1oC21VRe4ElW2wo=";
+    hash = "sha256-FpnWCJsytxJ5w9yqWayU2ZNDCm7RgubU34ouIeNWqfA=";
   };
 
   postPatch = ''
