@@ -12,16 +12,16 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "tokscale";
-  version = "4.14.0";
+  version = "4.15.0";
 
   src = fetchFromGitHub {
     owner = "junhoyeo";
     repo = "tokscale";
     tag = "v${version}";
-    hash = "sha256-kceKCBg5WzISIoNBKcFbfsZ1VJvzOEGa5VUnPfjzm9k=";
+    hash = "sha256-abug+ZOnW8zl0xG1C+cwQcp6UOi48mOct4klSdwgR/w=";
   };
 
-  cargoHash = "sha256-hu1208/D+2i0MZx0SCulcUqqQxsUfP19XcRGmZwqeeg=";
+  cargoHash = "sha256-nvgvVFDthLYLb20huX4iNxyeRDVPP5PyxUhrk3DvJhI=";
 
   # Use nixpkgs OpenSSL instead of building vendored OpenSSL from source.
   postPatch = ''
