@@ -9,13 +9,13 @@
 
 buildGoModule rec {
   pname = "openagent";
-  version = "2.89.0";
+  version = "2.89.1";
 
   src = fetchFromGitHub {
     owner = "the-open-agent";
     repo = "openagent";
     tag = "v${version}";
-    hash = "sha256-uI8p5uS8A68aSmqYp3iAmNp0L1XPmZlvXzfx4Nggu9U=";
+    hash = "sha256-qunY4iw5rYq41KJCYQ6/evI82f6ZZEphVvRL1p1KDEM=";
   };
 
   vendorHash = "sha256-mWMcFmClGo0myDSp6S9xzt/QX7a+8tfS8V2yEptfiZI=";
