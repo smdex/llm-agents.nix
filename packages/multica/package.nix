@@ -11,13 +11,13 @@
 # Relax the go.mod constraint until nixpkgs reaches 1.26.6, then drop the hook.
 (buildGoModule.override { go = go_1_26; }) rec {
   pname = "multica";
-  version = "0.4.37";
+  version = "0.4.38";
 
   src = fetchFromGitHub {
     owner = "multica-ai";
     repo = "multica";
     tag = "v${version}";
-    hash = "sha256-/0XVt2xxQPbD6cjudQEq68O53zMuPLkEa0hT8hPsth0=";
+    hash = "sha256-dtHAlV0uLO6ZJH5lfFc91yEbF8ICr/MBYBmEqrGNNYQ=";
   };
 
   sourceRoot = "source/server";
