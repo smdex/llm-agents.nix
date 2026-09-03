@@ -1,0 +1,3 @@
+# codex-chatgpt-web-cli shares hashes.json/bun.nix with codex-chatgpt-web
+# and asserts version equality at eval time; it is bumped in the same run.
+codex-chatgpt-web-cli
