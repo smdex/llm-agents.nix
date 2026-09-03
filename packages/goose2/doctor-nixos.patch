@@ -1,0 +1,218 @@
+--- a/crates/doctor/src/resolve.rs
++++ b/crates/doctor/src/resolve.rs
+@@ -5,44 +5,120 @@
+
+ use super::types::ResolvedBinary;
+
+-/// Resolve a binary by trying login shell `which` then common install paths.
++/// Return the first regular file named `cmd` in a PATH value.
++pub fn resolve_on_path(cmd: &str, path_env: Option<&str>) -> Option<PathBuf> {
++    let separator = if cfg!(windows) { ';' } else { ':' };
++    path_env?
++        .split(separator)
++        .filter(|directory| !directory.is_empty())
++        .map(|directory| PathBuf::from(directory).join(cmd))
++        .find(|path| path.is_file())
++}
++
++/// Resolve a login shell from explicit environment values.
++pub fn login_shell_from(shell_env: Option<&str>, path_env: Option<&str>) -> Option<PathBuf> {
++    if let Some(shell) = shell_env
++        .map(PathBuf::from)
++        .filter(|path| path.is_file())
++    {
++        return Some(shell);
++    }
++
++    for name in ["zsh", "bash", "sh"] {
++        if let Some(shell) = resolve_on_path(name, path_env) {
++            return Some(shell);
++        }
++    }
++
++    ["/bin/zsh", "/bin/bash", "/bin/sh"]
++        .into_iter()
++        .map(PathBuf::from)
++        .find(|path| path.is_file())
++}
++
++/// Resolve a login shell from the inherited environment.
++pub fn login_shell() -> Option<PathBuf> {
++    login_shell_from(
++        std::env::var("SHELL").ok().as_deref(),
++        std::env::var("PATH").ok().as_deref(),
++    )
++}
++
++/// Resolve a binary by trying the inherited PATH, then a login shell, then
++/// common install paths.
+ pub fn resolve_binary(cmd: &str) -> ResolvedBinary {
++    resolve_binary_with_env(
++        cmd,
++        std::env::var("PATH").ok().as_deref(),
++        std::env::var("SHELL").ok().as_deref(),
++    )
++}
++
++fn resolve_binary_with_env(
++    cmd: &str,
++    path_env: Option<&str>,
++    shell_env: Option<&str>,
++) -> ResolvedBinary {
+     let mut lines = vec![format!("resolve '{cmd}':")];
+
+-    // Strategy 1: Login shell `which` (primary)
++    // Strategy 0: direct PATH lookup works on NixOS without an FHS shell.
++    lines.push("  strategy 0 — direct PATH search:".to_string());
++    if let Some(path) = resolve_on_path(cmd, path_env) {
++        lines.push(format!("    {} => found (resolved)", path.display()));
++        return ResolvedBinary {
++            path: Some(path),
++            search_output: lines.join("\n"),
++        };
++    }
++    lines.push("    no direct PATH match".to_string());
++
++    // Strategy 1: login shell `which` (compatibility fallback).
+     lines.push("  strategy 1 — login shell `which`:".to_string());
+-    for shell in &["/bin/zsh", "/bin/bash"] {
++    let mut shells = Vec::new();
++    if let Some(shell) = login_shell_from(shell_env, path_env) {
++        shells.push(shell);
++    }
++    for shell in [PathBuf::from("/bin/zsh"), PathBuf::from("/bin/bash")] {
++        if !shells.contains(&shell) {
++            shells.push(shell);
++        }
++    }
++    for shell in shells {
+         let which_cmd = format!("which {cmd}");
+-        match Command::new(shell).args(["-l", "-c", &which_cmd]).output() {
++        match Command::new(&shell).args(["-l", "-c", &which_cmd]).output() {
+             Ok(output) => {
+                 let result = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                 if output.status.success() && !result.is_empty() {
+                     lines.push(format!(
+-                        "    {shell} -l -c 'which {cmd}' => {result} (resolved)"
++                        "    {} -l -c 'which {cmd}' => {result} (resolved)",
++                        shell.display()
+                     ));
+                     return ResolvedBinary {
+                         path: Some(PathBuf::from(&result)),
+                         search_output: lines.join("\n"),
+                     };
+                 }
+-                lines.push(format!("    {shell} -l -c 'which {cmd}' => not found"));
++                lines.push(format!("    {} -l -c 'which {cmd}' => not found", shell.display()));
+             }
+-            Err(e) => {
+-                lines.push(format!("    {shell} -l -c 'which {cmd}' => error: {e}"));
++            Err(error) => {
++                lines.push(format!(
++                    "    {} -l -c 'which {cmd}' => error: {error}",
++                    shell.display()
++                ));
+             }
+         }
+     }
+
+-    // Strategy 2: Common install paths (fallback)
++    // Strategy 2: Common install paths (fallback).
+     lines.push("  strategy 2 — common install paths (fallback):".to_string());
+-    for dir in &[
++    for directory in [
+         "/opt/homebrew/bin",
+         "/usr/local/bin",
+         "/usr/bin",
+         "/home/linuxbrew/.linuxbrew/bin",
+     ] {
+-        let path = PathBuf::from(dir).join(cmd);
+-        if path.exists() {
++        let path = PathBuf::from(directory).join(cmd);
++        if path.is_file() {
+             lines.push(format!("    {} => found (resolved)", path.display()));
+             return ResolvedBinary {
+                 path: Some(path),
+@@ -59,6 +135,45 @@
+     }
+ }
+
++#[cfg(test)]
++mod tests {
++    use super::*;
++    use std::fs;
++    use std::sync::atomic::{AtomicU64, Ordering};
++
++    fn temporary_directory(name: &str) -> PathBuf {
++        static NEXT: AtomicU64 = AtomicU64::new(0);
++        let id = NEXT.fetch_add(1, Ordering::Relaxed);
++        std::env::temp_dir().join(format!("doctor-{name}-{}-{id}", std::process::id()))
++    }
++
++    #[test]
++    fn path_only_resolution_does_not_require_an_fhs_shell() {
++        let directory = temporary_directory("path-only");
++        fs::create_dir_all(&directory).unwrap();
++        let binary = directory.join("goose");
++        fs::write(&binary, b"fake executable").unwrap();
++
++        let resolved = resolve_binary_with_env("goose", directory.to_str(), None);
++
++        assert_eq!(resolved.path, Some(binary));
++        assert!(resolved.search_output.contains("strategy 0"));
++        fs::remove_dir_all(directory).unwrap();
++    }
++
++    #[test]
++    fn login_shell_prefers_the_configured_store_path() {
++        let directory = temporary_directory("shell");
++        fs::create_dir_all(&directory).unwrap();
++        let shell = directory.join("bash");
++        fs::write(&shell, b"fake shell").unwrap();
++
++        assert_eq!(login_shell_from(shell.to_str(), None), Some(shell.clone()));
++        assert_eq!(login_shell_from(None, directory.to_str()), Some(shell));
++        fs::remove_dir_all(directory).unwrap();
++    }
++}
++
+ /// Format the raw output of a command invocation for debug diagnostics.
+ pub fn format_command_output(cmd_desc: &str, output: &std::process::Output) -> String {
+     let stdout = String::from_utf8_lossy(&output.stdout);
+--- a/crates/doctor/src/lib.rs
++++ b/crates/doctor/src/lib.rs
+@@ -159,19 +159,26 @@
+ /// should use `execute_fix` which looks up the command from static definitions.
+ pub(crate) async fn execute_command(command: String) -> Result<(), String> {
+     tokio::task::spawn_blocking(move || {
+-        let (shell, args) = if std::path::Path::new("/bin/zsh").exists() {
+-            ("/bin/zsh", vec!["-l", "-c", &command])
+-        } else {
+-            ("/bin/bash", vec!["-l", "-c", &command])
+-        };
++        let shell = resolve::login_shell().ok_or_else(|| "No login shell found".to_string())?;
++        let shell_str = shell.to_string_lossy().into_owned();
+         let home = std::env::var("HOME").unwrap_or_else(|_| "/".to_string());
+         let user = std::env::var("USER").unwrap_or_default();
+-        let output = std::process::Command::new(shell)
+-            .args(&args)
++        let path = std::env::var("PATH").unwrap_or_default();
++        let mut process = std::process::Command::new(shell);
++        process
++            .args(["-l", "-c", &command])
+             .env_clear()
+             .env("HOME", &home)
+             .env("USER", &user)
+-            .env("TERM", "xterm-256color")
++            .env("PATH", &path)
++            .env("SHELL", &shell_str)
++            .env("TERM", "xterm-256color");
++        for name in ["NIX_SSL_CERT_FILE", "SSL_CERT_FILE"] {
++            if let Ok(value) = std::env::var(name) {
++                process.env(name, value);
++            }
++        }
++        let output = process
+             .current_dir(&home)
+             .output()
+             .map_err(|e| format!("Failed to run command: {e}"))?;
