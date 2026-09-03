@@ -1,0 +1,15 @@
+diff --git a/crates/gateway/src/tura_exec/mod.rs b/crates/gateway/src/tura_exec/mod.rs
+index c47c32c..023f270 100644
+--- a/crates/gateway/src/tura_exec/mod.rs
++++ b/crates/gateway/src/tura_exec/mod.rs
+@@ -32,6 +32,10 @@ fn run() -> Result<i32, String> {
+         print_help();
+         return Ok(0);
+     }
++    if args.iter().any(|arg| arg == "--version" || arg == "-V") {
++        println!("tura {}", tura_path::instance_version());
++        return Ok(0);
++    }
+     let config = CliConfig::parse(args)?;
+     configure_runtime_env(&config)?;
+ 
