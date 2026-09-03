@@ -6,6 +6,7 @@ pkgs.mkShellNoCC {
 
     # Tools needed for update scripts
     pkgs.bash
+    pkgs.bun
     pkgs.coreutils
     pkgs.curl
     pkgs.gh
