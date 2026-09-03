@@ -764,16 +764,6 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
-<summary><strong>hermes-hudui</strong> - Web UI consciousness monitor for Hermes</summary>
-
-- **Source**: source
-- **License**: MIT
-- **Homepage**: https://github.com/joeynyc/hermes-hudui
-- **Usage**: `nix run github:numtide/llm-agents.nix#hermes-hudui -- --help`
-- **Nix**: [packages/hermes-hudui/package.nix](packages/hermes-hudui/package.nix)
-
-</details>
-<details>
 <summary><strong>hermes-one</strong> - Hermes One, community desktop companion for Hermes Agent</summary>
 
 - **Source**: source
