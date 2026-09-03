@@ -1,0 +1,69 @@
+{
+  "version": "0.63.17",
+  "hash": "sha256-5yoe3v3/30cnr21dB9rQNw5/DKl98FwZWWobL6H2Kfo=",
+  "pnpmDeps": "sha256-1yDQDiuboHiuLoeGogGb/zZ/awCCza6SwvL5B8rFcu4=",
+  "cargoCliDeps": "sha256-9PDYgvWbKQp92HVH1QxcSholmccsNp0uFzCKtfc9blw=",
+  "cargoAppDeps": "sha256-1fbSju+3qkoeKjyCRojP9i0Fa1M0vTzNohvLPbpoUOo=",
+  "submodules": {
+    "vendor/tinyagents": {
+      "owner": "tinyhumansai",
+      "repo": "tinyagents",
+      "rev": "65c02fbf9392f736a4ee169870e36e702dc5d923",
+      "hash": "sha256-IBZG43QCNvpwwkEP+CSHrccF1EtxmlG26dM2WXJLtAU="
+    },
+    "vendor/tinybus": {
+      "owner": "tinyhumansai",
+      "repo": "tinybus",
+      "rev": "c35105f95b5efd49f63aec3f82f8bc2154694977",
+      "hash": "sha256-y3Zahz/O0aqjWUXdWCJGvCz+tPvvIXJVrZwbfrjK3L0="
+    },
+    "vendor/tinychannels": {
+      "owner": "tinyhumansai",
+      "repo": "tinychannels",
+      "rev": "39266a3d196705d67f5172cd82c605ab5a475a3d",
+      "hash": "sha256-g9bLfNCPBt2LA75sQ3kFJyJhrMlqBLhaqrauBKvperw="
+    },
+    "vendor/tinycortex": {
+      "owner": "tinyhumansai",
+      "repo": "tinycortex",
+      "rev": "b7cf1213b6093af136797670a9682839bc909781",
+      "hash": "sha256-uszv/aI+6NYxmG+rMMgDGz/itDqkLG1O/TvVyg0qkm8="
+    },
+    "vendor/tinyflows": {
+      "owner": "tinyhumansai",
+      "repo": "tinyflows",
+      "rev": "8f63a2734f13bb5b7b974615bb8d4abd2df57894",
+      "hash": "sha256-vf2HeUNVvhGjFLPmgzpp5miAxI9qoZI4RgHJODLosBE="
+    },
+    "vendor/tinyhosts": {
+      "owner": "tinyhumansai",
+      "repo": "tinyhosts",
+      "rev": "d2e6b7703c710340980dc51e47af2035771ef511",
+      "hash": "sha256-0uUhrmQKEhwfC2C/+IakYg14xV5GSyLIwR7YNTB1Mh0="
+    },
+    "vendor/tinyhumans-sdk": {
+      "owner": "tinyhumansai",
+      "repo": "sdk",
+      "rev": "83ab7b1d32fdef85ec8d8427b92225a7575fb5cc",
+      "hash": "sha256-QouKmsWl49//q/6bf/nDhbPcDutQvBUQFP213YJrj8w="
+    },
+    "vendor/tinymemory": {
+      "owner": "tinyhumansai",
+      "repo": "tinymemory",
+      "rev": "1d6b997874a06600ba0c4922708b5613497c9ffe",
+      "hash": "sha256-S/Ba8okm69JIe/wLL9qo0FiaLtMNmpvCIORENAtlP0c="
+    },
+    "vendor/tinyplace": {
+      "owner": "tinyhumansai",
+      "repo": "tiny.place",
+      "rev": "2b5bb1da53eec369eb2a781b14938f14314c69af",
+      "hash": "sha256-OckjpEdazYxE/r1r6Nlvu2lPDFaawJGEsDSCjyftpyA="
+    },
+    "vendor/tinywallet": {
+      "owner": "tinyhumansai",
+      "repo": "tinywallet",
+      "rev": "22141ecaab2b6022dc9970bedc9fc29b65ee7b45",
+      "hash": "sha256-7PXg7D5fw8Brm7Oxw30LE0eF0HWl0Py2hka5O7Ar6/s="
+    }
+  }
+}
