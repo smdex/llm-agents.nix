@@ -20,3 +20,5 @@ target/
 .claude/
 scripts/updater/*-DESIGN.md
 scripts/updater/*-MIGRATION.md
+
+.pi-subagents/
