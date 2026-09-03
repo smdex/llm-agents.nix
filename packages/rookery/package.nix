@@ -12,16 +12,16 @@
 # gitignored), so `cargo build` picks them up as-is.
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "rookery";
-  version = "0.1.11";
+  version = "0.1.14";
 
   src = fetchFromGitHub {
     owner = "lance0";
     repo = "rookery";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-mQESlzLXHfN/EWy3csCSaqI3slZM2EjK/d4lIKj5AXY=";
+    hash = "sha256-K/byotIr3BNsCUOaZiKj/vyyasgTQSZzhYvVQnwogmM=";
   };
 
-  cargoHash = "sha256-UUGKoMuXfo48e0NjmlFL8+LXO/p9GG+nihmknKnoHqw=";
+  cargoHash = "sha256-W3JNmJsIOOxrgoSgaFJLS6KoB0Pi2WQrxnYtxa2K9Rw=";
 
   # Tests spawn helper processes and shell out to sqlite3 (see
   # rookery_engine::integrity), which is not available in the sandbox.
