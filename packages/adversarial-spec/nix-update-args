@@ -1,0 +1,3 @@
+# No GitHub tags/releases — track the latest commit on main and bump rev.
+--version
+branch=main
