@@ -16,13 +16,13 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "agentty";
-  version = "0.5.0";
+  version = "0.6.0";
 
   src = fetchFromGitHub {
     owner = "1ay1";
     repo = "agentty";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-rkBt663EJ6WQJR75X6yRAE7/6T8IMTClFQyxrDLIbFg=";
+    hash = "sha256-QZCNy9080NkpdgSqni/VZo4VHjYI5FVY4Q400RCGdFo=";
     # maya / acp-cpp / mcp-cpp / rag-cpp are git submodules pinned by commit
     # in the tag's tree; materializing them here pins the whole tree with one
     # hash. The fetcher strips .git, which also disables agentty's
