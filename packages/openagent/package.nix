@@ -9,16 +9,16 @@
 
 buildGoModule rec {
   pname = "openagent";
-  version = "2.90.1";
+  version = "2.91.0";
 
   src = fetchFromGitHub {
     owner = "the-open-agent";
     repo = "openagent";
     tag = "v${version}";
-    hash = "sha256-l1lz4trGpTNkn6rGr1Fr6lLgVMYYnYz/7T63yaIRMs0=";
+    hash = "sha256-YZtAFhhrO3+0ohC6BcG8zGcu9KfLWmf5NxQeEALOKBo=";
   };
 
-  vendorHash = "sha256-mWMcFmClGo0myDSp6S9xzt/QX7a+8tfS8V2yEptfiZI=";
+  vendorHash = "sha256-SEjo3GMRJMnx9RnTcSuRAegseo0fKgQsfl7SXnUMO34=";
 
   # Pure-Go build (modernc.org/sqlite, goleveldb) — no native deps.
   env.CGO_ENABLED = 0;
