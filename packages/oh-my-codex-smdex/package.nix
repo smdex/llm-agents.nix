@@ -109,6 +109,8 @@ buildNpmPackage {
 
     cp -r dist skills prompts templates package.json Cargo.toml Cargo.lock crates $root/
     cp -r src/scripts $root/src/
+    cp -r plugins $root/
+    install -Dm644 .agents/plugins/marketplace.json $root/.agents/plugins/marketplace.json
 
     npm prune --omit=dev
     cp -r node_modules $root/
@@ -139,6 +141,13 @@ buildNpmPackage {
   doInstallCheck = true;
   nativeInstallCheckInputs = [ versionCheckHook ];
   versionCheckProgramArg = [ "--version" ];
+  postInstallCheck = ''
+    ${lib.getExe nodejs} --input-type=module -e '
+      import assert from "node:assert/strict";
+      import { resolvePackagedOmxMarketplace } from "'"$out"'/share/oh-my-codex/dist/cli/plugin-marketplace.js";
+      assert.ok(await resolvePackagedOmxMarketplace(process.argv[1]));
+    ' "$out/share/oh-my-codex"
+  '';
 
   passthru = {
     category = "AI Coding Agents";
