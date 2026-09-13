@@ -37,18 +37,18 @@
 
 buildNpmPackage (finalAttrs: {
   pname = "paseo-desktop";
-  version = "0.7.2";
+  version = "0.8.0";
 
   src = fetchFromGitHub {
     owner = "getpaseo";
     repo = "paseo";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-JUVjE32qS29ZNh1tSOLy9YtyPD3+qjhz+W30lWtVqaw=";
+    hash = "sha256-zYUj7CGz+i+w0elysbU+Sup+NACsBoIEqCu8WHA24PE=";
   };
 
   nodejs = nodejs_22;
 
-  npmDepsHash = "sha256-xYp+cGChDn57nX/+mmvt0HD++kjnQcNzASr6kUByAMY=";
+  npmDepsHash = "sha256-d6hZcmNSdOUtjKdITNCKMM6+9ommUZWIc/7MO4dJEJ8=";
   npmDepsFetcherVersion = 2;
 
   # Prevent onnxruntime-node's install script from running during automatic
@@ -149,6 +149,12 @@ buildNpmPackage (finalAttrs: {
     # as-is, which node's module resolution requires).
     sort -u runtime-files.txt | tar cf - --no-recursion -T - \
       | tar xf - -C $out/share/paseo-desktop
+
+    # The trace pulls in prebuilt addons for every platform (musl, arm, ia32).
+    find $out/share/paseo-desktop -name '*.node' -path '*/@electron-internal/extract-zip/*' \
+      ! -name 'index.${
+        if stdenv.hostPlatform.isAarch64 then "linux-arm64-gnu" else "linux-x64-gnu"
+      }.node' -delete
 
     # Hicolor icon for desktop environments
     install -Dm644 packages/desktop/assets/icon.png \
