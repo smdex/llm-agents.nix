@@ -229,6 +229,9 @@ python.pkgs.buildPythonApplication rec {
   # satisfy the otel requirements (issue #3668).
   pythonRelaxDeps = true;
 
+  # Closed-source binary wheel. Optional at runtime (find_spec fallback).
+  pythonRemoveDeps = [ "mistralai-vibe-local-harness" ];
+
   # `import vibe` alone is lazy and misses dependency drift: mistralai 2.1.3
   # lacked mistralai.extra.observability.telemetry yet built fine and crashed
   # at runtime (issue #6462). Import submodules that pull in the vendored deps
