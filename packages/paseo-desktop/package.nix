@@ -150,6 +150,12 @@ buildNpmPackage (finalAttrs: {
     sort -u runtime-files.txt | tar cf - --no-recursion -T - \
       | tar xf - -C $out/share/paseo-desktop
 
+    # The trace pulls in prebuilt addons for every platform (musl, arm, ia32).
+    find $out/share/paseo-desktop -name '*.node' -path '*/@electron-internal/extract-zip/*' \
+      ! -name 'index.${
+        if stdenv.hostPlatform.isAarch64 then "linux-arm64-gnu" else "linux-x64-gnu"
+      }.node' -delete
+
     # Hicolor icon for desktop environments
     install -Dm644 packages/desktop/assets/icon.png \
       $out/share/icons/hicolor/512x512/apps/paseo-desktop.png
