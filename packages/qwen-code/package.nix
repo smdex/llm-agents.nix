@@ -46,6 +46,10 @@ buildNpmPackage (finalAttrs: {
   buildPhase = ''
     runHook preBuild
 
+    # npmConfigHook only patches the root node_modules. Workspaces with
+    # nested .bin (web-shell's vite) keep /usr/bin/env otherwise.
+    patchShebangs packages/*/node_modules
+
     npm run generate
     # The CLI esbuild bundle resolves imports against workspace dist/ output.
     # Use upstream's --cli-only build order so every workspace the bundle pulls
