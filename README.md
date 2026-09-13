@@ -501,6 +501,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>paseo</strong> - Self-hosted daemon for AI coding agents (server + CLI)</summary>
+
+- **Source**: source
+- **License**: AGPL-3.0-or-later
+- **Homepage**: https://github.com/getpaseo/paseo
+- **Usage**: `nix run github:numtide/llm-agents.nix#paseo -- --help`
+- **Nix**: [packages/paseo/package.nix](packages/paseo/package.nix)
+
+</details>
+<details>
 <summary><strong>pi</strong> - A terminal-based coding agent with multi-model support</summary>
 
 - **Source**: bytecode
