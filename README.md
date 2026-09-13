@@ -491,6 +491,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>omo-ai</strong> - Oh My OpenAgent standalone (Senpi edition) coding agent</summary>
+
+- **Source**: bytecode
+- **License**: MIT
+- **Homepage**: https://github.com/code-yeongyu/oh-my-openagent
+- **Usage**: `nix run github:numtide/llm-agents.nix#omo-ai -- --help`
+- **Nix**: [packages/omo-ai/package.nix](packages/omo-ai/package.nix)
+
+</details>
+<details>
 <summary><strong>omp</strong> - A terminal-based coding agent with multi-model support</summary>
 
 - **Source**: source
@@ -551,6 +561,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>openhands-agent-canvas</strong> - Self-hosted web UI for running OpenHands, Claude Code, Codex and other ACP agents</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/OpenHands/OpenHands
+- **Usage**: `nix run github:numtide/llm-agents.nix#openhands-agent-canvas -- --help`
+- **Nix**: [packages/openhands-agent-canvas/package.nix](packages/openhands-agent-canvas/package.nix)
+
+</details>
+<details>
 <summary><strong>orca</strong> - ADE for working with a fleet of parallel coding agents</summary>
 
 - **Source**: binary
@@ -568,6 +588,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://openrouter.ai/labs/ori
 - **Usage**: `nix run github:numtide/llm-agents.nix#ori -- --help`
 - **Nix**: [packages/ori/package.nix](packages/ori/package.nix)
+
+</details>
+<details>
+<summary><strong>paseo</strong> - Self-hosted daemon for AI coding agents (server + CLI)</summary>
+
+- **Source**: source
+- **License**: AGPL-3.0-or-later
+- **Homepage**: https://github.com/getpaseo/paseo
+- **Usage**: `nix run github:numtide/llm-agents.nix#paseo -- --help`
+- **Nix**: [packages/paseo/package.nix](packages/paseo/package.nix)
 
 </details>
 <details>
@@ -1040,6 +1070,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://ccusage.com/
 - **Usage**: `nix run github:numtide/llm-agents.nix#ccusage -- --help`
 - **Nix**: [packages/ccusage/package.nix](packages/ccusage/package.nix)
+
+</details>
+<details>
+<summary><strong>cpa-usage-keeper</strong> - Standalone CliProxyAPI usage tracker with SQLite persistence and built-in dashboard</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/Willxup/cpa-usage-keeper
+- **Usage**: `nix run github:numtide/llm-agents.nix#cpa-usage-keeper -- --help`
+- **Nix**: [packages/cpa-usage-keeper/package.nix](packages/cpa-usage-keeper/package.nix)
 
 </details>
 <details>
@@ -1796,6 +1836,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>agent-slack</strong> - Slack automation CLI for AI agents</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/stablyai/agent-slack
+- **Usage**: `nix run github:numtide/llm-agents.nix#agent-slack -- --help`
+- **Nix**: [packages/agent-slack/package.nix](packages/agent-slack/package.nix)
+
+</details>
+<details>
 <summary><strong>apm</strong> - Agent Package Manager — dependency manager for AI agents</summary>
 
 - **Source**: source
@@ -1933,6 +1983,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/iOfficeAI/OfficeCLI
 - **Usage**: `nix run github:numtide/llm-agents.nix#officecli -- --help`
 - **Nix**: [packages/officecli/package.nix](packages/officecli/package.nix)
+
+</details>
+<details>
+<summary><strong>opencodex</strong> - Universal provider proxy for OpenAI Codex, Claude Code, Claude Desktop & Grok Build</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/lidge-jun/opencodex
+- **Usage**: `nix run github:numtide/llm-agents.nix#opencodex -- --help`
+- **Nix**: [packages/opencodex/package.nix](packages/opencodex/package.nix)
 
 </details>
 <details>
