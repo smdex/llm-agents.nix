@@ -1,12 +1,11 @@
 name: Sync Upstream
 on:
   schedule:
-    # Upstream runs dependency updates at 00:00, 04:00, 18:00, and 21:00 UTC.
-    # Sync two hours later (02:00, 06:00, 20:00, 23:00) so merged upstream
-    # updates are likely present before fork-only package updates run.
-    # Midday runs (09:00, 12:00, 15:00) close the daytime gap so ad-hoc
-    # upstream merges land within a few hours instead of waiting until 20:00.
-    - cron: '0 2,6,9,12,15,20,23 * * *'
+    # GitHub's cron scheduler delays scheduled runs under load and can drop
+    # them entirely. Sync every 30 minutes instead of a handful of fixed
+    # slots: the merge-base --is-ancestor fast path makes no-op runs cheap,
+    # so a dropped or delayed run only postpones the rebase by one slot.
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 permissions:
   actions: write
@@ -135,10 +134,18 @@ jobs:
           fi
 
           export GIT_EDITOR=true
-          export GIT_SEQUENCE_EDITOR=true
+          # Replay only real fork commits: previous syncs leave "sync:
+          # regenerate README" commits behind, so drop them from the todo
+          # and rebuild the generated section once below. Interactive mode
+          # (-i) is what makes git honor GIT_SEQUENCE_EDITOR.
+          export GIT_SEQUENCE_EDITOR="sed -i '/^pick .*sync: regenerate README after upstream rebase$/d'"
+          # Lease anchor: remote main as seen by this checkout. Pushing with
+          # an explicit expected SHA refuses to move main if anything (e.g.
+          # an auto-merged PR) advanced it since.
+          base_sha="$(git rev-parse origin/main)"
           fork_base="$(git merge-base upstream/main HEAD)"
 
-          if ! git rebase --onto upstream/main --empty=drop "$fork_base"; then
+          if ! git rebase -i --onto upstream/main --empty=drop "$fork_base"; then
             # Only enter the loop if a rebase is actually in progress.
             if ! test -d .git/rebase-merge && ! test -d .git/rebase-apply; then
               echo "::error::Upstream rebase failed before reporting a conflict."
@@ -170,6 +177,18 @@ jobs:
             fi
           fi
 
+          # The result must be a linear stack of fork-only commits on top
+          # of the upstream/main we just fetched; refuse to push anything
+          # else.
+          if ! git merge-base --is-ancestor upstream/main HEAD; then
+            echo "::error::Rebase result does not contain upstream/main; refusing to push."
+            exit 1
+          fi
+          if [ -n "$(git rev-list --merges HEAD --not upstream/main)" ]; then
+            echo "::error::Rebase result contains merge commits; refusing to push."
+            exit 1
+          fi
+
           # Regenerate the package-docs section so it includes both upstream
           # and fork packages after the rebase.
           ./scripts/generate-package-docs.nu
@@ -178,11 +197,15 @@ jobs:
             git commit -m "sync: regenerate README after upstream rebase"
           fi
 
-          git push --force-with-lease origin HEAD:main
+          git push --force-with-lease=main:"$base_sha" origin HEAD:main
           echo "result=rebased" >> "$GITHUB_OUTPUT"
+      # Fork package updates keep their own schedule in update-fork.yml and
+      # are re-triggered after every actual rebase; gating on result ==
+      # 'rebased' keeps the frequent no-op sync runs from queueing update
+      # jobs around the clock.
       - name: Trigger fork package updates
         id: trigger-updates
-        if: steps.upstream.outputs.has-upstream == 'true' && steps.upstream-update.outputs.ready == 'true' && steps.sync.outcome == 'success'
+        if: steps.upstream.outputs.has-upstream == 'true' && steps.upstream-update.outputs.ready == 'true' && steps.sync.outputs.result == 'rebased'
         uses: actions/github-script@v9
         env:
           FORK_UPDATE_PACKAGES: ${{ vars.FORK_UPDATE_PACKAGES }}
@@ -222,7 +245,7 @@ jobs:
           fi
 
           if [ "${{ steps.sync.outputs.result }}" = 'up-to-date' ]; then
-            echo "main already contains upstream/main from ${{ steps.upstream.outputs.repository }}. Fork package updates were triggered." >> "$GITHUB_STEP_SUMMARY"
+            echo "main already contains upstream/main from ${{ steps.upstream.outputs.repository }}. Fork package updates run on their own schedule and after each rebase." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
