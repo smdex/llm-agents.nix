@@ -66,6 +66,10 @@ rustPlatform.buildRustPackage (finalAttrs: {
     # /usr/bin/false) and compile a fixture with `rustc` at run time, none of
     # which exist in the sandbox, so every invocation fails to start.
     "--skip=tui::app::tests::custom_commands"
+  ]
+  # needs wl-copy/xclip and a desktop session
+  ++ lib.optionals stdenv.hostPlatform.isLinux [
+    "--skip=sync_pair_copy_delivers_only_to_clipboard_without_qr_capacity_limit"
   ];
 
   # Many tests rely on inferring the project from the surrounding git repo;
