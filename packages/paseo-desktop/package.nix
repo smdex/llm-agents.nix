@@ -7,7 +7,7 @@
 #   - version: pinned explicitly (upstream reads ../package.json at eval time).
 #   - npmDeps: built from npmDepsHash with npmDepsFetcherVersion = 2 (repo
 #     convention) instead of reusing the daemon package's FOD.
-#   - electron: pinned to electron_41 to match upstream's devDependency (41.x).
+#   - electron: upstream pins 41.x, which is EOL in nixpkgs.
 #   - meta/passthru: this repo's maintainer and category conventions.
 #   - installPhase: instead of copying the whole monorepo (packages/ +
 #     node_modules/, ~1.3 GB with all devDependencies), reuse upstream's
@@ -29,7 +29,7 @@
   makeWrapper,
   copyDesktopItems,
   makeDesktopItem,
-  electron_41,
+  electron_42,
   libuv,
   formatelf,
   gcc-unwrapped,
@@ -163,7 +163,7 @@ buildNpmPackage (finalAttrs: {
     # (defaults to http://localhost:8081 — the Expo dev server, which doesn't
     # exist here). Point it at the `paseo://` protocol handler instead, which
     # serves from `__dirname/../../app/dist` (our install layout matches).
-    makeWrapper ${electron_41}/bin/electron $out/bin/paseo-desktop \
+    makeWrapper ${electron_42}/bin/electron $out/bin/paseo-desktop \
       --add-flags "$out/share/paseo-desktop/packages/desktop/dist/main.js" \
       --add-flags "--no-sandbox" \
       --set EXPO_DEV_URL "paseo://app/"

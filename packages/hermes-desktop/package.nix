@@ -5,7 +5,7 @@
   flake,
   buildNpmPackage,
   nodejs_26,
-  electron_41,
+  electron_42,
   hermes-agent,
   makeWrapper,
   xcbuild,
@@ -27,7 +27,7 @@ let
   # npm installer changed in later 40.x releases; Nix skips that installer and
   # supplies Electron separately. Keep the intentional major bump explicit and
   # rebuild node-pty against the runtime we actually ship.
-  electron = electron_41;
+  electron = electron_42;
   desktopVersion = "0.17.0";
 
   isLinux = stdenv.hostPlatform.isLinux;
