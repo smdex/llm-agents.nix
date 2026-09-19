@@ -154,16 +154,33 @@ jobs:
 
             while test -d .git/rebase-merge || test -d .git/rebase-apply; do
               conflicts="$(git diff --name-only --diff-filter=U)"
-              if [ "$conflicts" != 'README.md' ]; then
-                echo "::error::Upstream rebase has non-generated conflicts: ${conflicts:-<none>}"
+              if [ -z "$conflicts" ]; then
+                echo "::error::Upstream rebase stopped without reporting conflicted files."
                 git rebase --abort
                 exit 1
               fi
 
-              # During a rebase, --ours is upstream/main. README's package
-              # section is generated, so take upstream then regenerate below.
-              git checkout --ours README.md
-              git add README.md
+              while IFS= read -r path; do
+                case "$path" in
+                  README.md|packages/*)
+                    # During a rebase, --ours is upstream/main. Package files
+                    # already present upstream are authoritative; README is
+                    # generated again after the rebase.
+                    if git checkout --ours -- "$path"; then
+                      git add -- "$path"
+                    else
+                      # Also handle modify/delete conflicts where upstream
+                      # removed the package.
+                      git rm -- "$path"
+                    fi
+                    ;;
+                  *)
+                    echo "::error::Upstream rebase has an unexpected conflict: $path"
+                    git rebase --abort
+                    exit 1
+                    ;;
+                esac
+              done <<< "$conflicts"
 
               if git rebase --continue; then
                 break
@@ -171,7 +188,7 @@ jobs:
             done
 
             if test -d .git/rebase-merge || test -d .git/rebase-apply; then
-              echo "::error::Upstream rebase stopped without a resolvable README.md conflict."
+              echo "::error::Upstream rebase did not finish after resolving generated/package conflicts."
               git rebase --abort
               exit 1
             fi
