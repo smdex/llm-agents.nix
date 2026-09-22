@@ -14,18 +14,18 @@
   # (where `fetchNpmDeps` may produce a different hash for the same lockfile)
   # can override via `.override { npmDepsHash = "sha256-..."; }` without
   # `overrideAttrs` gymnastics.
-  npmDepsHash ? "sha256-gDB48rHd0K1VOAblaQlPP4XnKGHI8cAt9S09aRxx6b4=",
+  npmDepsHash ? "sha256-3cqO8DpPVDjYaSh0q5EPJuMpCgl2OJ17uLGVGuk1Wwc=",
 }:
 
 buildNpmPackage rec {
   pname = "paseo";
-  version = "0.8.0";
+  version = "0.9.0";
 
   src = fetchFromGitHub {
     owner = "getpaseo";
     repo = "paseo";
     tag = "v${version}";
-    hash = "sha256-zYUj7CGz+i+w0elysbU+Sup+NACsBoIEqCu8WHA24PE=";
+    hash = "sha256-qCjsMOi9/vMp0AVuWeSoiS1bv4bFMKoAha/zWNb2fHE=";
   };
 
   nodejs = nodejs_22;
