@@ -385,7 +385,7 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 - **Source**: source
 - **License**: MIT
-- **Homepage**: https://github.com/1jehuang/jcode
+- **Homepage**: https://github.com/smdex/jcode
 - **Usage**: `nix run github:numtide/llm-agents.nix#jcode -- --help`
 - **Nix**: [packages/jcode/package.nix](packages/jcode/package.nix)
 
