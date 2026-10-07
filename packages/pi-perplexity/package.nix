@@ -31,7 +31,7 @@ let
     dontFixup = true;
     outputHashAlgo = "sha256";
     outputHashMode = "recursive";
-    outputHash = "sha256-EDE3+L+19eoDnSADIZbf2LfmavzJGolyKM99D35X17c=";
+    outputHash = "sha256-w16U1Nf+j9V5amadjc4Qs+678LolIrslA+32VsRw6wY=";
   };
 in
 stdenvNoCC.mkDerivation {
