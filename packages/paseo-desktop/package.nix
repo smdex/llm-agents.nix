@@ -1,29 +1,10 @@
-# Vendored from upstream's own from-source nix expression:
-#   https://github.com/getpaseo/paseo/blob/v0.3.1/nix/desktop-package.nix
-#
-# Adaptations for this repo:
-#   - src: fetchFromGitHub of the release tag instead of `cleanSourceWith ./..`
-#     (the source filter is unnecessary for a fetched tarball).
-#   - version: pinned explicitly (upstream reads ../package.json at eval time).
-#   - npmDeps: built from npmDepsHash with npmDepsFetcherVersion = 2 (repo
-#     convention) instead of reusing the daemon package's FOD.
-#   - electron: upstream pins 41.x, which is EOL in nixpkgs.
-#   - meta/passthru: this repo's maintainer and category conventions.
-#   - installPhase: instead of copying the whole monorepo (packages/ +
-#     node_modules/, ~1.3 GB with all devDependencies), reuse upstream's
-#     @vercel/nft runtime tracer (scripts/trace-daemon.mjs, also used by their
-#     daemon package) plus a supplemental trace of the Electron entry points
-#     to ship only the files loaded at runtime.
-#   - node-pty: delete the bundled manylinux prebuilds before `npm rebuild` so
-#     node-gyp-build actually compiles it against nix libraries. The prebuilt
-#     pty.node has no rpath and needs a system libstdc++.so.6, which fails to
-#     dlopen on NixOS and silently breaks the terminal feature.
+# Keep the renderer and bundled daemon on the same fork revision.
 {
   lib,
   stdenv,
   flake,
   buildNpmPackage,
-  fetchFromGitHub,
+  paseo,
   nodejs_22,
   python3,
   makeWrapper,
@@ -37,19 +18,14 @@
 
 buildNpmPackage (finalAttrs: {
   pname = "paseo-desktop";
-  version = "0.10.3";
-
-  src = fetchFromGitHub {
-    owner = "getpaseo";
-    repo = "paseo";
-    tag = "v${finalAttrs.version}";
-    hash = "sha256-yI/H8XPC0lLdmokePJ4qyVxaV+/PsgePzQupumm5LPQ=";
-  };
+  inherit (paseo)
+    version
+    src
+    npmDeps
+    npmDepsFetcherVersion
+    ;
 
   nodejs = nodejs_22;
-
-  npmDepsHash = "sha256-tetnvvpOxeMIWpJ0qVz5octD7rUM216mj0b1rYnNMzM=";
-  npmDepsFetcherVersion = 2;
 
   # Prevent onnxruntime-node's install script from running during automatic
   # npm rebuild. We manually rebuild only node-pty in buildPhase.
@@ -84,6 +60,7 @@ buildNpmPackage (finalAttrs: {
     # so remove the bundled prebuilds first to force a real build.
     rm -rf packages/server/node_modules/node-pty/prebuilds
     npm rebuild node-pty --workspace=@getpaseo/server
+    npm run postinstall
 
     # Server workspaces (highlight + relay + protocol + client + server + cli)
     npm run build:server
@@ -113,23 +90,7 @@ buildNpmPackage (finalAttrs: {
     #    desktop app imports at runtime, and the @getpaseo/server exports
     #    barrel, which the CLI loads via require.resolve() where nft can't
     #    follow it.
-    node scripts/trace-daemon.mjs > runtime-files.txt
-    node --input-type=module -e '
-      import { nodeFileTrace } from "@vercel/nft";
-      const { fileList } = await nodeFileTrace(
-        [
-          "packages/desktop/dist/main.js",
-          "packages/desktop/dist/preload.js",
-          "packages/server/dist/server/server/exports.js",
-          "node_modules/@getpaseo/cli/dist/run.js",
-        ],
-        {
-          base: process.cwd(),
-          ignore: ["**/*.test.js", "**/*.e2e.test.js"],
-        },
-      );
-      for (const f of [...fileList].sort()) console.log(f);
-    ' >> runtime-files.txt
+    PASEO_TRACE_DESKTOP=1 node scripts/trace-daemon.mjs > runtime-files.txt
 
     # Files read via fs APIs rather than require(): the pre-exported Expo web
     # renderer (served through the paseo:// protocol handler), desktop assets
@@ -152,6 +113,7 @@ buildNpmPackage (finalAttrs: {
     # as-is, which node's module resolution requires).
     sort -u runtime-files.txt | tar cf - --no-recursion -T - \
       | tar xf - -C $out/share/paseo-desktop
+    patchShebangs --build "$out/share/paseo-desktop"
 
     # The trace pulls in prebuilt addons for every platform (musl, arm, ia32).
     find $out/share/paseo-desktop -name '*.node' -path '*/@electron-internal/extract-zip/*' \
@@ -200,8 +162,8 @@ buildNpmPackage (finalAttrs: {
   meta = {
     description = "Voice-controlled desktop development environment for AI coding agents";
     homepage = "https://paseo.sh";
-    changelog = "https://github.com/getpaseo/paseo/releases/tag/v${finalAttrs.version}";
-    license = lib.licenses.agpl3Plus;
+    changelog = "https://github.com/smdex/paseo/commit/${finalAttrs.src.rev}";
+    license = lib.licenses.asl20;
     sourceProvenance = [ lib.sourceTypes.fromSource ];
     maintainers = with flake.lib.maintainers; [ smdex ];
     mainProgram = "paseo-desktop";
