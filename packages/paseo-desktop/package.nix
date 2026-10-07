@@ -24,6 +24,7 @@ buildNpmPackage (finalAttrs: {
     npmDeps
     npmDepsFetcherVersion
     postPatch
+    preBuild
     ;
 
   nodejs = nodejs_22;

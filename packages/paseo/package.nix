@@ -76,6 +76,15 @@ buildNpmPackage rec {
   # Don't use the default npm build hook — we need a custom build sequence
   dontNpmBuild = true;
 
+  # Expo evaluates native version metadata even for web exports. Upstream's
+  # native-version parser rejects our fork suffix; preserve it everywhere else.
+  # Run after npm ci so workspace manifests and the dependency lock stay intact.
+  preBuild = ''
+    substituteInPlace packages/app/app.config.js \
+      --replace-fail 'getNativeReleaseVersion(pkg.version)' \
+      'getNativeReleaseVersion(pkg.version.replace(/-smdex$/, ""))'
+  '';
+
   buildPhase = ''
     runHook preBuild
 
