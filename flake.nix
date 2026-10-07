@@ -2,8 +2,8 @@
   description = "Exploring integration between Nix and AI coding agents";
   nixConfig = {
     allow-import-from-derivation = false;
-    extra-substituters = [ "https://cache.numtide.com" ];
-    extra-trusted-public-keys = [ "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g=" ];
+    extra-substituters = [ "https://cache.numtide.com" "https://smdex.cachix.org" ];
+    extra-trusted-public-keys = [ "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g=" "smdex.cachix.org-1:ajaAnmeGWE1MAr3k02gsGoQg/JjZfB/xojnalzwbqLE=" ];
   };
 
   inputs = {
