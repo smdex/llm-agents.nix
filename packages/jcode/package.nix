@@ -15,13 +15,13 @@ rustPlatform.buildRustPackage (finalAttrs: {
   version = "0.91.0";
 
   src = fetchFromGitHub {
-    owner = "1jehuang";
+    owner = "smdex";
     repo = "jcode";
-    tag = "v${finalAttrs.version}";
-    hash = "sha256-YpVVd8Qy2XEgts3+Drv+VLrKyVu/RCSoAzaLtpfSmlE=";
+    rev = "1b434d4ceed0ff93265153cf2012a24cd214025a";
+    hash = "sha256-xuNwx8lHDBk7d4tNMlRoXpFWwgNwlzP4kIEZt1jQsr4=";
   };
 
-  cargoHash = "sha256-fxYkGqm+SRstnle7F6wYM9+/+YNROimJLPi8Mvju6no=";
+  cargoHash = "sha256-p5qKX+MFC44aZ5OZ5iJxCj0sY6pdQMsEPNzuXdmsd3Q=";
 
   # .cargo/config.toml caps builds at 4 jobs; let Nix parallelism decide.
   postPatch = ''
@@ -55,8 +55,8 @@ rustPlatform.buildRustPackage (finalAttrs: {
 
   meta = with lib; {
     description = "RAM-efficient coding agent TUI with multi-model support and swarm coordination";
-    homepage = "https://github.com/1jehuang/jcode";
-    changelog = "https://github.com/1jehuang/jcode/releases/tag/v${finalAttrs.version}";
+    homepage = "https://github.com/smdex/jcode";
+    changelog = "https://github.com/smdex/jcode/commit/${finalAttrs.src.rev}";
     license = licenses.mit;
     sourceProvenance = with sourceTypes; [ fromSource ];
     maintainers = with flake.lib.maintainers; [ smdex ];
