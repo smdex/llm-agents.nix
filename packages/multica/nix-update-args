@@ -1,0 +1,3 @@
+# smdex/multica publishes tags from a different upstream; track fork main.
+--version
+branch=main
