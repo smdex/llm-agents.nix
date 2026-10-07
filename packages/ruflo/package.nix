@@ -56,7 +56,7 @@ in
 buildNpmPackage rec {
   npmDepsFetcherVersion = 2;
   pname = "ruflo";
-  version = "3.53.0";
+  version = "3.54.0";
 
   src = fetchFromGitHub {
     owner = "ruvnet";
