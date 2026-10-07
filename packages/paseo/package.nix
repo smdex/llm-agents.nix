@@ -16,7 +16,7 @@
   # (where `fetchNpmDeps` may produce a different hash for the same lockfile)
   # can override via `.override { npmDepsHash = "sha256-..."; }` without
   # `overrideAttrs` gymnastics.
-  npmDepsHash ? "sha256-vZBYdoiEEO7lRU7MLVG6/IDyUvFlQ5JoRwz0Z6XPwFE=",
+  npmDepsHash ? "sha256-3dZg3fd8x4Y5knKiekzWLMmw7FEZDEzTjwa1dJiLT+U=",
 }:
 
 buildNpmPackage rec {
