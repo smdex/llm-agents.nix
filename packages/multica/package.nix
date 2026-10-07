@@ -8,19 +8,19 @@
 
 buildGo127Module (finalAttrs: {
   pname = "multica";
-  version = "0.6.2";
+  version = "0-unstable-2026-10-07";
 
   src = fetchFromGitHub {
-    owner = "multica-ai";
+    owner = "smdex";
     repo = "multica";
-    tag = "v${finalAttrs.version}";
-    hash = "sha256-MVu93cGe+g1S835042cDwcTqC/5kwIR6myR9DwewDwU=";
+    rev = "2c749ddf9f21421862523c3dbb10a843481e0378";
+    hash = "sha256-/BoI2b2lBJtn0XsgSD0uqNLtcjRY0uBTPjudLZfNAoc=";
   };
 
   sourceRoot = "${finalAttrs.src.name}/server";
   subPackages = [ "cmd/multica" ];
 
-  vendorHash = "sha256-KJIrY4kLAQ5CBu/ClcXjLHG0FWvSX1ne06OG+ZkL75E=";
+  vendorHash = "sha256-SL//NLuzLV+faAjD7SR9f9j0AaDHel2haZajLJpsj5s=";
 
   ldflags = [ "-X main.version=${finalAttrs.version}" ];
 
@@ -33,8 +33,8 @@ buildGo127Module (finalAttrs: {
 
   meta = {
     description = "Command-line interface for the Multica platform";
-    homepage = "https://github.com/multica-ai/multica";
-    changelog = "https://github.com/multica-ai/multica/releases/tag/v${finalAttrs.version}";
+    homepage = "https://github.com/smdex/multica";
+    changelog = "https://github.com/smdex/multica/commits/${finalAttrs.src.rev}";
     license = flake.lib.licenses.unfree;
     sourceProvenance = with lib.sourceTypes; [ fromSource ];
     maintainers = with flake.lib.maintainers; [ smdex ];
