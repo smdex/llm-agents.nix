@@ -634,7 +634,7 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 <summary><strong>paseo</strong> - Self-hosted daemon for AI coding agents (server + CLI)</summary>
 
 - **Source**: source
-- **License**: AGPL-3.0-or-later
+- **License**: Apache-2.0
 - **Homepage**: https://github.com/getpaseo/paseo
 - **Usage**: `nix run github:numtide/llm-agents.nix#paseo -- --help`
 - **Nix**: [packages/paseo/package.nix](packages/paseo/package.nix)
@@ -1656,7 +1656,7 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 <summary><strong>paseo-desktop</strong> - Voice-controlled desktop development environment for AI coding agents</summary>
 
 - **Source**: source
-- **License**: AGPL-3.0-or-later
+- **License**: Apache-2.0
 - **Homepage**: https://paseo.sh
 - **Usage**: `nix run github:numtide/llm-agents.nix#paseo-desktop -- --help`
 - **Nix**: [packages/paseo-desktop/package.nix](packages/paseo-desktop/package.nix)
@@ -2143,6 +2143,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://pdfvision.dev/
 - **Usage**: `nix run github:numtide/llm-agents.nix#pdfvision -- --help`
 - **Nix**: [packages/pdfvision/package.nix](packages/pdfvision/package.nix)
+
+</details>
+<details>
+<summary><strong>pi-perplexity</strong> - Perplexity CLI for cited answers, research, and threads</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/smdex/pi-perplexity
+- **Usage**: `nix run github:numtide/llm-agents.nix#pi-perplexity -- --help`
+- **Nix**: [packages/pi-perplexity/package.nix](packages/pi-perplexity/package.nix)
 
 </details>
 <details>
