@@ -7,8 +7,9 @@
 #
 # Upstream packages the launcher with electron-builder and ships a bundled bun
 # runtime (launcher build:runtime -> scripts/build-runtime-bundle.ts). We skip
-# all of that and run the launcher UNPACKAGED instead: nixpkgs electron_41
-# loading $out/share/codex-chatgpt-web/launcher directly.
+# all of that and run the launcher UNPACKAGED instead: nixpkgs electron_42
+# loading $out/share/codex-chatgpt-web/launcher directly. Upstream pins
+# Electron 41, which is EOL in nixpkgs; use the supported Electron 42 runtime.
 #
 # In unpackaged mode (app.isPackaged = false) launcher/electron/main.cjs:
 #   * loads the renderer from ../dist/index.html — prebuilt here with vite
@@ -37,7 +38,7 @@
   fetchFromGitHub,
   bun,
   bun2nixLib,
-  electron_41,
+  electron_42,
   makeWrapper,
   flake,
   codex-chatgpt-web-cli,
@@ -149,7 +150,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     # live in the (immutable) nix store — repo precedent (paseo-desktop).
     # CODEX_WEB_GPT_BUN selects the bun binary sourceRuntimeInvocation spawns
     # for the CLI runtime.
-    makeWrapper ${lib.getExe electron_41} $out/bin/codex-chatgpt-web \
+    makeWrapper ${lib.getExe electron_42} $out/bin/codex-chatgpt-web \
       --add-flags "$out/share/codex-chatgpt-web/launcher" \
       --add-flags "--no-sandbox" \
       --set CODEX_WEB_GPT_BUN "${lib.getExe bun}" \
