@@ -4,28 +4,36 @@
   stdenv,
   fetchFromGitHub,
   fetchPnpmDeps,
-  fetchurl,
+  zip,
   runCommand,
   makeWrapper,
   nodejs,
   pnpm_10,
   pnpmConfigHook,
-  electron_41,
+  electron_43,
   goose-cli,
 }:
 
 let
   pnpm = pnpm_10;
-  electron = electron_41;
-  electronVersion = "41.0.0";
-  electronZip = fetchurl {
-    url = "https://github.com/electron/electron/releases/download/v${electronVersion}/electron-v${electronVersion}-linux-x64.zip";
-    hash = "sha256-oo1atjj6BlhTyA1fJ+qdfsf4Yh2SQiAPdHeYxe0xk9Q=";
-  };
-  electronZipDir = runCommand "electron-${electronVersion}-zip-dir" { } ''
-    mkdir -p $out
-    ln -s ${electronZip} $out/electron-v${electronVersion}-linux-x64.zip
-  '';
+  electron = electron_43;
+  electronVersion = electron.version;
+  # Forge accepts an offline Electron archive. Repack the patched nixpkgs
+  # runtime so the packaged executable and its shared libraries use the same
+  # supported version, without a second upstream binary pin.
+  electronZipDir =
+    runCommand "electron-${electronVersion}-zip-dir"
+      {
+        nativeBuildInputs = [ zip ];
+      }
+      ''
+        mkdir -p $out
+        cp -a ${electron.dist} electron
+        chmod -R u+w electron
+        cd electron
+        zip -X -qr "$out/electron-v${electronVersion}-linux-x64.zip" .
+      '';
+
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "goose-desktop";
@@ -60,8 +68,8 @@ stdenv.mkDerivation (finalAttrs: {
     pnpmConfigHook
   ];
 
-  # electron-forge's packager is given the exact npm-pinned Electron archive
-  # from the Nix store. This avoids @electron/get network access in the build
+  # electron-forge uses the same supported Electron version as the runtime
+  # installed below. This avoids @electron/get network access in the build
   # sandbox. The final application runtime is the Nix Electron distribution.
   env = {
     ELECTRON_SKIP_BINARY_DOWNLOAD = "1";
@@ -96,6 +104,20 @@ stdenv.mkDerivation (finalAttrs: {
     # The electron npm package is present in the offline pnpm tree, but its
     # postinstall cannot download a runtime. Give it the Nix runtime path so
     # Forge can load the package while its packager uses electronZipDir above.
+    # Forge derives its runtime version from the installed npm metadata,
+    # overriding packagerConfig.electronVersion. Align it after the frozen
+    # dependency installation; the actual runtime comes from electronZipDir.
+    node <<'JS'
+    const fs = require('fs');
+    const desktop = JSON.parse(fs.readFileSync('desktop/package.json', 'utf8'));
+    desktop.devDependencies.electron = '${electronVersion}';
+    fs.writeFileSync('desktop/package.json', JSON.stringify(desktop));
+    const path = 'node_modules/electron/package.json';
+    const electron = JSON.parse(fs.readFileSync(path, 'utf8'));
+    electron.version = '${electronVersion}';
+    fs.writeFileSync(path, JSON.stringify(electron));
+    JS
+
     electronPackage=node_modules/electron
     echo "Electron package: $electronPackage"
     test -e "$electronPackage"
@@ -105,6 +127,7 @@ stdenv.mkDerivation (finalAttrs: {
     printf 'electron\n' > "$electronPackage/path.txt"
 
     cd desktop
+    pnpm run build-goose-acp-client
     pnpm run i18n:compile
     pnpm exec electron-forge package --platform=linux --arch=x64
     cd ..
