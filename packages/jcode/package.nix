@@ -11,16 +11,16 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "jcode";
-  version = "0.92.1-smdex.1";
+  version = "0.95.1-smdex.2";
 
   src = fetchFromGitHub {
     owner = "smdex";
     repo = "jcode";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-zX6JDsjXi4xNbXXHtvoyPif7HFUSC86y/VMVsZV+pcA=";
+    hash = "sha256-vcR59zykpae20eLz5UP0ml+B2ZApw5eOeFIEeGF59zU=";
   };
 
-  cargoHash = "sha256-4hjX4mkefjIrYpxicwqGmCWyVQKyz2NVcXgn7Aj/J8Q=";
+  cargoHash = "sha256-YyQ2RFky31StD+TzCWXP1kJ4Bq/fKOvwKkmT2ikEasw=";
 
   # .cargo/config.toml caps builds at 4 jobs; let Nix parallelism decide.
   postPatch = ''
@@ -41,8 +41,8 @@ rustPlatform.buildRustPackage (finalAttrs: {
   # fine for tarball builds.
   env = {
     JCODE_RELEASE_BUILD = "1";
-    JCODE_BUILD_SEMVER = "0.92.1";
-    JCODE_BUILD_GIT_HASH = "da075227";
+    JCODE_BUILD_SEMVER = "0.95.1";
+    JCODE_BUILD_GIT_HASH = "7fe343cf";
   };
 
   # Test suite needs network access, provider credentials and a TTY.
@@ -52,7 +52,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   nativeInstallCheckInputs = [ versionCheckHomeHook ];
   installCheckPhase = ''
     runHook preInstallCheck
-    $out/bin/jcode -V | grep -F "v0.92.1"
+    $out/bin/jcode -V | grep -F "v0.95.1"
     runHook postInstallCheck
   '';
 
