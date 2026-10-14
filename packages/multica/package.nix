@@ -8,19 +8,19 @@
 
 buildGo127Module (finalAttrs: {
   pname = "multica";
-  version = "0-unstable-2026-10-07";
+  version = "0.4.8-unstable-2026-10-08";
 
   src = fetchFromGitHub {
     owner = "smdex";
     repo = "multica";
-    rev = "2c749ddf9f21421862523c3dbb10a843481e0378";
-    hash = "sha256-/BoI2b2lBJtn0XsgSD0uqNLtcjRY0uBTPjudLZfNAoc=";
+    rev = "21216761afcdba769e3b99a87e31dc142c0f9165";
+    hash = "sha256-FeRn/RgZPT520HINu2mM3hcpuaJ/Jc7iPumDzcUan0k=";
   };
 
   sourceRoot = "${finalAttrs.src.name}/server";
   subPackages = [ "cmd/multica" ];
 
-  vendorHash = "sha256-SL//NLuzLV+faAjD7SR9f9j0AaDHel2haZajLJpsj5s=";
+  vendorHash = "sha256-b6elV4j+7R6L29q8tbCI3MAOY8X63ndzlmCMv7jo7mM=";
 
   ldflags = [ "-X main.version=${finalAttrs.version}" ];
 
