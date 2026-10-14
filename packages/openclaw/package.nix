@@ -8,39 +8,31 @@
   jq,
   makeWrapper,
   nodejs,
-  # Lockfile predates pnpm 11's stricter overrides/patchedDependencies
-  # validation; pin pnpm 10 until upstream regenerates the lockfile.
-  pnpm_10,
+  pnpm_11,
   pnpmConfigHook,
   versionCheckHook,
   versionCheckHomeHook,
 }:
 
 let
-  pnpm = pnpm_10;
-  # pnpm 10.33+ rejects patchedDependencies mismatch between lockfile
-  # and pnpm-workspace.yaml; strip from both for frozen install.
-  stripPatchedDeps = ''
-    sed -i '/^patchedDependencies:/,/^[^ ]/{/^patchedDependencies:/d;/^  /d;}' pnpm-lock.yaml pnpm-workspace.yaml
-  '';
+  pnpm = pnpm_11;
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "openclaw";
-  version = "2026.9.5";
+  version = "2026.10.3";
 
   src = fetchFromGitHub {
     owner = "openclaw";
     repo = "openclaw";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-M0nfeZDy6MafWCfqefwDRdL1MFLs8l1YZJmB6sV9IyU=";
+    hash = "sha256-eNcTYmHZyPiVKOsqdafGBJ//XFQXfsS+2sRsIJ733/o=";
   };
 
   pnpmDeps = fetchPnpmDeps {
     inherit (finalAttrs) pname version src;
     inherit pnpm;
-    hash = "sha256-c/ot2z4LLA6hNq9FJsg+7XXTElpWsb/iHNTCkYxpP68=";
-    fetcherVersion = 3;
-    prePnpmInstall = stripPatchedDeps;
+    hash = "sha256-BeFsc1+hvLA4ic+q4Bv4OZu4Py8efvzcRH8xmjHafUE=";
+    fetcherVersion = 4;
   };
 
   nativeBuildInputs = [
@@ -69,8 +61,6 @@ stdenv.mkDerivation (finalAttrs: {
     FS_SAFE_NATIVE_MODE = "off";
     RAYON_NUM_THREADS = "4";
   };
-
-  postPatch = stripPatchedDeps;
 
   buildPhase = ''
     runHook preBuild
