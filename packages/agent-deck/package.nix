@@ -2,7 +2,7 @@
   lib,
   stdenv,
   flake,
-  buildGoModule,
+  buildGo127Module,
   fetchFromGitHub,
   versionCheckHook,
   versionCheckHomeHook,
@@ -12,18 +12,18 @@
   tmux,
 }:
 
-buildGoModule rec {
+buildGo127Module rec {
   pname = "agent-deck";
-  version = "1.16.27";
+  version = "1.16.28";
 
   src = fetchFromGitHub {
     owner = "asheshgoplani";
     repo = "agent-deck";
     tag = "v${version}";
-    hash = "sha256-yCtoCPOPiKDPZM4t/vtv4/Yn1Ut6hCc7E1a5uklmQm0=";
+    hash = "sha256-+DRgbiJYZqvO7B11C/HF7+kaKHMHUkoKIubaOaK2Ams=";
   };
 
-  vendorHash = "sha256-AChAtXMmFDfJzlqnUpgkyD1KCmLGxkPZtKsD0+Tnt7E=";
+  vendorHash = "sha256-E7wm0ESRE3NLdEhzfmlCOI2R7sgq1jkfNgwPSB5P4v4=";
 
   subPackages = [ "cmd/agent-deck" ];
 

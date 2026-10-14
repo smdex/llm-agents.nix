@@ -1,0 +1,13 @@
+diff --git a/bun.lock b/bun.lock
+index 066300b..5790b1e 100644
+--- a/bun.lock
++++ b/bun.lock
+@@ -1359,7 +1359,7 @@
+ 
+     "omo-ai": ["omo-ai@workspace:packages/omo-native"],
+ 
+-    "omowright": ["omowright@github:code-yeongyu/omowright#293ca50", { "dependencies": { "ws": "^8.18.3", "zod": "^4.1.5" }, "bin": { "omowright-cloak": "./bin/omowright-cloak.mjs" } }, "code-yeongyu-omowright-293ca50", "sha512-T3DUbm/PQIhHdKISDGDNavamumA7bcX1m5KTmkXw7xmUxC3NrXOF4C23neskJr5iwvtUX7heFIYEYN+Q3Aa6LQ=="],
++    "omowright": ["omowright@github:code-yeongyu/omowright#293ca50", { "dependencies": { "ws": "^8.18.3", "zod": "^4.1.5" }, "bin": { "omowright-cloak": "./bin/omowright-cloak.mjs" } }, "code-yeongyu-omowright-293ca50"],
+ 
+     "on-finished": ["on-finished@2.4.1", "", { "dependencies": { "ee-first": "1.1.1" } }, "sha512-oVlzkg3ENAhCk2zdv7IJwd/QUD4z2RxRwpkcGY8psCVcCYZNq4wYnVWALHM+brtuJjePWiYF/ClmuDr8Ch5+kg=="],
+ 

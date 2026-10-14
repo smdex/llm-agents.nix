@@ -54,7 +54,7 @@ buildNpmPackage rec {
     npm rebuild better-sqlite3
   '';
 
-  postInstall = ''
+  postInstall = lib.optionalString stdenv.hostPlatform.isLinux ''
     koffiBuild="$out/lib/node_modules/@juliusbrussee/caveman-code/node_modules/koffi/build/koffi"
     if [ -d "$koffiBuild" ]; then
       find "$koffiBuild" -mindepth 1 -maxdepth 1 -type d \
@@ -63,10 +63,7 @@ buildNpmPackage rec {
   '';
 
   # better-sqlite3 is a native addon built via node-gyp during npm install.
-  nativeBuildInputs = [
-    formatelf
-    python3
-  ];
+  nativeBuildInputs = [ python3 ] ++ lib.optionals stdenv.hostPlatform.isLinux [ formatelf ];
 
   # better-sqlite3 links libstdc++.
   buildInputs = [ stdenv.cc.cc.lib ];

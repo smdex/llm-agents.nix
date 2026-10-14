@@ -1,21 +1,20 @@
 {
   lib,
   python3,
-  fetchFromGitHub,
+  fetchPypi,
   versionCheckHook,
   versionCheckHomeHook,
 }:
 
 python3.pkgs.buildPythonApplication rec {
   pname = "loopx";
-  version = "0.4.5";
+  version = "1.4.0";
   pyproject = true;
 
-  src = fetchFromGitHub {
-    owner = "huangruiteng";
-    repo = "loopx";
-    tag = "v${version}";
-    hash = "sha256-xF8L4dqEtXTgqSgfzhJyVLAO5pJxlJkRM604DP8bp6Y=";
+  # PyPI distributions include the validated chat frontend required at build time.
+  src = fetchPypi {
+    inherit pname version;
+    hash = "sha256-iQ9U+7QEH/6tuHqmXk2TRU/E4A/CSJHiEVZRF27nbrI=";
   };
 
   build-system = with python3.pkgs; [

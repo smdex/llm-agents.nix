@@ -3,21 +3,25 @@
   flake,
   buildNpmPackage,
   fetchurl,
+  mkUpdater,
   ripgrep,
   versionCheckHook,
   versionCheckHomeHook,
 }:
 
+let
+  data = lib.importJSON ./hashes.json;
+in
 buildNpmPackage rec {
   pname = "dirac";
-  version = "0.4.35";
+  inherit (data) version;
 
   # Upstream publishes a prebuilt tarball to npm (dist/cli.mjs is the bin), so
   # consume that instead of driving the heavy VSCode-extension monorepo's
   # native toolchain (esbuild, protobuf, wasm).
   src = fetchurl {
     url = "https://registry.npmjs.org/dirac-cli/-/dirac-cli-${version}.tgz";
-    hash = "sha256-1sirutiR5bHOaDmWU8u06qNEtoKx6zsI2nO83wnunTE=";
+    hash = data.sourceHash;
   };
 
   # The npm tarball ships no lockfile; vendor one next to package.nix.
@@ -29,7 +33,7 @@ buildNpmPackage rec {
     cp ${./dirac.1} man/dirac.1
   '';
 
-  npmDepsHash = "sha256-I0mFIBjvSV0Mt5ouVKiLmtd4JYvTtMcNW7aGBCmma68=";
+  inherit (data) npmDepsHash;
 
   # dist is already built upstream — only install runtime deps.
   dontNpmBuild = true;
@@ -53,6 +57,10 @@ buildNpmPackage rec {
   versionCheckProgramArg = "--version";
 
   passthru.category = "AI Coding Agents";
+  passthru.updater = mkUpdater {
+    kind = "npm";
+    purl = "pkg:npm/dirac-cli";
+  };
 
   meta = with lib; {
     description = "Open-source AI coding agent focused on efficiency and context curation";

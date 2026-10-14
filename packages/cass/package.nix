@@ -13,34 +13,33 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "cass";
-  version = "0.6.23";
+  version = "0.10.0";
 
   src = fetchFromGitHub {
     owner = "Dicklesworthstone";
     repo = "coding_agent_session_search";
     tag = "v${version}";
-    hash = "sha256-buUYbiaWZjp99DXG+HRO+zCY0cOJz5bH8qEJnu0HZa8=";
+    hash = "sha256-7spfk9GwgmF9+yEUG4waMsPILzVOjCaHio9OxnquIhk=";
   };
 
-  cargoHash = "sha256-GOIvNTkZWqjt1S/Kj67PknokpK61ADyLUCFaRRgZMtw=";
+  cargoHash = "sha256-RMiGL8fbi2T5tY6fLEkmlyJIKDD7vZIzV3OdE5LXETY=";
 
-  # The frankensearch git dependency lists an optimization-only workspace
-  # member that refers to an absent sibling checkout. It is not a dependency
-  # of cass, but removing it lets Nix inspect and vendor the locked crates.
-  # rustc 1.97 also fails to compile frankentorch's AVX-512 VNNI intrinsics;
-  # disable that optional runtime optimization and retain its scalar fallback.
-  # Locate both files by content/path rather than revision so nix-update can
-  # update the locked dependency graph without hand-editing this expression.
-  depsExtraArgs.postBuild = ''
-    frankensearchManifest=$(grep -rlF '"tools/optimize_params",' "$out/git" --include Cargo.toml)
-    test -n "$frankensearchManifest"
-    sed -i '/"tools\/optimize_params",/d' "$frankensearchManifest"
-
-    frankentorchKernel=$(find "$out/git" -path '*/crates/ft-kernel-cpu/src/lib.rs' -print -quit)
-    test -n "$frankentorchKernel"
-    sed -i '/if std::arch::is_x86_feature_detected!("avx512vnni")/i\        #[cfg(any())]' "$frankentorchKernel"
-    sed -i '/target_feature(enable = "avx512vnni,avx512bw,avx512f")/i\#[cfg(any())]' "$frankentorchKernel"
-  '';
+  # Dependencies are now registry crates. Patch the extracted vendor tree,
+  # retaining the scalar fallback for intrinsics unsupported by stable Rust.
+  cargoDeps =
+    (rustPlatform.fetchCargoVendor {
+      inherit src;
+      hash = cargoHash;
+      name = "cass-${version}-vendor";
+    }).overrideAttrs
+      (old: {
+        buildCommand = old.buildCommand + ''
+          frankentorchKernel=$(find "$out" -path '*/frankentorch-kernel-cpu-*/src/lib.rs' -print -quit)
+          test -n "$frankentorchKernel"
+          sed -i '/if std::arch::is_x86_feature_detected!("avx512vnni")/i\        #[cfg(any())]' "$frankentorchKernel"
+          sed -i '/target_feature(enable = "avx512vnni,avx512bw,avx512f")/i\#[cfg(any())]' "$frankentorchKernel"
+        '';
+      });
 
   nativeBuildInputs = [
     pkg-config

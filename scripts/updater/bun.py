@@ -154,6 +154,21 @@ def clone_and_generate_bun_nix(
             msg = f"Could not find or generate bun.lock in {owner}/{repo}"
             raise FileNotFoundError(msg)
 
+        # Bun 1.4 adds an integrity field to GitHub entries. The pinned
+        # bun2nix understands their three-field form and independently pins
+        # the commit with a fetchFromGitHub hash. Keep Bun's compatible form
+        # in the source patch as well as the generated dependency expression.
+        original_lock = bun_lock.read_text()
+        normalized_lock = re.sub(
+            r'^(\s*"[^\"]+": \["[^\"\n]+@github:[^\n]+), "sha512-[^\"\n]+"\],$',
+            r"\1],",
+            original_lock,
+            flags=re.MULTILINE,
+        )
+        if normalized_lock != original_lock:
+            bun_lock.write_text(normalized_lock)
+            lockfile_was_stale = True
+
         regenerate_bun_nix(bun_lock, bun_nix_output, flake_root)
 
         patch_file = pkg_dir / "fix-stale-bun-lock.patch" if pkg_dir else None

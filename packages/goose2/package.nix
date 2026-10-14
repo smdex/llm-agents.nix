@@ -41,7 +41,7 @@
 let
   pnpm = pnpm_10;
   sourceRevision = "612cd89d515f16c84f70b4c74247e270277fe7ba";
-  version = "0.1.0";
+  version = "1.54.0";
 
   gooseSrc = fetchFromGitHub {
     owner = "aaif-goose";

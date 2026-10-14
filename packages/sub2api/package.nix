@@ -2,6 +2,8 @@
   lib,
   flake,
   buildGo127Module,
+  go_1_27,
+  fetchurl,
   fetchFromGitHub,
   fetchPnpmDeps,
   makeWrapper,
@@ -21,8 +23,20 @@ let
     vendorHash
     pnpmDepsHash
     ;
+  # Upstream requires the October Go security patch before nixpkgs ships it.
+  go =
+    if lib.versionAtLeast go_1_27.version "1.27.2" then
+      go_1_27
+    else
+      go_1_27.overrideAttrs {
+        version = "1.27.2";
+        src = fetchurl {
+          url = "https://go.dev/dl/go1.27.2.src.tar.gz";
+          hash = "sha256-A0ldorpkiU1A9cSZLklFT6eLUGkGBP+Stq//UIG3bmI=";
+        };
+      };
 in
-buildGo127Module (finalAttrs: {
+(buildGo127Module.override { inherit go; }) (finalAttrs: {
   pname = "sub2api";
   inherit version;
 
