@@ -421,6 +421,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>octopus-si-os</strong> - Agentic OS: runtime daemon and registry of the Octopus Superintelligence OS</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/maximoffua/Octopus-SI-OS
+- **Usage**: `nix run github:numtide/llm-agents.nix#octopus-si-os -- --help`
+- **Nix**: [packages/octopus-si-os/package.nix](packages/octopus-si-os/package.nix)
+
+</details>
+<details>
 <summary><strong>oh-my-codex</strong> - Multi-agent orchestration layer for OpenAI Codex CLI</summary>
 
 - **Source**: source
