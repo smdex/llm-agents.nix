@@ -1,0 +1,84 @@
+# Fork maintenance pipeline for the GitLab-hosted mirror of
+# numtide/llm-agents.nix. Mirrors .github/workflows/{sync-upstream,
+# update-fork,auto-merge}.yml without modifying them; all logic lives in
+# scripts/ci (shared with the Woodpecker pipelines).
+#
+# Stages: sync upstream -> update fork-only packages -> merge validated
+# bot update MRs. The chain runs on schedules and manual web runs of the
+# protected default branch ONLY (GL_TOKEN must be a protected+masked
+# variable, so MR pipelines can never see it). MRs get a validation
+# pipeline whose success (plus Woodpecker statuses, if enabled) is what
+# the merger accepts as evidence.
+#
+# Enable the schedule in exactly ONE CI system: either the GitLab
+# schedule below or the Woodpecker cron — not both (they are redundant;
+# resource_group serializes GitLab pipelines only).
+#
+# Required CI/CD variables (masked + protected):
+#   GL_TOKEN   project access token (Maintainer, scope api) used to push
+#              branches and to create/merge MRs
+# Optional:
+#   FORK_UPDATE_PACKAGES  space-separated subset selection of the fork-package
+#              list (default: directory set difference vs upstream)
+#   MERGE_WAIT_TIMEOUT    seconds the merge stage waits for validation
+#              (default 1800)
+stages:
+  - validate
+  - sync
+  - update
+  - merge
+workflow:
+  rules:
+    # Scheduled maintenance (configure the schedule for the default branch).
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    # Manual "Run pipeline" from the UI.
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    # Validation pipelines for merge requests.
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    # Plain pushes never trigger this pipeline.
+    - when: never
+default:
+  # Any image shipping nix works: every script brings its own tools via
+  # nix shebangs (see scripts/generate-package-docs.nu for the pattern).
+  image: nixos/nix:latest
+variables:
+  NIX_CONFIG: "experimental-features = nix-command flakes"
+  GIT_DEPTH: "0"
+  GL_SERVER_URL: "$CI_SERVER_URL"
+  GL_PROJECT_PATH: "$CI_PROJECT_PATH"
+  DEFAULT_BRANCH: "$CI_DEFAULT_BRANCH"
+  GL_PROJECT_URL: "$CI_PROJECT_URL"
+.maintenance:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE =~ /\A(schedule|web)\z/ && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  # Serialize maintenance jobs. Different pipeline chains can interleave;
+  # scripts refresh main and enforce an explicit push lease.
+  resource_group: fork-main-maintenance
+sync-upstream:
+  extends: .maintenance
+  stage: sync
+  script:
+    - ./scripts/ci/sync-upstream.sh
+update-fork-packages:
+  extends: .maintenance
+  stage: update
+  needs: ["sync-upstream"]
+  # Partial failures (exit 1: some packages failed) must not block
+  # merging the updates that did publish; systemic failures (exit 2)
+  # fail the pipeline.
+  allow_failure:
+    exit_codes: [1]
+  script:
+    - ./scripts/ci/update_fork_packages.py
+merge-update-mrs:
+  extends: .maintenance
+  stage: merge
+  needs: ["update-fork-packages"]
+  script:
+    - ./scripts/ci/merge_update_mrs.py
+validate-update-mr:
+  stage: validate
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - MR_SOURCE_BRANCH="$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" MR_TARGET_BRANCH="$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" ./scripts/ci/validate-mr.sh
