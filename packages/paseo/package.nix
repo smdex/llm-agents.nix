@@ -16,7 +16,13 @@
   # (where `fetchNpmDeps` may produce a different hash for the same lockfile)
   # can override via `.override { npmDepsHash = "sha256-..."; }` without
   # `overrideAttrs` gymnastics.
-  npmDepsHash ? "sha256-BviMj+DUg05o6sUUwThIwF7hl0SnBU0inQMLs4vLUIA=",
+  npmDepsHash ?
+    {
+      x86_64-linux = "sha256-9VYmxPWM9TqMhE9IFh70rSdr6keDByyj3xbJC8ZClZY=";
+      aarch64-linux = "sha256-2GVQn5TsIc8CYBncn/exjCtNtmtw4bgLixd+gkWnJqY=";
+      aarch64-darwin = "sha256-Rko5g+ba9OpPlMw/b7ZB8Pf8oQwPepbsdBfOdn/flHg=";
+    }
+    .${stdenv.hostPlatform.system} or "sha256-BviMj+DUg05o6sUUwThIwF7hl0SnBU0inQMLs4vLUIA=",
 }:
 
 buildNpmPackage rec {
@@ -34,6 +40,22 @@ buildNpmPackage rec {
 
   inherit npmDepsHash;
   npmDepsFetcherVersion = 2;
+
+  # fetchNpmDeps fetches every lockfile entry, including optional binaries for
+  # other platforms. Apply the same filter before fetching and npm ci.
+  # Other architectures retain the original, platform-independent cache.
+  postPatch =
+    lib.optionalString
+      (lib.elem stdenv.hostPlatform.system [
+        "x86_64-linux"
+        "aarch64-linux"
+        "aarch64-darwin"
+      ])
+      ''
+        ${python3}/bin/python3 ${./filter-lockfile.py} \
+          ${if stdenv.hostPlatform.isDarwin then "darwin" else "linux"} \
+          ${if stdenv.hostPlatform.isAarch64 then "arm64" else "x64"}
+      '';
 
   # Prevent onnxruntime-node's install script from running during automatic
   # npm rebuild (it tries to download from api.nuget.org, which fails in the
@@ -53,6 +75,15 @@ buildNpmPackage rec {
 
   # Don't use the default npm build hook — we need a custom build sequence
   dontNpmBuild = true;
+
+  # Expo evaluates native version metadata even for web exports. Upstream's
+  # native-version parser rejects our fork suffix; preserve it everywhere else.
+  # Run after npm ci so workspace manifests and the dependency lock stay intact.
+  preBuild = ''
+    substituteInPlace packages/app/app.config.js \
+      --replace-fail 'getNativeReleaseVersion(pkg.version)' \
+      'getNativeReleaseVersion(pkg.version.replace(/-smdex$/, ""))'
+  '';
 
   buildPhase = ''
     runHook preBuild
