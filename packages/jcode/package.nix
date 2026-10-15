@@ -11,16 +11,16 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "jcode";
-  version = "0.95.1-smdex.9";
+  version = "0.98.2-smdex.1";
 
   src = fetchFromGitHub {
     owner = "smdex";
     repo = "jcode";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-ko9HjW4GWHJlBT6wQaTMSCk8inipl2OQwTw8CjmVEnc=";
+    hash = "sha256-VfvG0FSbyuTxQORk1oSAFVgyPXKJ5QZF7cG2VcYuZAc=";
   };
 
-  cargoHash = "sha256-y4m3xOgRjB6JxtwVm7UADKFqIt1OssbHLZYomndoZdc=";
+  cargoHash = "sha256-AQwS+i59bsbDVzM5bKNqAgwMe1CgyO5cNUkdEG+9w/w=";
 
   # .cargo/config.toml caps builds at 4 jobs; let Nix parallelism decide.
   postPatch = ''
@@ -42,7 +42,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   env = {
     JCODE_RELEASE_BUILD = "1";
     JCODE_BUILD_SEMVER = finalAttrs.version;
-    JCODE_BUILD_GIT_HASH = "6e1b7cc4";
+    JCODE_BUILD_GIT_HASH = "4a60b965";
   };
 
   # Test suite needs network access, provider credentials and a TTY.
