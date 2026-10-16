@@ -32,8 +32,8 @@ buildNpmPackage rec {
   src = fetchFromGitHub {
     owner = "smdex";
     repo = "paseo";
-    tag = "v${version}";
-    hash = "sha256-2R9MI6EmLRS3vUcgC8isXAYOWnWyaUKgPHwon6iWaxs=";
+    rev = "ea6c24bb972dde85e52548e6ca528e7238a62b3b";
+    hash = "sha256-VJVvEwgTKbIzneUveMDPZbWPCOaMSOvZe8DRF2WkvrA=";
   };
 
   nodejs = nodejs_22;
