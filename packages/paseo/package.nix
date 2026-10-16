@@ -28,6 +28,7 @@
 buildNpmPackage rec {
   pname = "paseo";
   version = "0.11.2-smdex";
+  # Pin the fork's verified feature revision rather than its stale release tag.
 
   src = fetchFromGitHub {
     owner = "smdex";
