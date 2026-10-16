@@ -18,7 +18,7 @@
   # `overrideAttrs` gymnastics.
   npmDepsHash ?
     {
-      x86_64-linux = "sha256-9VYmxPWM9TqMhE9IFh70rSdr6keDByyj3xbJC8ZClZY=";
+      x86_64-linux = "sha256-XcFAzgw8kaJ1wkg8X9QNMFkxuabyqJBYBA0I94vE+kw=";
       aarch64-linux = "sha256-2GVQn5TsIc8CYBncn/exjCtNtmtw4bgLixd+gkWnJqY=";
       aarch64-darwin = "sha256-Rko5g+ba9OpPlMw/b7ZB8Pf8oQwPepbsdBfOdn/flHg=";
     }
