@@ -60,8 +60,11 @@ buildNpmPackage (finalAttrs: {
     # Native deps (terminal emulation; libuv-linked on Linux).
     # node-gyp-build skips compilation when a matching prebuilt binary exists,
     # so remove the bundled prebuilds first to force a real build.
-    rm -rf packages/server/node_modules/node-pty/prebuilds
-    npm rebuild node-pty --workspace=@getpaseo/server
+    # npm >=10 hoists node-pty to the root in regenerated locks while
+    # upstream-generated locks keep it nested under the server workspace —
+    # handle both layouts.
+    rm -rf packages/server/node_modules/node-pty/prebuilds node_modules/node-pty/prebuilds
+    npm rebuild node-pty
     npm run postinstall
 
     # Server workspaces (highlight + relay + protocol + client + server + cli)
@@ -104,7 +107,10 @@ buildNpmPackage (finalAttrs: {
       echo packages/desktop/package.json
       # node-pty's compiled addon: loaded via a runtime-computed path that
       # static tracing cannot follow (build/Release is checked first).
-      find packages/server/node_modules/node-pty/build/Release -maxdepth 1 -type f
+      # Tolerate both hoisted and nested lock layouts (see buildPhase note).
+      for d in packages/server/node_modules/node-pty/build/Release node_modules/node-pty/build/Release; do
+        [ -d "$d" ] && find "$d" -maxdepth 1 -type f
+      done || true
       if [ -d skills ]; then find skills -type f; fi
       # Root package.json lets node resolve the workspace layout.
       echo package.json
