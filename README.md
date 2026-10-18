@@ -694,6 +694,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>browseros-neo</strong> - The open source agentic browser</summary>
+
+- **Source**: binary
+- **License**: BSD-3-Clause
+- **Homepage**: https://www.browseros.com/
+- **Usage**: `nix run github:numtide/llm-agents.nix#browseros-neo -- --help`
+- **Nix**: [packages/browseros-neo/package.nix](packages/browseros-neo/package.nix)
+
+</details>
+<details>
 <summary><strong>grok-bot</strong> - Grok Bot desktop agent — AI teammates that finish the work</summary>
 
 - **Source**: binary
