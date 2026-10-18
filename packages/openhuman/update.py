@@ -27,8 +27,10 @@ Only ``hashes.json`` is touched; ``package.nix`` reads everything from it.
 import re
 import sys
 from functools import cmp_to_key
+from http import HTTPStatus
 from pathlib import Path
 from typing import Any, cast
+from urllib.error import HTTPError
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 
@@ -119,36 +121,37 @@ def latest_tag() -> str:
     return max(versions, key=cmp_to_key(compare_versions))
 
 
-def parse_gitmodules(tag: str) -> dict[str, str]:
-    """Map submodule path -> ``owner/repo`` slug from the tag's .gitmodules."""
-    text = fetch_text(
-        f"https://raw.githubusercontent.com/{OWNER}/{REPO}/{tag}/.gitmodules",
-    )
+def parse_gitmodules(slug: str, rev: str) -> dict[str, str]:
+    """Map submodule path -> ``owner/repo`` slug from a revision's .gitmodules."""
+    try:
+        text = fetch_text(
+            f"https://raw.githubusercontent.com/{slug}/{rev}/.gitmodules",
+        )
+    except HTTPError as error:
+        if error.code == HTTPStatus.NOT_FOUND:
+            return {}
+        raise
     sections = re.split(r"(?m)^\s*\[submodule\s+\"[^\"]+\"\]", text)[1:]
     slugs: dict[str, str] = {}
     for section in sections:
         path = re.search(r"(?m)^\s*path\s*=\s*(\S+)", section)
         url = re.search(r"(?m)^\s*url\s*=\s*(\S+)", section)
         if path is None or url is None:
-            msg = f".gitmodules section lacks path/url at {tag}"
+            msg = f".gitmodules section lacks path/url at {slug}@{rev}"
             raise ValueError(msg)
         m = re.fullmatch(
             r"https://github\.com/([^/\s]+)/([^/\s]+?)(?:\.git)?/?", url.group(1)
         )
-        if m is None:
-            msg = f"submodule {path.group(1)} URL is not a plain GitHub repo: {url.group(1)}"
-            raise ValueError(msg)
-        slugs[path.group(1)] = f"{m.group(1)}/{m.group(2)}"
-    if not slugs:
-        msg = f"no submodule sections parsed from {tag} .gitmodules"
-        raise ValueError(msg)
+        if m is not None:
+            slugs[path.group(1)] = f"{m.group(1)}/{m.group(2)}"
+    return slugs
     return slugs
 
 
-def gitlink_revs(tag: str) -> dict[str, str]:
-    """Map gitlink path -> pinned rev, from the tag's (recursive) tree."""
+def gitlink_revs_for(slug: str, rev: str) -> dict[str, str]:
+    """Map gitlink path -> pinned rev from a repository tree."""
     tree = fetch_json(
-        f"https://api.github.com/repos/{OWNER}/{REPO}/git/trees/{tag}?recursive=1",
+        f"https://api.github.com/repos/{slug}/git/trees/{rev}?recursive=1",
     )
     if not isinstance(tree, dict) or not isinstance(tree.get("tree"), list):
         msg = "unexpected tree API response"
@@ -163,6 +166,11 @@ def gitlink_revs(tag: str) -> dict[str, str]:
     }
 
 
+def gitlink_revs(tag: str) -> dict[str, str]:
+    """Map top-level gitlink path -> pinned rev."""
+    return gitlink_revs_for(f"{OWNER}/{REPO}", tag)
+
+
 def submodule_pins(tag: str) -> dict[str, dict[str, str]]:
     """Build the tag's submodule set: path -> {owner, repo, rev}.
 
@@ -170,7 +178,7 @@ def submodule_pins(tag: str) -> dict[str, dict[str, str]]:
     ``.gitmodules`` only supplies where each path is fetched from.
     """
     revs = gitlink_revs(tag)
-    slugs = parse_gitmodules(tag)
+    slugs = parse_gitmodules(f"{OWNER}/{REPO}", tag)
     orphans = set(revs) - set(slugs)
     if orphans:
         msg = f"tag {tag} has gitlinks missing from .gitmodules: {sorted(orphans)}"
@@ -179,6 +187,19 @@ def submodule_pins(tag: str) -> dict[str, dict[str, str]]:
     for path, rev in revs.items():
         owner, repo = slugs[path].split("/", 1)
         pins[path] = {"owner": owner, "repo": repo, "rev": rev}
+
+    # Nested vendor repositories are gitlinks too, but GitHub's recursive tree
+    # API does not descend through the top-level gitlink.
+    for parent, pin in list(pins.items()):
+        slug = f"{pin['owner']}/{pin['repo']}"
+        nested_revs = gitlink_revs_for(slug, pin["rev"])
+        nested_slugs = parse_gitmodules(slug, pin["rev"])
+        for nested_path, nested_rev in nested_revs.items():
+            if not nested_path.startswith("vendor/") or nested_path not in nested_slugs:
+                continue
+            owner, repo = nested_slugs[nested_path].split("/", 1)
+            path = f"{parent}/{nested_path}"
+            pins[path] = {"owner": owner, "repo": repo, "rev": nested_rev}
     return pins
 
 
@@ -190,6 +211,19 @@ def prefetch_github_archive(slug: str, rev: str) -> str:
     )
 
 
+def cef_lock(tag: str) -> str | None:
+    """Fetch desktop lockfile from its current or legacy location."""
+    for path in ("app/src-tauri/Cargo.lock", "crates/openhuman-app/Cargo.lock"):
+        try:
+            return fetch_text(
+                f"https://raw.githubusercontent.com/{OWNER}/{REPO}/{tag}/{path}",
+            )
+        except HTTPError as error:
+            if error.code != HTTPStatus.NOT_FOUND:
+                raise
+    return None
+
+
 def cef_pins(tag: str) -> tuple[str, dict[str, dict[str, str]]] | None:
     """CEF crate version + per-platform {name, sha1} for the tag.
 
@@ -198,9 +232,9 @@ def cef_pins(tag: str) -> tuple[str, dict[str, dict[str, str]]] | None:
     when the tag's lockfile carries no cef-dll-sys (that release does not
     ship the CEF engine; the pin is retired).
     """
-    lock = fetch_text(
-        f"https://raw.githubusercontent.com/{OWNER}/{REPO}/{tag}/app/src-tauri/Cargo.lock",
-    )
+    lock = cef_lock(tag)
+    if lock is None:
+        return None
     m = re.search(
         r'^\s*name = "cef-dll-sys"\n\s*version = "([^"]+)"', lock, re.MULTILINE
     )

@@ -109,6 +109,7 @@ let
     ${lib.concatStrings (
       lib.mapAttrsToList (path: meta: ''
         mkdir -p $out/$(dirname ${path})
+        chmod -R u+w $out/$(dirname ${path})
         cp -TR ${submoduleSource path meta} $out/${path}
       '') data.submodules
     )}
@@ -137,7 +138,7 @@ let
   cargoDepsApp = rustPlatform.fetchCargoVendor {
     name = "openhuman-${data.version}-app-deps";
     src = fullSrc;
-    cargoRoot = "app/src-tauri";
+    cargoRoot = "crates/openhuman-app";
     hash = data.cargoAppDeps;
   };
 
@@ -392,7 +393,7 @@ stdenv.mkDerivation (finalAttrs: {
     ''}
     cargo build \
       --release --locked --offline \
-      --manifest-path "$PWD/app/src-tauri/Cargo.toml" \
+      --manifest-path "$PWD/crates/openhuman-app/Cargo.toml" \
       --bin OpenHuman \
       $shellFeatures
 
