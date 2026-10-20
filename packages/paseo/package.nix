@@ -18,7 +18,7 @@
   # `overrideAttrs` gymnastics.
   npmDepsHash ?
     {
-      x86_64-linux = "sha256-vmUO6/aeEI+0U9QF2pjnsfdbWZRoj8Zd/4WATDhpEzM=";
+      x86_64-linux = "sha256-cpo88C4wrgpcGGjfczCNgy/L9SN4HwQP+vNADbnqssk=";
       aarch64-linux = "sha256-2GVQn5TsIc8CYBncn/exjCtNtmtw4bgLixd+gkWnJqY=";
       aarch64-darwin = "sha256-Rko5g+ba9OpPlMw/b7ZB8Pf8oQwPepbsdBfOdn/flHg=";
     }
@@ -27,14 +27,14 @@
 
 buildNpmPackage rec {
   pname = "paseo";
-  version = "0.12.0-beta.3-smdex.1";
+  version = "0.12.0-smdex.1";
   # Pin the fork's verified feature revision rather than its stale release tag.
 
   src = fetchFromGitHub {
     owner = "smdex";
     repo = "paseo";
-    rev = "22ce7f91bff5631f328ab0c609f4e0cd9d7184cd";
-    hash = "sha256-3hnLJ6uJnnb4JrlmUyixXt15dlJ3nLo4sstrx9rZDtI=";
+    rev = "b58029e452f8fd2c464040a6d8dbb118430d5f2b";
+    hash = "sha256-edMWHFCYvIIgCTZC323XOfYZPfKvgnvxnwZHec8tfuo=";
   };
 
   nodejs = nodejs_22;
