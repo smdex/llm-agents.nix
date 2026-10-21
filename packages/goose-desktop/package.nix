@@ -1,0 +1,178 @@
+{
+  lib,
+  flake,
+  stdenv,
+  fetchFromGitHub,
+  fetchPnpmDeps,
+  zip,
+  runCommand,
+  makeWrapper,
+  nodejs,
+  pnpm_10,
+  pnpmConfigHook,
+  electron_43,
+  goose-cli,
+}:
+
+let
+  pnpm = pnpm_10;
+  electron = electron_43;
+  electronVersion = electron.version;
+  # Forge accepts an offline Electron archive. Repack the patched nixpkgs
+  # runtime so the packaged executable and its shared libraries use the same
+  # supported version, without a second upstream binary pin.
+  electronZipDir =
+    runCommand "electron-${electronVersion}-zip-dir"
+      {
+        nativeBuildInputs = [ zip ];
+      }
+      ''
+        mkdir -p $out
+        cp -a ${electron.dist} electron
+        chmod -R u+w electron
+        cd electron
+        zip -X -qr "$out/electron-v${electronVersion}-linux-x64.zip" .
+      '';
+
+in
+stdenv.mkDerivation (finalAttrs: {
+  pname = "goose-desktop";
+  version = "1.54.0";
+
+  src = fetchFromGitHub {
+    owner = "aaif-goose";
+    repo = "goose";
+    tag = "v${finalAttrs.version}";
+    hash = "sha256-+A64mXt9xLJ9Fg0N68JImbIGFG//mHmFFdJbmaQKG8c=";
+  };
+
+  sourceRoot = "${finalAttrs.src.name}/ui";
+  pnpmDeps = fetchPnpmDeps {
+    inherit (finalAttrs) pname version src;
+    sourceRoot = "${finalAttrs.src.name}/ui";
+    inherit pnpm;
+    fetcherVersion = 3;
+    hash = "sha256-zdWZTQ4l0ULsCDBIosAV/pBe5zFTYjLrTcNFq30C3F8=";
+  };
+
+  postPatch = ''
+    substituteInPlace desktop/forge.config.ts \
+      --replace-fail 'rebuildConfig: {},' 'rebuildConfig: { onlyModules: [] },' \
+      --replace-fail 'packagerConfig: cfg,' 'packagerConfig: { ...cfg, electronZipDir: "${electronZipDir}" },'
+  '';
+
+  nativeBuildInputs = [
+    makeWrapper
+    nodejs
+    pnpm
+    pnpmConfigHook
+  ];
+
+  # electron-forge uses the same supported Electron version as the runtime
+  # installed below. This avoids @electron/get network access in the build
+  # sandbox. The final application runtime is the Nix Electron distribution.
+  env = {
+    ELECTRON_SKIP_BINARY_DOWNLOAD = "1";
+    npm_config_runtime = "electron";
+    npm_config_target = electronVersion;
+    npm_config_nodedir = electron.headers;
+    ELECTRON_SKIP_REBUILD = "1";
+  };
+
+  dontStrip = true;
+
+  buildPhase = ''
+    runHook preBuild
+
+    set +e
+    pnpm --filter @aaif/goose-sdk exec tsc --pretty false --diagnostics
+    tscStatus=$?
+    echo "SDK TypeScript status: $tscStatus"
+    set -e
+    test "$tscStatus" -eq 0
+
+    # Forge's extraResource rule copies src/bin into resources/bin. Keep the
+    # source-built ACP executable as a store symlink; the packaged app uses
+    # this exact path for `goose serve`.
+    mkdir -p desktop/src/bin
+    rm -f desktop/src/bin/goose
+    ln -s ${lib.getExe goose-cli} desktop/src/bin/goose
+    test -L desktop/src/bin/goose
+    test "$(realpath desktop/src/bin/goose)" = "${lib.getExe goose-cli}"
+    echo "Staged Goose ACP binary: $(realpath desktop/src/bin/goose)"
+
+    # The electron npm package is present in the offline pnpm tree, but its
+    # postinstall cannot download a runtime. Give it the Nix runtime path so
+    # Forge can load the package while its packager uses electronZipDir above.
+    # Forge derives its runtime version from the installed npm metadata,
+    # overriding packagerConfig.electronVersion. Align it after the frozen
+    # dependency installation; the actual runtime comes from electronZipDir.
+    node <<'JS'
+    const fs = require('fs');
+    const desktop = JSON.parse(fs.readFileSync('desktop/package.json', 'utf8'));
+    desktop.devDependencies.electron = '${electronVersion}';
+    fs.writeFileSync('desktop/package.json', JSON.stringify(desktop));
+    const path = 'node_modules/electron/package.json';
+    const electron = JSON.parse(fs.readFileSync(path, 'utf8'));
+    electron.version = '${electronVersion}';
+    fs.writeFileSync(path, JSON.stringify(electron));
+    JS
+
+    electronPackage=node_modules/electron
+    echo "Electron package: $electronPackage"
+    test -e "$electronPackage"
+    rm -rf "$electronPackage/dist"
+    mkdir -p "$electronPackage/dist"
+    ln -s ${electron}/bin/electron "$electronPackage/dist/electron"
+    printf 'electron\n' > "$electronPackage/path.txt"
+
+    cd desktop
+    pnpm run build-goose-acp-client
+    pnpm run i18n:compile
+    pnpm exec electron-forge package --platform=linux --arch=x64
+    cd ..
+
+    runHook postBuild
+  '';
+
+  installPhase = ''
+    runHook preInstall
+
+    appDir=$(find desktop/out -mindepth 1 -maxdepth 1 -type d -name 'Goose-linux-*' | head -1)
+    test -n "$appDir"
+    mkdir -p $out/libexec/goose-desktop $out/bin
+    cp -a "$appDir/." $out/libexec/goose-desktop/
+    cp -a ${electron.dist}/. $out/libexec/goose-desktop/
+
+    install -Dm644 desktop/src/images/icon.png \
+      $out/share/icons/hicolor/512x512/apps/goose-desktop.png
+    makeWrapper $out/libexec/goose-desktop/Goose $out/bin/goose-desktop \
+      --add-flags "--no-sandbox"
+
+    runHook postInstall
+  '';
+
+  doInstallCheck = true;
+  installCheckPhase = ''
+    runHook preInstallCheck
+    test -x $out/bin/goose-desktop
+    test -x $out/libexec/goose-desktop/Goose
+    test -f $out/libexec/goose-desktop/resources/app.asar
+    test -L $out/libexec/goose-desktop/resources/bin/goose
+    test "$(realpath $out/libexec/goose-desktop/resources/bin/goose)" = "${lib.getExe goose-cli}"
+    runHook postInstallCheck
+  '';
+
+  passthru.category = "AI Coding Agents";
+
+  meta = {
+    description = "Legacy Electron desktop app for Goose, a local extensible AI agent";
+    homepage = "https://github.com/aaif-goose/goose";
+    changelog = "https://github.com/aaif-goose/goose/releases/tag/v${finalAttrs.version}";
+    license = lib.licenses.asl20;
+    sourceProvenance = [ lib.sourceTypes.fromSource ];
+    maintainers = with flake.lib.maintainers; [ smdex ];
+    mainProgram = "goose-desktop";
+    platforms = [ "x86_64-linux" ];
+  };
+})
