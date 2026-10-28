@@ -24,7 +24,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   # "provider source roots require a qualified local Linux filesystem".
   # Accept ZFS alongside the qualified local filesystems.
   # TODO: drop when upstream adds ZFS_SUPER_MAGIC.
-  postPatch = '\''
+  postPatch = ''
     substituteInPlace crates/ctx-history-source-io/src/io/root_handle/unix.rs \
       --replace-fail \
         'EXT_SUPER_MAGIC | XFS_SUPER_MAGIC | BTRFS_SUPER_MAGIC | F2FS_SUPER_MAGIC | TMPFS_MAGIC' \
@@ -33,7 +33,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
       --replace-fail 'const TMPFS_MAGIC: i64 = 0x0102_1994;' \
         'const TMPFS_MAGIC: i64 = 0x0102_1994;
     const ZFS_SUPER_MAGIC: i64 = 0x2FC1_2FC1;'
-  '\';
+  '';
 
   cargoHash = "sha256-Jf51SQ7FuC9a55ZIFQlYW2ebsUGE62loiJHYoDVnu5Q=";
 
