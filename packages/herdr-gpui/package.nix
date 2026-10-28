@@ -33,7 +33,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     hash = "sha256-yia9ihxrPfcCTQlP/TqQcPR8l50CG/fK3H/xBc/tM04=";
   };
 
-  cargoHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+  cargoHash = "sha256-rD0KnPpTClo8bV0rxiMoQaqXpSlZa9tfka0We4ozKyc=";
 
   outputs = [
     "out"
