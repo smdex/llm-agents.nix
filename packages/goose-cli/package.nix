@@ -9,10 +9,6 @@
   dbus,
   versionCheckHook,
   cacert,
-  callPackage,
-  librusty_v8 ? callPackage ./librusty_v8.nix {
-    inherit (callPackage ./fetchers.nix { }) fetchLibrustyV8;
-  },
 }:
 
 let
@@ -50,10 +46,6 @@ rustPlatform.buildRustPackage rec {
 
   # reqwest-based tests need a CA bundle to construct HTTP clients.
   nativeCheckInputs = [ cacert ];
-
-  # The v8 package will try to download a `librusty_v8.a` release at build time to our read-only filesystem
-  # To avoid this we pre-download the file and export it via RUSTY_V8_ARCHIVE
-  env.RUSTY_V8_ARCHIVE = librusty_v8;
 
   # Build only the CLI package
   cargoBuildFlags = [
