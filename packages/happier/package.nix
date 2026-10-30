@@ -12,7 +12,7 @@ let
     platforms = {
       x86_64-linux = "linux-x64";
     };
-    urlTemplate = "https://github.com/happier-dev/happier/releases/download/cli-stable/happier-{platform}.tar.gz";
+    urlTemplate = "https://github.com/happier-dev/happier/releases/download/cli-stable/happier-v{version}-{platform}.tar.gz";
   };
   libPath = lib.makeLibraryPath [
     stdenv.cc.cc.lib

@@ -11,8 +11,8 @@ let
   src = fetchFromGitHub {
     owner = "smdex";
     repo = "pi-perplexity";
-    tag = "v0.6.1";
-    hash = "sha256-J9gtnSZESDfG3Sxuc78n56/PAFHNRVH+Shm1hM1AblE=";
+    rev = "22d1c3ba9332e1464382f0a0362732c36ebb7c36";
+    hash = "sha256-CX4JC1ZIWsjuOrZEb+7geQWpztDIos3QWnFAGSJekqk=";
   };
   cli = "${src}/cli";
   bunDeps = stdenvNoCC.mkDerivation {
