@@ -8,13 +8,13 @@
 
 python3.pkgs.buildPythonApplication rec {
   pname = "loopx";
-  version = "1.4.0";
+  version = "2.1.1";
   pyproject = true;
 
   # PyPI distributions include the validated chat frontend required at build time.
   src = fetchPypi {
     inherit pname version;
-    hash = "sha256-iQ9U+7QEH/6tuHqmXk2TRU/E4A/CSJHiEVZRF27nbrI=";
+    hash = "sha256-CYz+xVx50IqAyjJKeWd6nAv0xPUxAHl+wHq1mxl9BAQ=";
   };
 
   build-system = with python3.pkgs; [

@@ -3,6 +3,7 @@
   stdenv,
   platformSource,
   makeWrapper,
+  formatelf,
   openssl,
 }:
 
@@ -12,7 +13,7 @@ let
     platforms = {
       x86_64-linux = "linux-x64";
     };
-    urlTemplate = "https://github.com/happier-dev/happier/releases/download/server-stable/happier-server-{platform}.tar.gz";
+    urlTemplate = "https://github.com/happier-dev/happier/releases/download/server-stable/happier-server-v{version}-{platform}.tar.gz";
   };
   libPath = lib.makeLibraryPath [
     stdenv.cc.cc.lib
@@ -23,24 +24,30 @@ stdenv.mkDerivation {
   pname = "happier-server";
   inherit (source) version src;
 
-  nativeBuildInputs = [ makeWrapper ];
+  nativeBuildInputs = [
+    formatelf
+    makeWrapper
+  ];
+  buildInputs = [
+    stdenv.cc.cc.lib
+    openssl
+  ];
 
   dontBuild = true;
   # The server executable is a Bun compiled binary; preserve its appended
   # payload and the full sibling bundle (Prisma engines, UI, migrations).
   dontStrip = true;
-  dontPatchELF = true;
 
   installPhase = ''
     runHook preInstall
 
     mkdir -p $out/lib/happier-server $out/bin
     cp -a . $out/lib/happier-server
+    # These glibc builds cannot load the bundled optional musl addons.
+    find $out/lib/happier-server/node_modules -iname '*musl*' -prune -exec rm -rf {} +
     bin=$out/lib/happier-server/happier-server
 
-    # Bun's compiled payload is appended to this executable. Do not mutate it:
-    # a wrapper keeps the binary byte-for-byte intact while exposing dynamic
-    # libraries needed by the packaged Prisma engine.
+    # Prisma's native engine is loaded dynamically rather than via RUNPATH.
     makeWrapper "$bin" $out/bin/happier-server \
       --prefix LD_LIBRARY_PATH : "${libPath}" \
       --set PRISMA_QUERY_ENGINE_LIBRARY "$out/lib/happier-server/generated/sqlite-client/libquery_engine-debian-openssl-3.0.x.so.node"
