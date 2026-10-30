@@ -1,7 +1,5 @@
 {
   lib,
-  stdenv,
-  flake,
   fetchFromGitHub,
   rustPlatform,
   makeWrapper,
@@ -69,15 +67,14 @@ rustPlatform.buildRustPackage (finalAttrs: {
     wayland
   ];
 
-  buildInputs =
-    [
-      alsa-lib
-      fontconfig
-      freetype
-      libxkbcommon
-      libxcb
-    ]
-    ++ finalAttrs.runtimeLibraries;
+  buildInputs = [
+    alsa-lib
+    fontconfig
+    freetype
+    libxkbcommon
+    libxcb
+  ]
+  ++ finalAttrs.runtimeLibraries;
 
   # The workspace test suite needs a desktop session and a live daemon.
   doCheck = false;
@@ -98,7 +95,12 @@ rustPlatform.buildRustPackage (finalAttrs: {
   postFixup = ''
     patchelf --add-rpath ${lib.makeLibraryPath finalAttrs.runtimeLibraries} $out/bin/herdr-gpui
     wrapProgram $out/bin/herdr-gpui \
-      --prefix PATH : ${lib.makeBinPath [ wl-clipboard xclip ]}
+      --prefix PATH : ${
+        lib.makeBinPath [
+          wl-clipboard
+          xclip
+        ]
+      }
   '';
 
   # Every build runs each shipped program's safe CLI and checks ldd, as the
