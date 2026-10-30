@@ -2,6 +2,7 @@
   lib,
   stdenv,
   platformSource,
+  mkUpdater,
   makeWrapper,
   formatelf,
   openssl,
@@ -55,7 +56,19 @@ stdenv.mkDerivation {
     runHook postInstall
   '';
 
-  passthru.category = "AI Assistants";
+  passthru = {
+    category = "AI Assistants";
+    updater = mkUpdater (
+      source.updater
+      // {
+        versionSource = {
+          type = "text";
+          url = "https://api.github.com/repos/happier-dev/happier/releases/tags/server-stable";
+          regex = ''"name"\s*:\s*"happier-server-v([0-9.]+)-linux-x64\.tar\.gz"'';
+        };
+      }
+    );
+  };
 
   meta = {
     description = "Self-hosted, end-to-end encrypted Happier sync server";
