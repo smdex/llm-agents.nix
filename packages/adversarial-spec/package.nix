@@ -54,6 +54,9 @@ stdenvNoCC.mkDerivation rec {
   installCheckPhase = ''
     runHook preInstallCheck
 
+    # LiteLLM must use its bundled pricing map in the offline build sandbox.
+    export LITELLM_LOCAL_MODEL_COST_MAP=True
+
     $out/bin/adversarial-spec providers | grep -q "Supported providers"
     $out/bin/adversarial-spec focus-areas | grep -q "Available focus areas"
     $out/bin/adversarial-spec-telegram --help | grep -q "Telegram bot utilities"
