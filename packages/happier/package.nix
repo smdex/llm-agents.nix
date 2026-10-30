@@ -3,7 +3,10 @@
   stdenv,
   platformSource,
   makeWrapper,
+  formatelf,
   openssl,
+  versionCheckHook,
+  versionCheckHomeHook,
 }:
 
 let
@@ -23,31 +26,40 @@ stdenv.mkDerivation {
   pname = "happier";
   inherit (source) version src;
 
-  nativeBuildInputs = [ makeWrapper ];
+  nativeBuildInputs = [
+    formatelf
+    makeWrapper
+  ];
+  buildInputs = [
+    stdenv.cc.cc.lib
+    openssl
+  ];
 
   dontBuild = true;
-  # The entry point is a Bun compiled executable. Its bytecode payload is
-  # appended to the ELF, so stripping or autoPatchelfHook would corrupt it.
+  # Preserve Bun's appended bytecode while formatelf fixes the ELF loader.
   dontStrip = true;
-  dontPatchELF = true;
 
   installPhase = ''
     runHook preInstall
 
     mkdir -p $out/lib/happier $out/bin
     cp -a . $out/lib/happier
+    # These glibc builds cannot load the bundled optional musl addons.
+    find $out/lib/happier/node_modules -iname '*musl*' -prune -exec rm -rf {} +
     bin=$out/lib/happier/happier
 
-    # Bun's compiled payload is appended to this executable. Do not mutate it:
-    # a wrapper keeps the binary byte-for-byte intact while exposing dynamic
-    # libraries needed by dlopen'd native addons.
+    # Native addons use dlopen rather than the main binary's RUNPATH.
     makeWrapper "$bin" $out/bin/happier \
       --prefix LD_LIBRARY_PATH : "${libPath}"
 
     runHook postInstall
   '';
 
-  doInstallCheck = false;
+  doInstallCheck = true;
+  nativeInstallCheckInputs = [
+    versionCheckHook
+    versionCheckHomeHook
+  ];
 
   passthru.category = "AI Coding Agents";
 
