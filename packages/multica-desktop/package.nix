@@ -86,8 +86,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   meta = {
     description = "Desktop client for the Multica platform";
-    homepage = "https://github.com/multica-ai/multica";
-    changelog = "https://github.com/multica-ai/multica/releases/tag/v${finalAttrs.version}";
+    inherit (multica.meta) homepage changelog;
     license = flake.lib.licenses.unfree;
     sourceProvenance = with lib.sourceTypes; [ fromSource ];
     maintainers = with flake.lib.maintainers; [ smdex ];
