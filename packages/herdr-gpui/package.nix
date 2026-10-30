@@ -145,6 +145,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     homepage = "https://herdrui.dev";
     changelog = "https://github.com/smdex/herdr-gpui/commits/ba80a6fd396e1c0e2ba07c105b76005392407bb9";
     license = lib.licenses.asl20;
+    sourceProvenance = with lib.sourceTypes; [ fromSource ];
     mainProgram = "herdr-gpui";
     platforms = [
       "x86_64-linux"
