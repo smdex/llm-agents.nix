@@ -2,6 +2,7 @@
   lib,
   stdenv,
   platformSource,
+  mkUpdater,
   makeWrapper,
   formatelf,
   openssl,
@@ -61,7 +62,19 @@ stdenv.mkDerivation {
     versionCheckHomeHook
   ];
 
-  passthru.category = "AI Coding Agents";
+  passthru = {
+    category = "AI Coding Agents";
+    updater = mkUpdater (
+      source.updater
+      // {
+        versionSource = {
+          type = "text";
+          url = "https://api.github.com/repos/happier-dev/happier/releases/tags/cli-stable";
+          regex = ''"name"\s*:\s*"happier-v([0-9.]+)-linux-x64\.tar\.gz"'';
+        };
+      }
+    );
+  };
 
   meta = {
     description = "End-to-end encrypted cross-device companion for coding agents";
