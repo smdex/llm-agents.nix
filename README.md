@@ -631,6 +631,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>openfang</strong> - Open-source Agent OS built in Rust — CLI for the OpenFang platform</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/RightNow-AI/openfang
+- **Usage**: `nix run github:numtide/llm-agents.nix#openfang -- --help`
+- **Nix**: [packages/openfang/package.nix](packages/openfang/package.nix)
+
+</details>
+<details>
 <summary><strong>openhands-agent-canvas</strong> - Self-hosted web UI for running OpenHands, Claude Code, Codex and other ACP agents</summary>
 
 - **Source**: source
@@ -1456,6 +1466,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>herdr-gpui</strong> - Native GPUI client for an existing local Herdr daemon (smdex fork)</summary>
+
+- **Source**: source
+- **License**: Apache-2.0
+- **Homepage**: https://herdrui.dev
+- **Usage**: `nix run github:numtide/llm-agents.nix#herdr-gpui -- --help`
+- **Nix**: [packages/herdr-gpui/package.nix](packages/herdr-gpui/package.nix)
+
+</details>
+<details>
 <summary><strong>kandev</strong> - Manage tasks, orchestrate agents, review changes, and ship value</summary>
 
 - **Source**: source
@@ -1547,6 +1567,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>ovis</strong> - Browser and phone client for herdr terminal workspaces</summary>
+
+- **Source**: source
+- **License**: MIT
+- **Homepage**: https://github.com/devswha/ovis
+- **Usage**: `nix run github:numtide/llm-agents.nix#ovis -- --help`
+- **Nix**: [packages/ovis/package.nix](packages/ovis/package.nix)
+
+</details>
+<details>
 <summary><strong>ralph-tui</strong> - AI Agent Loop Orchestrator TUI</summary>
 
 - **Source**: source
@@ -1604,6 +1634,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/kunchenguid/treehouse
 - **Usage**: `nix run github:numtide/llm-agents.nix#treehouse -- --help`
 - **Nix**: [packages/treehouse/package.nix](packages/treehouse/package.nix)
+
+</details>
+<details>
+<summary><strong>vibe-kanban</strong> - Kanban board to orchestrate AI coding agents like Claude Code, Codex, and Gemini CLI</summary>
+
+- **Source**: source
+- **License**: Apache-2.0
+- **Homepage**: https://github.com/BloopAI/vibe-kanban
+- **Usage**: `nix run github:numtide/llm-agents.nix#vibe-kanban -- --help`
+- **Nix**: [packages/vibe-kanban/package.nix](packages/vibe-kanban/package.nix)
 
 </details>
 <details>
@@ -1722,7 +1762,7 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 <details>
 <summary><strong>open-code-review</strong> - AI-powered code review CLI</summary>
 
-- **Source**: binary
+- **Source**: source
 - **License**: Apache-2.0
 - **Homepage**: https://github.com/alibaba/open-code-review
 - **Usage**: `nix run github:numtide/llm-agents.nix#open-code-review -- --help`
@@ -2032,6 +2072,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Nix**: [packages/skills/package.nix](packages/skills/package.nix)
 
 </details>
+<details>
+<summary><strong>skills-installer</strong> - Install agent skills across multiple AI coding clients</summary>
+
+- **Source**: bytecode
+- **License**: MIT
+- **Homepage**: https://github.com/Kamalnrf/claude-plugins
+- **Usage**: `nix run github:numtide/llm-agents.nix#skills-installer -- --help`
+- **Nix**: [packages/skills-installer/package.nix](packages/skills-installer/package.nix)
+
+</details>
 
 ### Utilities
 
@@ -2213,6 +2263,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 - **Homepage**: https://github.com/zilliztech/memsearch
 - **Usage**: `nix run github:numtide/llm-agents.nix#memsearch -- --help`
 - **Nix**: [packages/memsearch/package.nix](packages/memsearch/package.nix)
+
+</details>
+<details>
+<summary><strong>mercat</strong> - Render markdown and mermaid diagrams in the terminal</summary>
+
+- **Source**: source
+- **License**: GPL-3.0-or-later
+- **Homepage**: https://github.com/tawago/mercat
+- **Usage**: `nix run github:numtide/llm-agents.nix#mercat -- --help`
+- **Nix**: [packages/mercat/package.nix](packages/mercat/package.nix)
 
 </details>
 <details>
