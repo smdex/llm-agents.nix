@@ -1008,7 +1008,7 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 - **Source**: source
 - **License**: unfree
-- **Homepage**: https://github.com/multica-ai/multica
+- **Homepage**: https://github.com/smdex/multica
 - **Usage**: `nix run github:numtide/llm-agents.nix#multica -- --help`
 - **Nix**: [packages/multica/package.nix](packages/multica/package.nix)
 
@@ -1018,7 +1018,7 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 - **Source**: source
 - **License**: unfree
-- **Homepage**: https://github.com/multica-ai/multica
+- **Homepage**: https://github.com/smdex/multica
 - **Usage**: `nix run github:numtide/llm-agents.nix#multica-desktop -- --help`
 - **Nix**: [packages/multica-desktop/package.nix](packages/multica-desktop/package.nix)
 
