@@ -28,14 +28,14 @@ let
       hash = "sha256-3o7Qhqnby8UvuFmuiNvW1/Ad8gDXvbHPmrwQslfQL2I=";
     };
     ruvector-router-linux-x64-gnu = fetchzip {
-      url = "https://registry.npmjs.org/@ruvector/router-linux-x64-gnu/-/router-linux-x64-gnu-0.1.30.tgz";
-      hash = "sha256-WDalH2ta21hpZuzsucXCaRNw6egmq4oHRHdSdI37doo=";
+      url = "https://registry.npmjs.org/@ruvector/router-linux-x64-gnu/-/router-linux-x64-gnu-0.1.31.tgz";
+      hash = "sha256-q/+YO4RGhuRKZluFVrUEnEQRnLm1m0As+dl0GZYrzLU=";
     };
     ruvector-ruvllm-linux-x64-gnu = fetchzip {
       url = "https://registry.npmjs.org/@ruvector/ruvllm-linux-x64-gnu/-/ruvllm-linux-x64-gnu-2.0.1.tgz";
       hash = "sha256-AT1NazZAtd1By3BkmCk0FqdTjrRR8gr0jQGp1s7M4HM=";
     };
-    ruvector-ruvllm-linux-x64-gnu-agentic-flow = fetchzip {
+    ruvector-ruvllm-linux-x64-gnu-agent-federation = fetchzip {
       url = "https://registry.npmjs.org/@ruvector/ruvllm-linux-x64-gnu/-/ruvllm-linux-x64-gnu-0.2.0.tgz";
       hash = "sha256-cMpEr6kl0HLL8Br20fhUXSxyUALgJrOX7b7+PMgWTTQ=";
     };
@@ -48,8 +48,8 @@ let
       hash = "sha256-wYN62cgI3sRSkrcri2I+7NyETDklfRAQpFW4SYzXOh0=";
     };
     ruvector-tiny-dancer-linux-x64-gnu = fetchzip {
-      url = "https://registry.npmjs.org/@ruvector/tiny-dancer-linux-x64-gnu/-/tiny-dancer-linux-x64-gnu-0.1.15.tgz";
-      hash = "sha256-kYGot9AFo9hrW+yKUuEiNOMPkBo9q780E1yAzTyTai8=";
+      url = "https://registry.npmjs.org/@ruvector/tiny-dancer-linux-x64-gnu/-/tiny-dancer-linux-x64-gnu-0.1.22.tgz";
+      hash = "sha256-glphWxYauxs2X+iGKCn4qJCPQ1biN1+L3qiV6vdM/D8=";
     };
   };
 in
@@ -106,10 +106,10 @@ buildNpmPackage rec {
     ln -s ${nativeDeps.ruvector-sona-linux-x64-gnu} $out/share/ruflo/node_modules/@ruvector/sona-linux-x64-gnu
     ln -s ${nativeDeps.ruvector-tiny-dancer-linux-x64-gnu} $out/share/ruflo/node_modules/@ruvector/tiny-dancer-linux-x64-gnu
 
-    if [ -d $out/share/ruflo/node_modules/agentic-flow/node_modules/@ruvector ]; then
-      rm -rf $out/share/ruflo/node_modules/agentic-flow/node_modules/@ruvector/ruvllm-linux-x64-gnu
-      ln -s ${nativeDeps.ruvector-ruvllm-linux-x64-gnu-agentic-flow} $out/share/ruflo/node_modules/agentic-flow/node_modules/@ruvector/ruvllm-linux-x64-gnu
-    fi
+    # Only federation still uses the 0.2 ABI; agentic-flow now shares root 2.0.1.
+    mkdir -p $out/share/ruflo/v3/@claude-flow/plugin-agent-federation/node_modules/@ruvector
+    rm -rf $out/share/ruflo/v3/@claude-flow/plugin-agent-federation/node_modules/@ruvector/ruvllm-linux-x64-gnu
+    ln -s ${nativeDeps.ruvector-ruvllm-linux-x64-gnu-agent-federation} $out/share/ruflo/v3/@claude-flow/plugin-agent-federation/node_modules/@ruvector/ruvllm-linux-x64-gnu
 
     makeWrapper ${lib.getExe nodejs} $out/bin/ruflo \
       --add-flags "$out/share/ruflo/ruflo/bin/ruflo.js" \
@@ -127,6 +127,18 @@ buildNpmPackage rec {
     runHook preInstallCheck
     $out/bin/ruflo --version | grep -F "${version}"
     $out/bin/claude-flow --version >/dev/null
+    ${lib.getExe nodejs} - "$out/share/ruflo" <<'JS'
+    const assert = require('node:assert/strict');
+    const fs = require('node:fs');
+    const root = process.argv[2];
+    const lock = require(root + '/package-lock.json');
+    for (const parent of ['node_modules/@ruvector', 'v3/@claude-flow/plugin-agent-federation/node_modules/@ruvector']) {
+      for (const name of fs.readdirSync(root + '/' + parent).filter(name => name.endsWith('-linux-x64-gnu'))) {
+        const key = parent + '/' + name;
+        assert.equal(require(root + '/' + key + '/package.json').version, lock.packages[key].version, key);
+      }
+    }
+    JS
     runHook postInstallCheck
   '';
 
