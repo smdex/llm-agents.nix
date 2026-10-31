@@ -37,6 +37,12 @@ stdenv.mkDerivation rec {
 
   dontConfigure = true;
 
+  # The local-source tar copy inherits read-only Nix-store directory modes.
+  postPatch = ''
+    substituteInPlace install.sh --replace-fail \
+      '# Read version from manifest' 'chmod -R u+w "$VC_INSTALL_TMPDIR"'
+  '';
+
   buildPhase = ''
     runHook preBuild
     # Rewrite every shebang so the kit's scripts and hooks run on NixOS, which
@@ -89,6 +95,19 @@ stdenv.mkDerivation rec {
         ""
     }
     runHook postInstall
+  '';
+
+  doInstallCheck = true;
+  installCheckPhase = ''
+    runHook preInstallCheck
+    chmod -R a-w "$out/share/vibecode-pro-max-kit"
+    HOME=$(mktemp -d)
+    export HOME
+    cd "$(mktemp -d)"
+    "$out/bin/vibecode-pro-max-kit-install"
+    test "$(cat .vc-version)" = "${version}"
+    test -w AGENTS.md
+    runHook postInstallCheck
   '';
 
   passthru.category = "Workflow & Project Management";
