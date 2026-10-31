@@ -23,17 +23,17 @@ rustPlatform.buildRustPackage (finalAttrs: {
   pname = "herdr-gpui";
   # Calendar version carried by the fork's CI (HERDR_RELEASE_VERSION); the
   # fork publishes no tags, so this pin tracks verified fork main revisions.
-  version = "20261030.1";
+  version = "20261031.3";
   env.HERDR_RELEASE_VERSION = finalAttrs.version;
 
   src = fetchFromGitHub {
     owner = "smdex";
     repo = "herdr-gpui";
-    rev = "13959f29770ebb886245311a220048a7cb789b65";
-    hash = "sha256-oP/3cerRj5N28PN3M8fwSboFCbKBsFOp94JnUY0jGUw=";
+    rev = "1eb92cf445189c698bb7fce69c738a93f4f2192c";
+    hash = "sha256-CX/59E26D8xH8Y2c7xsr2P+m9UZlv2El+Gmre7lAYRE=";
   };
 
-  cargoHash = "sha256-X7J49zPiiD8x/9xq7Qm5RJ+Hw9N1KK//fkkNT3Io5Gs=";
+  cargoHash = "sha256-QCoRD4sYWSeZsTkHAyuKPWzhA37COAuKUbSsjvOd8k0=";
 
   outputs = [
     "out"
@@ -44,7 +44,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
 
   # The app starts chats with the herdr-acp beside its executable, runs the
   # herdr-remote-control beside it as a user service, and runs automations in
-  # the herdr-automate there.
+  # the herdr-automate there. Bluetooth discovery uses herdr-nearby beside it.
   cargoBuildFlags = [
     "-p"
     "herdr-gpui"
@@ -54,6 +54,8 @@ rustPlatform.buildRustPackage (finalAttrs: {
     "herdr-remote-control"
     "-p"
     "herdr-automate"
+    "-p"
+    "herdr-nearby"
   ];
 
   nativeBuildInputs = [
@@ -113,7 +115,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   doInstallCheck = true;
   installCheckPhase = ''
     runHook preInstallCheck
-    for program in herdr-gpui herdr-acp herdr-remote-control herdr-automate; do
+    for program in herdr-gpui herdr-acp herdr-remote-control herdr-automate herdr-nearby; do
       test -x "$out/bin/$program"
       # Capture before matching: with pipefail, grep -q exiting early
       # would fail the writer with SIGPIPE (as the release smoke notes).
@@ -127,6 +129,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     $out/bin/herdr-acp --help >/dev/null
     $out/bin/herdr-remote-control --version >/dev/null
     $out/bin/herdr-automate --version >/dev/null
+    test "$($out/bin/herdr-nearby --version)" = "herdr-nearby ${finalAttrs.version}"
     $acp/bin/herdr-acp --help >/dev/null
     $remoteControl/bin/herdr-remote-control --version >/dev/null
     $remoteControl/bin/herdr-acp --help >/dev/null
