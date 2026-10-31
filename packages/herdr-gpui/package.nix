@@ -22,16 +22,17 @@ rustPlatform.buildRustPackage (finalAttrs: {
   pname = "herdr-gpui";
   # Calendar version carried by the fork's CI (HERDR_RELEASE_VERSION); the
   # fork publishes no tags, so this pin tracks verified fork main revisions.
-  version = "0-unstable-2026-10-28";
+  version = "20261030.1";
+  env.HERDR_RELEASE_VERSION = finalAttrs.version;
 
   src = fetchFromGitHub {
     owner = "smdex";
     repo = "herdr-gpui";
-    rev = "ba80a6fd396e1c0e2ba07c105b76005392407bb9";
-    hash = "sha256-yia9ihxrPfcCTQlP/TqQcPR8l50CG/fK3H/xBc/tM04=";
+    rev = "13959f29770ebb886245311a220048a7cb789b65";
+    hash = "sha256-oP/3cerRj5N28PN3M8fwSboFCbKBsFOp94JnUY0jGUw=";
   };
 
-  cargoHash = "sha256-rD0KnPpTClo8bV0rxiMoQaqXpSlZa9tfka0We4ozKyc=";
+  cargoHash = "sha256-X7J49zPiiD8x/9xq7Qm5RJ+Hw9N1KK//fkkNT3Io5Gs=";
 
   outputs = [
     "out"
@@ -128,7 +129,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     $acp/bin/herdr-acp --help >/dev/null
     $remoteControl/bin/herdr-remote-control --version >/dev/null
     $remoteControl/bin/herdr-acp --help >/dev/null
-    $automate/bin/herdr-automate --version >/dev/null
+    test "$($automate/bin/herdr-automate --version)" = "herdr-automate ${finalAttrs.version}"
     for standalone in "$acp" "$remoteControl" "$automate"; do
       test ! -e "$standalone/bin/herdr-gpui"
       # A split output must not retain the bundle through ELF RPATHs.
@@ -145,7 +146,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   meta = {
     description = "Native GPUI client for an existing local Herdr daemon (smdex fork)";
     homepage = "https://herdrui.dev";
-    changelog = "https://github.com/smdex/herdr-gpui/commits/ba80a6fd396e1c0e2ba07c105b76005392407bb9";
+    changelog = "https://github.com/smdex/herdr-gpui/commits/${finalAttrs.src.rev}";
     license = lib.licenses.asl20;
     sourceProvenance = with lib.sourceTypes; [ fromSource ];
     mainProgram = "herdr-gpui";
