@@ -146,14 +146,14 @@ stdenv.mkDerivation {
   installPhase = ''
     runHook preInstall
 
-    install -Dm755 soulforge $out/libexec/soulforge
+    install -Dm755 soulforge $out/libexec/empryo/bin/soulforge
     mkdir -p $out/bin
-    makeWrapper $out/libexec/soulforge $out/bin/soulforge \
+    makeWrapper $out/libexec/empryo/bin/soulforge $out/bin/soulforge \
       --prefix PATH : "${runtimePath}"
     ln -s soulforge $out/bin/sf
 
-    # hydrate-runtime.ts probes dirname(execPath)/../deps → $out/deps.
-    cp -r deps $out/deps
+    # Keep dirname(execPath)/../deps inside the app's FHS-compliant tree.
+    cp -r deps $out/libexec/empryo/deps
 
     runHook postInstall
   '';
