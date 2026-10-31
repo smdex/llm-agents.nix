@@ -7,7 +7,7 @@
   git,
   jq,
   makeWrapper,
-  nodejs,
+  nodejs_26,
   # Lockfile predates pnpm 11's stricter overrides/patchedDependencies
   # validation; pin pnpm 10 until upstream regenerates the lockfile.
   pnpm_10,
@@ -47,7 +47,8 @@ stdenv.mkDerivation (finalAttrs: {
     cmake
     git
     makeWrapper
-    nodejs
+    # OpenClaw requires Node 26.12.1+; the default 24.21 is too old.
+    nodejs_26
     pnpm
     pnpmConfigHook
   ];
@@ -121,7 +122,7 @@ stdenv.mkDerivation (finalAttrs: {
     find . -name "*.test.ts" -delete
     popd
 
-    makeWrapper ${nodejs}/bin/node $out/bin/openclaw \
+    makeWrapper ${nodejs_26}/bin/node $out/bin/openclaw \
       --add-flags "$out/lib/openclaw/dist/entry.js"
 
     runHook postInstall
