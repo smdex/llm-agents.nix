@@ -1,5 +1,6 @@
 {
   lib,
+  flake,
   fetchFromGitHub,
   rustPlatform,
   makeWrapper,
@@ -149,6 +150,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     changelog = "https://github.com/smdex/herdr-gpui/commits/${finalAttrs.src.rev}";
     license = lib.licenses.asl20;
     sourceProvenance = with lib.sourceTypes; [ fromSource ];
+    maintainers = with flake.lib.maintainers; [ smdex ];
     mainProgram = "herdr-gpui";
     platforms = [
       "x86_64-linux"
