@@ -8,7 +8,7 @@ const [, pattern] = readFileSync(join(__dirname, "package.nix"), "utf8").match(
 for (const version of [
   "0.14.0-beta.1",
   "0.14.0-beta.1-smdex",
-  "0.14.0-beta.1-smdex.2",
+  "0.14.0-beta.1-smdex.3",
 ]) {
   assert.equal(version.replace(new RegExp(pattern), ""), "0.14.0-beta.1");
 }

@@ -18,23 +18,23 @@
   # `overrideAttrs` gymnastics.
   npmDepsHash ?
     {
-      x86_64-linux = "sha256-NAIjzcjYS/NCa9jTagtXt5kozyRLpBgO7jvC7dUHG4w=";
-      aarch64-linux = "sha256-yufqAgxwXf28B/og0+wcehAUyuzvIVh6HTLI4dtIzRU=";
-      aarch64-darwin = "sha256-lnAWs8SD9+N2WqWdMiGyeaG0Kw6dqxnDUDAYoOtpWV8=";
+      x86_64-linux = "sha256-KXEj4cVi/26zBdpXbj4NbMpb6b79F9smliKCyPoGxUM=";
+      aarch64-linux = "sha256-ofjEjqz1n4ZEc7qT2hU0lwTCnwFeaOZlRBehRLaSOPw=";
+      aarch64-darwin = "sha256-1gi8nYdIj1KQDAiPuhPgOG9yylkjaNP/4eiUC3ktMjw=";
     }
-    .${stdenv.hostPlatform.system} or "sha256-jhmFAxrQ9qxsJgIrpKRxE7KXHN4TaZm0cwCi5IO2MxQ=",
+    .${stdenv.hostPlatform.system} or "sha256-3ReXgxN5mskkbtv34AlaTcXR086/jYdkrQjxw7dK5YQ=",
 }:
 
 buildNpmPackage rec {
   pname = "paseo";
-  version = "0.14.0-beta.1-smdex.2";
+  version = "0.14.0-beta.1-smdex.3";
   # Pin the fork's verified feature revision rather than its stale release tag.
 
   src = fetchFromGitHub {
     owner = "smdex";
     repo = "paseo";
-    rev = "a152cfdf74921c67fb98e395f109f39449a8ccc0";
-    hash = "sha256-6OGcUOm1USAxge8UCRq1DubxwxIHsj9I3aTEs8e6Shk=";
+    rev = "997720c99d94b851b41a76f13edb680b5217605a";
+    hash = "sha256-aLTtDsQ4YBBlc8w8VVjWCcO23UdY6/xLy++XWvBUgGU=";
   };
 
   nodejs = nodejs_22;
