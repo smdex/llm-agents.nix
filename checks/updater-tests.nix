@@ -10,6 +10,7 @@ pkgs.runCommand "updater-tests-check"
   }
   ''
     cp -r ${flake}/scripts scripts
+    ln -s ${flake}/packages packages
     chmod -R +w scripts
     cd scripts
     export HOME=$TMPDIR
