@@ -56,10 +56,13 @@ stdenvNoCC.mkDerivation rec {
 
     # LiteLLM must use its bundled pricing map in the offline build sandbox.
     export LITELLM_LOCAL_MODEL_COST_MAP=True
+    # Install checks must not embed build timestamps in Python bytecode.
+    export PYTHONDONTWRITEBYTECODE=1
 
     $out/bin/adversarial-spec providers | grep -q "Supported providers"
     $out/bin/adversarial-spec focus-areas | grep -q "Available focus areas"
     $out/bin/adversarial-spec-telegram --help | grep -q "Telegram bot utilities"
+    test ! -d "$out/libexec/adversarial-spec/__pycache__"
 
     runHook postInstallCheck
   '';
