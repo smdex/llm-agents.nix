@@ -58,17 +58,24 @@ def resolve_litellm_rev(version: str) -> str:
         The 40-character litellm commit rev from the tag's flake.lock.
 
     Raises:
-        ValueError: If the tag's flake.lock has no nodes.litellm.locked.rev.
+        ValueError: If the tag's pricing input has no immutable LiteLLM commit.
 
     """
     url = f"https://raw.githubusercontent.com/{OWNER}/{REPO}/v{version}/flake.lock"
     lock = json.loads(fetch_text(url))
 
-    rev = lock.get("nodes", {}).get("litellm", {}).get("locked", {}).get("rev")
-    if not rev:
-        msg = f"v{version} flake.lock is missing nodes.litellm.locked.rev"
+    locked = lock.get("nodes", {}).get("litellm", {}).get("locked", {})
+    rev = locked.get("rev")
+    if locked.get("type") == "file":
+        match = re.fullmatch(
+            rf"https://raw\.githubusercontent\.com/BerriAI/litellm/([0-9a-f]{{40}})/{re.escape(PRICING_FILE)}",
+            locked.get("url", ""),
+        )
+        rev = match[1] if match else None
+    if not isinstance(rev, str) or not re.fullmatch(r"[0-9a-f]{40}", rev):
+        msg = f"v{version} flake.lock has no immutable LiteLLM pricing commit"
         raise ValueError(msg)
-    return str(rev)
+    return rev
 
 
 def pinned_litellm_rev() -> str:
