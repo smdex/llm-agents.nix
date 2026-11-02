@@ -16,7 +16,11 @@ let
   toolchain = callPackage ./rust-toolchain.nix { };
   rustPlatform = makeRustPlatform {
     rustc = toolchain;
-    cargo = toolchain;
+    cargo = toolchain // {
+      meta = toolchain.meta // {
+        mainProgram = "cargo";
+      };
+    };
   };
 in
 rustPlatform.buildRustPackage rec {
