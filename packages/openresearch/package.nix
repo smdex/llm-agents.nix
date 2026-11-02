@@ -62,7 +62,9 @@ rustPlatform.buildRustPackage (finalAttrs: {
       url = "https://github.com/alphaXiv/OpenResearch/commit/f53d9b0e8956ab14cbc85314c7780d697e8f2009.patch";
       hash = "sha256-MrfzGMAj6Gw4JMajr18wytL/J9WJrTRTvHZbUTtT6zc=";
     })
-  ];
+  ]
+  # ZFS can reject raw filename bytes; keep those fixture assertions on Linux tmpfs.
+  ++ lib.optionals stdenv.hostPlatform.isLinux [ ./non-utf8-fixtures.patch ];
 
   nativeBuildInputs = [
     makeWrapper
