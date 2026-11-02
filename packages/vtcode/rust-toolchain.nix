@@ -1,0 +1,55 @@
+{
+  lib,
+  stdenv,
+  fetchurl,
+  formatelf,
+  rustc,
+  zlib,
+}:
+
+# VTCode requires this stable patch release before nixpkgs provides it.
+let
+  version = "1.99.1";
+  target = stdenv.hostPlatform.rust.rustcTarget;
+  hashes = {
+    x86_64-linux = "sha256-Ix/K5H7pUGITdHJbX8O1RB0vvaKVWsRd19yBbYh2z+c=";
+    aarch64-linux = "sha256-pI+x6FO+Vs6bjidR9UZNvV4WRAzYHiN5IPOl5+gGMz4=";
+    aarch64-darwin = "sha256-MJdjeLaq79GGG6R1kFxroipEyYFBjOUihQBq8mM3+Yw=";
+  };
+in
+stdenv.mkDerivation {
+  pname = "rust-vtcode";
+  inherit version;
+  src = fetchurl {
+    url = "https://static.rust-lang.org/dist/2026-10-15/rust-${version}-${target}.tar.xz";
+    hash = hashes.${stdenv.hostPlatform.system};
+  };
+  nativeBuildInputs = lib.optionals stdenv.hostPlatform.isLinux [ formatelf ];
+  buildInputs = lib.optionals stdenv.hostPlatform.isLinux [
+    stdenv.cc.cc.lib
+    zlib
+  ];
+  dontConfigure = true;
+  dontBuild = true;
+  dontStrip = true;
+  installPhase = ''
+    runHook preInstall
+    ./install.sh --prefix="$out" --disable-ldconfig \
+      --components=rustc,rust-std-${target},cargo
+    runHook postInstall
+  '';
+  doInstallCheck = true;
+  installCheckPhase = ''
+    "$out/bin/rustc" --version | grep -F 'rustc ${version}'
+    "$out/bin/cargo" --version | grep -F 'cargo ${version}'
+  '';
+  meta = {
+    description = "Pinned stable Rust toolchain for VTCode's minimum supported version";
+    homepage = "https://www.rust-lang.org";
+    changelog = "https://github.com/rust-lang/rust/releases/tag/${version}";
+    inherit (rustc.meta) license maintainers;
+    sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
+    mainProgram = "rustc";
+    platforms = builtins.attrNames hashes;
+  };
+}
