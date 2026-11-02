@@ -6,7 +6,7 @@
   fetchFromGitHub,
   applyPatches,
   fetchPnpmDeps,
-  goose-cli,
+  callPackage,
   cargo-tauri,
   jq,
   moreutils,
@@ -39,6 +39,7 @@
 }:
 
 let
+  goose-cli = callPackage ./cli.nix { };
   pnpm = pnpm_10;
   sourceRevision = "612cd89d515f16c84f70b4c74247e270277fe7ba";
   version = "1.57.0";

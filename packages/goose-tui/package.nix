@@ -10,10 +10,11 @@
   pnpmConfigHook,
   versionCheckHook,
   versionCheckHomeHook,
-  goose-cli,
+  callPackage,
 }:
 
 let
+  goose-cli = callPackage ../goose2/cli.nix { };
   pnpm = pnpm_10;
 in
 stdenv.mkDerivation (finalAttrs: {

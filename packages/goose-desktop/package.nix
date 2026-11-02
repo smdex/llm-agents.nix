@@ -11,10 +11,11 @@
   pnpm_10,
   pnpmConfigHook,
   electron_43,
-  goose-cli,
+  callPackage,
 }:
 
 let
+  goose-cli = callPackage ../goose2/cli.nix { };
   pnpm = pnpm_10;
   electron = electron_43;
   electronVersion = electron.version;
