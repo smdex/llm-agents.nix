@@ -103,6 +103,8 @@ let
       # vibe unpacks the 3-tuple yielded by mcp 1.x streamable_http_client;
       # mcp 2.x yields 2 values and breaks every connector/HTTP MCP call.
       mcp = pyprev.mcp_1;
+      # The separate wire-types distribution needs the MCP 2 source layout.
+      mcp-types = pyprev.mcp-types.override { mcp = pyprev.mcp; };
 
       # Vibe 3.0.4 needs the 1.45 family and its two new exporter distributions.
       opentelemetry-api = pyprev.opentelemetry-api.overridePythonAttrs {
