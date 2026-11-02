@@ -19,7 +19,245 @@ let
   # evaluation accepts without a separate hash. The fetched tree is a
   # content-addressed store path, so every derivation built from it stays
   # binary-cacheable; only the first evaluation on a machine clones.
-  qlotLock = builtins.readFile "${src}/qlfile.lock";
+  qlotLock = ''
+    ("quicklisp" .
+     (:class qlot/source/dist:source-dist
+      :initargs (:distribution "https://beta.quicklisp.org/dist/quicklisp.txt" :%version :latest)
+      :version "2026-01-01"))
+    ("bordeaux-threads" .
+     (:class qlot/source/ql:source-ql
+      :initargs (:%version "2026-01-01")
+      :version "ql-2024-10-12"))
+    ("cl-base64" .
+     (:class qlot/source/ql:source-ql
+      :initargs (:%version "2026-01-01")
+      :version "ql-2020-10-16"))
+    ("cffi" .
+     (:class qlot/source/ql:source-ql
+      :initargs (:%version "2026-01-01")
+      :version "ql-2026-01-01"))
+    ("clingon" .
+     (:class qlot/source/ql:source-ql
+      :initargs (:%version "2026-01-01")
+      :version "ql-2026-01-01"))
+    ("closer-mop" .
+     (:class qlot/source/ql:source-ql
+      :initargs (:%version "2026-01-01")
+      :version "ql-2026-01-01"))
+    ("dexador" .
+     (:class qlot/source/ql:source-ql
+      :initargs (:%version "2026-01-01")
+      :version "ql-2026-01-01"))
+    ("fiveam" .
+     (:class qlot/source/ql:source-ql
+      :initargs (:%version "2026-01-01")
+      :version "ql-2024-10-12"))
+    ("ironclad" .
+     (:class qlot/source/ql:source-ql
+      :initargs (:%version "2026-01-01")
+      :version "ql-2024-10-12"))
+    ("nyaml" .
+     (:class qlot/source/ql:source-ql
+      :initargs (:%version "2026-01-01")
+      :version "ql-2025-06-22"))
+    ("opticl" .
+     (:class qlot/source/ql:source-ql
+      :initargs (:%version "2022-02-20")
+      :version "ql-2022-02-20"))
+    ("quri" .
+     (:class qlot/source/ql:source-ql
+      :initargs (:%version "2026-01-01")
+      :version "ql-2026-01-01"))
+    ("serapeum" .
+     (:class qlot/source/ql:source-ql
+      :initargs (:%version "2026-01-01")
+      :version "ql-2026-01-01"))
+    ("trivial-gray-streams" .
+     (:class qlot/source/ql:source-ql
+      :initargs (:%version "2026-01-01")
+      :version "ql-2024-10-12"))
+    ("winhttp" .
+     (:class qlot/source/ql:source-ql
+      :initargs (:%version "2026-01-01")
+      :version "ql-2024-10-12"))
+    ("yason" .
+     (:class qlot/source/ql:source-ql
+      :initargs (:%version "2026-01-01")
+      :version "ql-2025-06-22"))
+    ("agentcomms" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/agentcomms.git" :ref "17b22db1db0f6527fc17fa8033045fc991f03594")
+      :version "git-17b22db1db0f6527fc17fa8033045fc991f03594"))
+    ("fetch-gist" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/fetch-gist.git" :ref "082f4d45d4cf0076c0c891f00e05d71957de6009")
+      :version "git-082f4d45d4cf0076c0c891f00e05d71957de6009"))
+    ("cl-colorist" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/cl-colorist.git" :ref "90f17af4fa3d2c0433030e15fffc0328f3863e29")
+      :version "git-90f17af4fa3d2c0433030e15fffc0328f3863e29"))
+    ("cl+ssl" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/cl-plus-ssl/cl-plus-ssl.git" :ref "d7a92f9ed0cbae10f07b1b9a9c3c5cc179798748")
+      :version "git-d7a92f9ed0cbae10f07b1b9a9c3c5cc179798748"))
+    ("clinedi" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/clinedi.git" :ref "023add910557bc6581dbdcdafbe33c9867c1cfe2")
+      :version "git-023add910557bc6581dbdcdafbe33c9867c1cfe2"))
+    ("clermaid" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/clermaid.git" :ref "7a4497aff7514134dd69ab28b7d07c06335b7852")
+      :version "git-7a4497aff7514134dd69ab28b7d07c06335b7852"))
+    ("cl-jobpond" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/cl-jobpond.git" :ref "26940f414741addba4703a9c12e3220da64191c0")
+      :version "git-26940f414741addba4703a9c12e3220da64191c0"))
+    ("clinker-transcript" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/clinker-transcript.git" :ref "1a2af5d4c7441fe756ead213c96a7f332ea8ce25")
+      :version "git-1a2af5d4c7441fe756ead213c96a7f332ea8ce25"))
+    ("cl-rfc8252" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/cl-rfc8252.git" :ref "e2bbd2374ec159f86123c046c020fce27fce2d99")
+      :version "git-e2bbd2374ec159f86123c046c020fce27fce2d99"))
+    ("cl-rfc8628" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/cl-rfc8628.git" :ref "38d5b6ae81a24031ad6c95b4f42ba99f2cf0a6c3")
+      :version "git-38d5b6ae81a24031ad6c95b4f42ba99f2cf0a6c3"))
+    ("cl-llm-provider-api" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/cl-llm-provider-api.git" :ref "593c33568c2fb30f918562affbb9c3a68a2765f4")
+      :version "git-593c33568c2fb30f918562affbb9c3a68a2765f4"))
+    ("cl-lsp" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/cl-lsp.git" :ref "71327540754e7d77f90f76205c206985859b04c6")
+      :version "git-71327540754e7d77f90f76205c206985859b04c6"))
+    ("cl-resources" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/cl-resources.git" :ref "6fa84c8ab0a87706b2dc266aafb54696c26d919f")
+      :version "git-6fa84c8ab0a87706b2dc266aafb54696c26d919f"))
+    ("clasted" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/clasted.git" :ref "669dbf5ef7c9d8b6d31678f7d4b9677f3a2166b7")
+      :version "git-669dbf5ef7c9d8b6d31678f7d4b9677f3a2166b7"))
+    ("daphne" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/daphne.git" :ref "0727975d4c74a11be13b39ffe4a33aae74387848")
+      :version "git-0727975d4c74a11be13b39ffe4a33aae74387848"))
+    ("cl-skills" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/cl-skills.git" :ref "21a09a7b7195f6c0e1b36d843c518c5c7bee6ac0")
+      :version "git-21a09a7b7195f6c0e1b36d843c518c5c7bee6ac0"))
+    ("cl-termdown" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/cl-termdown.git" :ref "88abe646dc5b05ccda0b8b0a8229ae4b79a029f5")
+      :version "git-88abe646dc5b05ccda0b8b0a8229ae4b79a029f5"))
+    ("cl-worktree" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/cl-worktree.git" :ref "203c6eaab4cf74ccfaee110c692b62c2359979f9")
+      :version "git-203c6eaab4cf74ccfaee110c692b62c2359979f9"))
+    ("cl-exec-sandbox" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/cl-exec-sandbox.git" :ref "2eee22e33a4d4c6df6019e44ee7fe353454ce175")
+      :version "git-2eee22e33a4d4c6df6019e44ee7fe353454ce175"))
+    ("cl-hashline" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/cl-hashline.git" :ref "582986f8ccbd0bd206dde022f9f65837ae82357c")
+      :version "git-582986f8ccbd0bd206dde022f9f65837ae82357c"))
+    ("clifff" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/clifff.git" :ref "3abd4bbdf341023357b8ae94c9bb8651fa52d90d")
+      :version "git-3abd4bbdf341023357b8ae94c9bb8651fa52d90d"))
+    ("colorlisp" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/colorlisp.git" :ref "b6fdb68ae22ab997bb818c486983129ec7ac6177")
+      :version "git-b6fdb68ae22ab997bb818c486983129ec7ac6177"))
+    ("colordiff" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/colordiff.git" :ref "a8d229ae99dcd630bb4b32942e12791a7ea67a4d")
+      :version "git-a8d229ae99dcd630bb4b32942e12791a7ea67a4d"))
+    ("parenchek" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/parenchek.git" :ref "ff5281cdb0be79fd6368b26c837cf7c9a4ea26f6")
+      :version "git-ff5281cdb0be79fd6368b26c837cf7c9a4ea26f6"))
+    ("org-templater" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/org-templater.git" :ref "f9bbf7c4da14b2689450ab51e5b47bda260a6f3e")
+      :version "git-f9bbf7c4da14b2689450ab51e5b47bda260a6f3e"))
+    ("image-daemon" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/image-daemon.git" :ref "fa5a80c0084cf727258d1f937db41cf2ebed2072")
+      :version "git-fa5a80c0084cf727258d1f937db41cf2ebed2072"))
+    ("ls-compat" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/ls-compat.git" :ref "f3eaf96a8f80120423b5a31055984f9aa688566b")
+      :version "git-f3eaf96a8f80120423b5a31055984f9aa688566b"))
+    ("ls-flock" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/ls-flock.git" :ref "ee9fc57a46a396e6386d61f81a6df926ca9f9906")
+      :version "git-ee9fc57a46a396e6386d61f81a6df926ca9f9906"))
+    ("idsmall" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/idsmall.git" :ref "51032ca6799956bf267857332495c0b6696cc0bb")
+      :version "git-51032ca6799956bf267857332495c0b6696cc0bb"))
+    ("mcparen" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/mcparen.git" :ref "bef9d739fa6c187dcf1c2cfd8995d51b2c942b0b")
+      :version "git-bef9d739fa6c187dcf1c2cfd8995d51b2c942b0b"))
+    ("sbcl-generations" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/sbcl-generations.git" :ref "7c19962ffd402355bcc32586c880c5975e126ae0")
+      :version "git-7c19962ffd402355bcc32586c880c5975e126ae0"))
+    ("sexp-config" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/sexp-config.git" :ref "9280b5bf0dc056dee49dcf8c9940f30c049015f9")
+      :version "git-9280b5bf0dc056dee49dcf8c9940f30c049015f9"))
+    ("sexp-store" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/sexp-store.git" :ref "2da08f067f50dca8cd1c546e9b7adf45f6386f87")
+      :version "git-2da08f067f50dca8cd1c546e9b7adf45f6386f87"))
+    ("sophisticated-clipboard" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/sophisticated-clipboard.git" :ref "b933a913481bdcdc0ca0895f053d19eca314eac5")
+      :version "git-b933a913481bdcdc0ca0895f053d19eca314eac5"))
+    ("sbcl-workers" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/sbcl-workers.git" :ref "cded09d0c0d2a3c889f6fbb3414342b957978d74")
+      :version "git-cded09d0c0d2a3c889f6fbb3414342b957978d74"))
+    ("surgeon" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/surgeon.git" :ref "b159c64231f35d2b20aedd41544f8621d16a0c29")
+      :version "git-b159c64231f35d2b20aedd41544f8621d16a0c29"))
+    ("structlisp" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/structlisp.git" :ref "987829546bd07030e25ed1b2e4d3246d11b532db")
+      :version "git-987829546bd07030e25ed1b2e4d3246d11b532db"))
+    ("llh2" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/llh2.git" :ref "f516c92cff438d65fb42d31f4c552b39001e2edc")
+      :version "git-f516c92cff438d65fb42d31f4c552b39001e2edc"))
+    ("argo" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/argo.git" :ref "c8034c208f43436b19af2858bfb6112ac7e66e1f")
+      :version "git-c8034c208f43436b19af2858bfb6112ac7e66e1f"))
+    ("setinka" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/setinka.git" :ref "ce63dce34287b20ad81f08f6d208e6e18bc3163f")
+      :version "git-ce63dce34287b20ad81f08f6d208e6e18bc3163f"))
+    ("lambda-debugger" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/lambda-debugger.git" :ref "8299ae17be78a489321de5e035f1f6cc8ede88bc")
+      :version "git-8299ae17be78a489321de5e035f1f6cc8ede88bc"))
+    ("yolokuva" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/lambda-symbolics/yolokuva.git" :ref "e35d37d21bf07bb99473c0144144fa73c313d898")
+      :version "git-e35d37d21bf07bb99473c0144144fa73c313d898"))
+    ("defingerprinter" .
+     (:class qlot/source/git:source-git
+      :initargs (:remote-url "https://github.com/chakanysystems/defingerprinter.git" :ref "ade272f23397fc1791b5c0a9b1046407cbe39e04")
+      :version "git-ade272f23397fc1791b5c0a9b1046407cbe39e04"))
+
+  '';
   qlotGitSources =
     let
       pattern = ''\("([^"]+)" \.[[:space:]]+\(:class qlot/source/git:source-git[[:space:]]+:initargs \(:remote-url "([^"]+)" :ref "([0-9a-f]{40})"\)'';
@@ -754,7 +992,7 @@ let
 
   autolithSystem = pkgs.sbcl.buildASDFSystem {
     pname = "autolith";
-    version = lib.removeSuffix "\n" (builtins.readFile "${src}/VERSION");
+    version = "0.67.20";
     inherit src;
     systems = [
       "autolith"

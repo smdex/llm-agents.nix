@@ -28,13 +28,27 @@ REPO = "autolith"
 def vendor_upstream_nix(tag: str) -> str:
     """Fetch upstream's package.nix and strip the parts that need IFD.
 
-    Upstream reads the fff commit and an exact SBCL version/hash pin from
-    files inside `src`; inline the former and drop the latter so we can
-    follow nixpkgs' SBCL.
+    Inline release metadata rather than reading a derivation during evaluation.
+    Drop upstream's SBCL version/hash pin to follow nixpkgs' SBCL.
     """
     base = f"https://raw.githubusercontent.com/{OWNER}/{REPO}/{tag}"
     text = fetch_text(f"{base}/nix/package.nix")
     fff_commit = fetch_text(f"{base}/native/fff/commit").strip()
+    version_read = 'lib.removeSuffix "\\n" (builtins.readFile "${src}/VERSION")'
+    if version_read in text:
+        version = fetch_text(f"{base}/VERSION").strip()
+        if not re.fullmatch(r"\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?", version):
+            msg = "invalid upstream VERSION metadata"
+            raise ValueError(msg)
+        text = text.replace(version_read, json.dumps(version))
+    if 'qlotLock = builtins.readFile "${src}/qlfile.lock";' in text:
+        lock = (
+            fetch_text(f"{base}/qlfile.lock").replace("''", "'''").replace("${", "''${")
+        )
+        text = text.replace(
+            'qlotLock = builtins.readFile "${src}/qlfile.lock";',
+            "qlotLock = ''\n" + lock + "\n'';",
+        )
 
     text = re.sub(
         r"^  fffSourceCommit = .*$",
@@ -80,12 +94,19 @@ def main() -> None:
         f"https://github.com/{OWNER}/{REPO}/archive/refs/tags/{tag}.tar.gz",
         unpack=True,
     )
+    crane = json.loads(
+        fetch_text(f"https://raw.githubusercontent.com/{OWNER}/{REPO}/{tag}/flake.lock")
+    )["nodes"]["crane"]["locked"]
+    if crane["type"] != "github":
+        msg = "upstream Crane input is no longer a pinned GitHub source"
+        raise ValueError(msg)
     UPSTREAM_NIX.write_text(upstream)
+    HASHES.write_text(
+        json.dumps({"version": latest, "hash": src_hash, "crane": crane}, indent=2)
+        + "\n"
+    )
     # Keep the vendored file in treefmt's style so updates show real diffs only.
     run_command(["nix", "fmt", "--", str(UPSTREAM_NIX)], cwd=PACKAGE_DIR.parent.parent)
-    HASHES.write_text(
-        json.dumps({"version": latest, "hash": src_hash}, indent=2) + "\n"
-    )
     print(f"Updated to {latest}")
 
 

@@ -1,4 +1,12 @@
 {
   "version": "0.67.20",
-  "hash": "sha256-i9byLhjhE7SVryS7wAc4ipWkQ4tdUiP2gVi+vrVVY14="
+  "hash": "sha256-i9byLhjhE7SVryS7wAc4ipWkQ4tdUiP2gVi+vrVVY14=",
+  "crane": {
+    "lastModified": 1791754810,
+    "narHash": "sha256-cN0Mgk+sQtCJcGWs9H4M0CnLRAuC4I8aCwiBTcBJs6E=",
+    "owner": "ipetkov",
+    "repo": "crane",
+    "rev": "bd63bf1d0a0f6dcacd7549c714a671ee63b0db6a",
+    "type": "github"
+  }
 }

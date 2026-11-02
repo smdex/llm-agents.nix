@@ -19,6 +19,18 @@ let
   # Vendored copy of upstream's nix/package.nix, refreshed by update.py.
   upstream = import ./upstream-package.nix {
     inherit src;
+    # The native fingerprint binding uses the same Crane input as upstream.
+    crane.mkLib =
+      cranePkgs:
+      import (builtins.fetchTree {
+        inherit (versionData.crane)
+          type
+          owner
+          repo
+          rev
+          narHash
+          ;
+      }) { pkgs = cranePkgs; };
     pkgs = pkgs // {
       inherit sbcl;
     };
@@ -40,6 +52,7 @@ let
 in
 upstream.overrideAttrs (old: {
   name = "autolith-${version}";
+  inherit version;
 
   passthru = old.passthru // {
     category = "AI Assistants";
