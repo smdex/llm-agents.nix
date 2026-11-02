@@ -1,0 +1,11 @@
+diff --git a/src/lib.rs b/src/lib.rs
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -132,6 +132,6 @@ fn cli_error_lines(error: &anyhow::Error) -> Vec<String> {
+             }
+             lines
+         }
+-        None => vec![format!("Error: {error}")],
++        None => vec![format!("Error: {error:#}")],
+     }
+ }
