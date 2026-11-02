@@ -11,7 +11,7 @@
   installAgentSkills,
   fetchPnpmDeps,
   nodejs,
-  pnpm_10,
+  pnpm_12,
   pnpmConfigHook,
   bash,
   coreutils,
@@ -178,14 +178,14 @@ rustPlatform.buildRustPackage (finalAttrs: {
           src
           sourceRoot
           ;
-        pnpm = pnpm_10;
-        fetcherVersion = 3;
+        pnpm = pnpm_12;
+        fetcherVersion = 5;
         hash = "sha256-SylFpv2bkneoZgmgAGDgkUTIEmTlQSc2Q+476Tzl6z4=";
       };
 
       nativeBuildInputs = [
         nodejs
-        pnpm_10
+        pnpm_12
         pnpmConfigHook
       ];
 
