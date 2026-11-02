@@ -6,6 +6,7 @@
   callPackage,
   makeRustPlatform,
   cargo,
+  formatelf,
   pkg-config,
   openssl,
   libiconv,
@@ -38,7 +39,7 @@ rustPlatform.buildRustPackage rec {
     "vtcode"
   ];
 
-  nativeBuildInputs = [ pkg-config ];
+  nativeBuildInputs = [ pkg-config ] ++ lib.optionals stdenv.hostPlatform.isLinux [ formatelf ];
 
   buildInputs = [
     openssl
