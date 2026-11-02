@@ -4,6 +4,7 @@
   fetchFromGitHub,
   bun2nixLib,
   bun,
+  bun-bin,
   rustc,
   cargo,
   rustPlatform,
@@ -85,6 +86,8 @@ stdenv.mkDerivation {
   ];
 
   env = {
+    # Keep the compiler patched for Nix, but embed the unmodified required runtime.
+    OMP_BUN_RUNTIME = "${bun-bin}/share/bun-bin/${bun-bin.target}";
     # smallvec's `specialization` feature needs nightly features on stable rustc
     RUSTC_BOOTSTRAP = 1;
     # upstream's release profile is fat LTO with one codegen unit; that final
@@ -254,7 +257,7 @@ stdenv.mkDerivation {
     runHook preInstallCheck
     HOME=$TMPDIR $out/bin/omp --smoke-test | grep -q "smoke-test: ok"
     BUN_BE_BUN=1 $out/lib/omp/omp -e \
-      'if (Bun.version !== "${bun.version}" || typeof Bun.Image !== "function") process.exit(1)'
+      'if (Bun.version !== "${bun-bin.version}" || typeof Bun.Image !== "function") process.exit(1)'
     runHook postInstallCheck
   '';
 

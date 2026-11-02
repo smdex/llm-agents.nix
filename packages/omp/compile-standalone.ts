@@ -25,5 +25,6 @@ await compileCodingAgent({
 	repoRoot,
 	entrypoint: path.join(codingAgentDir, "src", "cli.ts"),
 	outfile: path.join(repoRoot, "dist", "omp"),
+	executablePath: process.env.OMP_BUN_RUNTIME,
 	transformersVersion: transformersManifest.version,
 });
