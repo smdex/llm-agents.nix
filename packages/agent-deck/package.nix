@@ -11,6 +11,7 @@
   lsof,
   ncurses,
   procps,
+  python3,
   tmux,
 }:
 
@@ -93,6 +94,7 @@ buildGo127Module rec {
     lsof
     ncurses # clear, used by the fake claude pane in the switch-settle tests
     procps
+    python3
     tmux
   ];
 
