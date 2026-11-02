@@ -23,17 +23,17 @@ rustPlatform.buildRustPackage (finalAttrs: {
   pname = "herdr-gpui";
   # Calendar version carried by the fork's CI (HERDR_RELEASE_VERSION); the
   # fork publishes no tags, so this pin tracks verified fork main revisions.
-  version = "20261031.3";
+  version = "20261102.1";
   env.HERDR_RELEASE_VERSION = finalAttrs.version;
 
   src = fetchFromGitHub {
     owner = "smdex";
     repo = "herdr-gpui";
-    rev = "1eb92cf445189c698bb7fce69c738a93f4f2192c";
-    hash = "sha256-CX/59E26D8xH8Y2c7xsr2P+m9UZlv2El+Gmre7lAYRE=";
+    rev = "daf20891d52627ad5348bc78c105670ee653b20b";
+    hash = "sha256-EPwOJoDzTC2U+8M3DdbCuCCs+FEe2zmztU5ksnwpPT8=";
   };
 
-  cargoHash = "sha256-QCoRD4sYWSeZsTkHAyuKPWzhA37COAuKUbSsjvOd8k0=";
+  cargoHash = "sha256-3+hwo/jOi2eAvHARab6xpXTMqKPT/iax9Aa4CW+HsBE=";
 
   outputs = [
     "out"
