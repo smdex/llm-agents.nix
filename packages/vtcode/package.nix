@@ -5,6 +5,7 @@
   fetchFromGitHub,
   callPackage,
   makeRustPlatform,
+  cargo,
   pkg-config,
   openssl,
   libiconv,
@@ -16,11 +17,7 @@ let
   toolchain = callPackage ./rust-toolchain.nix { };
   rustPlatform = makeRustPlatform {
     rustc = toolchain;
-    cargo = toolchain // {
-      meta = toolchain.meta // {
-        mainProgram = "cargo";
-      };
-    };
+    inherit cargo;
   };
 in
 rustPlatform.buildRustPackage rec {
