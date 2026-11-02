@@ -1,14 +1,16 @@
 diff --git a/src/commands/up/compute_settings.rs b/src/commands/up/compute_settings.rs
 --- a/src/commands/up/compute_settings.rs
 +++ b/src/commands/up/compute_settings.rs
-@@ -1610,2 +1610,2 @@
+@@ -1610,3 +1610,3 @@
      fn fake_home(files: &[(&str, &str)]) -> crate::local::git::TemporaryDirectory {
 -        let home = crate::local::git::TemporaryDirectory::new("orx-ssh-include").unwrap();
 +        let home = crate::local::git::TemporaryDirectory::new("/dev/shm/orx-ssh-include").unwrap();
+         for (path, contents) in files {
 diff --git a/src/local/git.rs b/src/local/git.rs
 --- a/src/local/git.rs
 +++ b/src/local/git.rs
-@@ -2632,2 +2632,2 @@
+@@ -2629,3 +2629,3 @@
          let root =
 -            std::env::temp_dir().join(format!("orx-byte-path-scan-{}", uuid::Uuid::new_v4()));
 +            std::path::Path::new("/dev/shm").join(format!("orx-byte-path-scan-{}", uuid::Uuid::new_v4()));
+         std::fs::create_dir_all(&root).unwrap();
