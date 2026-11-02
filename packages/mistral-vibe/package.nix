@@ -124,7 +124,7 @@ let
       };
       opentelemetry-exporter-http-transport =
         pyprev.opentelemetry-exporter-otlp-proto-common.overridePythonAttrs
-          {
+          (old: {
             pname = "opentelemetry-exporter-http-transport";
             version = "0.66b1";
             sourceRoot = "${pyfinal.opentelemetry-api.src.name}/exporter/opentelemetry-exporter-http-transport";
@@ -133,8 +133,9 @@ let
               requests
               urllib3
             ];
+            nativeCheckInputs = (old.nativeCheckInputs or [ ]) ++ [ pyfinal.mocket ];
             pythonImportsCheck = [ "opentelemetry.exporter.http.transport" ];
-          };
+          });
       opentelemetry-exporter-otlp-common =
         pyprev.opentelemetry-exporter-otlp-proto-common.overridePythonAttrs
           {
@@ -266,6 +267,7 @@ python.pkgs.buildPythonApplication {
 
   passthru = {
     category = "AI Coding Agents";
+    tests.opentelemetry-sdk = python.pkgs.opentelemetry-sdk.tests.opentelemetry-sdk;
     updater = mkUpdater {
       kind = "platform";
       versionSource = {
