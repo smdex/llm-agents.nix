@@ -160,6 +160,7 @@ stdenv.mkDerivation {
         type = "github";
         owner = "zenbu-labs";
         repo = "terminal-browser";
+        tagPattern = "v[0-9]+[.][0-9]+[.][0-9]+";
       };
     }
   );

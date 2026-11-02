@@ -91,7 +91,9 @@ def _version_getter(source: dict[str, Any]) -> Callable[[], str]:
 
     source_type = source["type"]
     if source_type == "github":
-        return lambda: fetch_github_latest_release(source["owner"], source["repo"])
+        return lambda: fetch_github_latest_release(
+            source["owner"], source["repo"], tag_pattern=source.get("tagPattern")
+        )
     if source_type == "npm":
         package = source["package"]
         tag = source.get("tag", "latest")

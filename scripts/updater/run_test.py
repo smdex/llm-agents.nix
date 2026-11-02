@@ -8,6 +8,7 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 from updater import http
 from updater.run import _json_pointer, _latest_git_tag, _version_getter, run
@@ -147,6 +148,24 @@ class TestRun(unittest.TestCase):
         self.assertEqual(rec.kwargs["url_template"], "https://x/{version}/{platform}")
         self.assertEqual(rec.kwargs["platforms"], {"x86_64-linux": "linux-x64.tar.gz"})
         self.assertTrue(callable(rec.kwargs["fetch_latest"]))
+
+    def test_platform_github_release_family(self) -> None:
+        pixel = {"tag_name": "vpixel-v0.2.10", "draft": False, "prerelease": False}
+        browser = {"tag_name": "v0.15.3", "draft": False, "prerelease": False}
+
+        def fetch(url: str) -> object:
+            return pixel if url.endswith("/latest") else [pixel, browser]
+
+        with patch("updater.version.fetch_json", side_effect=fetch):
+            getter = _version_getter(
+                {
+                    "type": "github",
+                    "owner": "zenbu-labs",
+                    "repo": "terminal-browser",
+                    "tagPattern": r"v\d+\.\d+\.\d+",
+                }
+            )
+            self.assertEqual(getter(), "0.15.3")
 
     def test_platform_version_sources(self) -> None:
         # Each type builds a callable without raising.
