@@ -119,6 +119,9 @@ let
       opentelemetry-semantic-conventions = pyprev.opentelemetry-semantic-conventions.overridePythonAttrs {
         version = "0.66b1";
       };
+      opentelemetry-test-utils = pyprev.opentelemetry-test-utils.overridePythonAttrs {
+        version = "0.66b1";
+      };
       opentelemetry-exporter-http-transport =
         pyprev.opentelemetry-exporter-otlp-proto-common.overridePythonAttrs
           {
