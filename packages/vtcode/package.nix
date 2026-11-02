@@ -3,7 +3,8 @@
   flake,
   stdenv,
   fetchFromGitHub,
-  rustPlatform,
+  callPackage,
+  makeRustPlatform,
   pkg-config,
   openssl,
   libiconv,
@@ -11,6 +12,13 @@
   versionCheckHomeHook,
 }:
 
+let
+  toolchain = callPackage ./rust-toolchain.nix { };
+  rustPlatform = makeRustPlatform {
+    rustc = toolchain;
+    cargo = toolchain;
+  };
+in
 rustPlatform.buildRustPackage rec {
   pname = "vtcode";
   version = "0.181.0";
@@ -58,7 +66,7 @@ rustPlatform.buildRustPackage rec {
     license = licenses.mit;
     sourceProvenance = with sourceTypes; [ fromSource ];
     maintainers = with flake.lib.maintainers; [ smdex ];
-    platforms = platforms.all;
+    platforms = toolchain.meta.platforms;
     mainProgram = "vtcode";
   };
 }
