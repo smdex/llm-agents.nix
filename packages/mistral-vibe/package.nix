@@ -255,7 +255,7 @@ python.pkgs.buildPythonApplication {
     "vibe.acp.entrypoint"
     "vibe.app_server.stdio"
     "vibe.app_server.local"
-    "vibe.core.llm.backend.mistral"
+    "vibe.core.llm.completion"
     "vibe.cli.transcribe.mistral_transcribe_client"
   ];
 
