@@ -7,12 +7,12 @@
   versionCheckHook,
 }:
 let
-  version = "0.1.0";
+  hashes = lib.importJSON ./hashes.json;
+  version = hashes.version;
   src = fetchFromGitHub {
     owner = "smdex";
     repo = "pi-perplexity";
-    rev = "22d1c3ba9332e1464382f0a0362732c36ebb7c36";
-    hash = "sha256-CX4JC1ZIWsjuOrZEb+7geQWpztDIos3QWnFAGSJekqk=";
+    inherit (hashes) rev hash;
   };
   cli = "${src}/cli";
   bunDeps = stdenvNoCC.mkDerivation {
@@ -31,7 +31,7 @@ let
     dontFixup = true;
     outputHashAlgo = "sha256";
     outputHashMode = "recursive";
-    outputHash = "sha256-w16U1Nf+j9V5amadjc4Qs+678LolIrslA+32VsRw6wY=";
+    outputHash = hashes.bunDepsHash;
   };
 in
 stdenvNoCC.mkDerivation {
@@ -54,6 +54,7 @@ stdenvNoCC.mkDerivation {
   doInstallCheck = true;
   nativeInstallCheckInputs = [ versionCheckHook ];
   passthru.category = "Utilities";
+  passthru.bunDeps = bunDeps;
   meta = {
     description = "Perplexity CLI for cited answers, research, and threads";
     homepage = "https://github.com/smdex/pi-perplexity";
