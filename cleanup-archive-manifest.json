@@ -1,0 +1,64 @@
+{
+  "originalMain": "90cbc830883c60ef9654f55eeccae8c8c6f0500a",
+  "originalChiki": "1e238a58ed7ac10a3ad0cc5e64a60dbaa5dbf0f6",
+  "upstream": "10f2be38f8a46fdf7689697270dd14b27f723aae",
+  "parkedUpstreamPackagePaths": [
+    "packages/agent-deck/package.nix",
+    "packages/agentty/package.nix",
+    "packages/autolith/hashes.json",
+    "packages/autolith/package.nix",
+    "packages/autolith/update.py",
+    "packages/autolith/update_test.py",
+    "packages/autolith/upstream-package.nix",
+    "packages/aven/cli-error-cause-chain.patch",
+    "packages/aven/package.nix",
+    "packages/bun-bin/hashes.json",
+    "packages/ccusage/package.nix",
+    "packages/ccusage/update.py",
+    "packages/codebuddy-code/hashes.json",
+    "packages/codebuddy-code/package-lock.json",
+    "packages/codex-acp/nix-update-args",
+    "packages/goose-cli/hashes.json",
+    "packages/goose-cli/package.nix",
+    "packages/goose-cli/update.py",
+    "packages/maki/package.nix",
+    "packages/mistral-vibe/hashes.json",
+    "packages/mistral-vibe/package.nix",
+    "packages/officecli/package.nix",
+    "packages/oh-my-opencode/bun.nix",
+    "packages/oh-my-opencode/hashes.json",
+    "packages/omo-ai/hashes.json",
+    "packages/omo-ai/package-lock.json",
+    "packages/omp/compile-standalone.ts",
+    "packages/omp/hashes.json",
+    "packages/omp/package.nix",
+    "packages/openclaw/package.nix",
+    "packages/opencode-desktop/hashes.json",
+    "packages/openresearch/non-utf8-fixtures.patch",
+    "packages/openresearch/package.nix",
+    "packages/terminal-browser/package.nix"
+  ],
+  "parkedSharedPaths": [
+    "checks/updater-tests.nix",
+    "scripts/updater/bun.py",
+    "scripts/updater/bun_test.py",
+    "scripts/updater/run.py",
+    "scripts/updater/run_test.py",
+    "scripts/updater/ccusage_test.py",
+    "scripts/updater/goose_cli_test.py"
+  ],
+  "retainedUpstreamException": "packages/ctx/package.nix \u2014 required ZFS allowlist fix",
+  "removedDirectories": [
+    "packages/browseros-neo",
+    "packages/hermes-hudui",
+    "packages/hermes-webui"
+  ],
+  "archiveRefs": [
+    "archive/round3-main-before-cleanup-20261102",
+    "archive/round3-chiki-before-cleanup-20261102"
+  ],
+  "retainedMinimalSharedPaths": {
+    "lib/default.nix": "Five-line viniciuspalma maintainer required by retained added openfang; no other lib change."
+  },
+  "retainedAddedPackageDependency": "Private goose2/cli.nix removes unused RUSTY_V8_ARCHIVE only for goose2/goose-desktop/goose-tui; public goose-cli restored exactly upstream."
+}
