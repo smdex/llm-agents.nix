@@ -206,10 +206,9 @@ stdenv.mkDerivation {
     bun ${./normalize-embedded-client.ts} \
       packages/stats/src/embedded-client.generated.txt
 
-    # export/html/index.ts text-imports ./tool-views.generated.js, which must
-    # exist before bun compile.
-    echo "Generating embedded HTML-export tool-views..."
-    bun --cwd packages/collab-web scripts/build-tool-views.ts
+    # Generate the viewer text imported by export/html/index.ts before compiling.
+    echo "Generating embedded HTML-export viewer..."
+    bun --cwd packages/collab-web run gen:export-viewer
 
     # compile-standalone.ts drives upstream's compile-binary.ts helper because
     # `bun build --compile` cannot load the required virtual-module plugin.
