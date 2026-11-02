@@ -2,7 +2,7 @@
   lib,
   stdenv,
   fetchurl,
-  formatelf,
+  patchelf,
   rustc,
   zlib,
 }:
@@ -24,7 +24,7 @@ stdenv.mkDerivation {
     url = "https://static.rust-lang.org/dist/2026-10-15/rust-${version}-${target}.tar.xz";
     hash = hashes.${stdenv.hostPlatform.system};
   };
-  nativeBuildInputs = lib.optionals stdenv.hostPlatform.isLinux [ formatelf ];
+  nativeBuildInputs = lib.optionals stdenv.hostPlatform.isLinux [ patchelf ];
   buildInputs = lib.optionals stdenv.hostPlatform.isLinux [
     stdenv.cc.cc.lib
     zlib
@@ -37,6 +37,22 @@ stdenv.mkDerivation {
     bash ./install.sh --prefix="$out" --disable-ldconfig \
       --components=rustc,rust-std-${target}
     runHook postInstall
+  '';
+  # LLVM's ELF layout cannot be rewritten by formatelf; patch this pinned toolchain explicitly.
+  postFixup = lib.optionalString stdenv.hostPlatform.isLinux ''
+    while IFS= read -r -d "" file; do
+      if patchelf --print-rpath "$file" >/dev/null 2>&1; then
+        patchelf --set-rpath "$out/lib:$out/lib/rustlib/${target}/lib:${
+          lib.makeLibraryPath [
+            stdenv.cc.cc.lib
+            zlib
+          ]
+        }" "$file"
+        if patchelf --print-interpreter "$file" >/dev/null 2>&1; then
+          patchelf --set-interpreter "${stdenv.cc.bintools.dynamicLinker}" "$file"
+        fi
+      fi
+    done < <(find "$out" -type f -print0)
   '';
   doInstallCheck = true;
   installCheckPhase = ''
