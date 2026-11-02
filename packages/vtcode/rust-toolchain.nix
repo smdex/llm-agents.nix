@@ -35,13 +35,12 @@ stdenv.mkDerivation {
   installPhase = ''
     runHook preInstall
     ./install.sh --prefix="$out" --disable-ldconfig \
-      --components=rustc,rust-std-${target},cargo
+      --components=rustc,rust-std-${target}
     runHook postInstall
   '';
   doInstallCheck = true;
   installCheckPhase = ''
     "$out/bin/rustc" --version | grep -F 'rustc ${version}'
-    "$out/bin/cargo" --version | grep -F 'cargo ${version}'
   '';
   passthru = {
     targetPlatforms = builtins.attrNames hashes;
