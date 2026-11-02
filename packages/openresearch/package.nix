@@ -45,16 +45,16 @@ let
 in
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "openresearch";
-  version = "0.2.22";
+  version = "0.2.23";
 
   src = fetchFromGitHub {
     owner = "alphaXiv";
     repo = "OpenResearch";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-B5XCBOf2cvbOehL7GV9eW/CVyI6ag1B/L8pzbkEUCHg=";
+    hash = "sha256-6VJ0OdC7lYXjcpdIs7UgSbh8Gpye2jPk76iDditbDiw=";
   };
 
-  cargoHash = "sha256-8WEU0pJ77SFiiiPhVa5s5FfpXk5dsuQvhIdYy3rKP+g=";
+  cargoHash = "sha256-XAqA8vxr4L56UlL4Pm0VpisuilNCQ/al87nMEtUqNb0=";
 
   patches = [
     # Pending upstream #698; remove once a release includes the readiness EINTR fix.
@@ -180,7 +180,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
           ;
         pnpm = pnpm_12;
         fetcherVersion = 5;
-        hash = "sha256-SylFpv2bkneoZgmgAGDgkUTIEmTlQSc2Q+476Tzl6z4=";
+        hash = "sha256-+xp1ky5ug6TJmGJ3kCK9RM5xH6ngL4Hxx/NqUgCwCl4=";
       };
 
       nativeBuildInputs = [
