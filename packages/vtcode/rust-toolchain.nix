@@ -34,7 +34,7 @@ stdenv.mkDerivation {
   dontStrip = true;
   installPhase = ''
     runHook preInstall
-    ./install.sh --prefix="$out" --disable-ldconfig \
+    bash ./install.sh --prefix="$out" --disable-ldconfig \
       --components=rustc,rust-std-${target}
     runHook postInstall
   '';
