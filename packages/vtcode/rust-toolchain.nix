@@ -43,6 +43,10 @@ stdenv.mkDerivation {
     "$out/bin/rustc" --version | grep -F 'rustc ${version}'
     "$out/bin/cargo" --version | grep -F 'cargo ${version}'
   '';
+  passthru = {
+    targetPlatforms = builtins.attrNames hashes;
+    badTargetPlatforms = [ ];
+  };
   meta = {
     description = "Pinned stable Rust toolchain for VTCode's minimum supported version";
     homepage = "https://www.rust-lang.org";
