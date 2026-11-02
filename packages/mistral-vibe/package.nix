@@ -153,6 +153,7 @@ let
       opentelemetry-exporter-otlp-proto-http =
         pyprev.opentelemetry-exporter-otlp-proto-http.overridePythonAttrs
           (old: {
+            nativeCheckInputs = (old.nativeCheckInputs or [ ]) ++ [ pyfinal.mocket ];
             dependencies = old.dependencies ++ [
               pyfinal.opentelemetry-exporter-http-transport
               pyfinal.opentelemetry-exporter-otlp-common
@@ -269,8 +270,10 @@ python.pkgs.buildPythonApplication {
     category = "AI Coding Agents";
     tests.opentelemetry-sdk = python.pkgs.opentelemetry-sdk.overridePythonAttrs (old: {
       doCheck = true;
-      # This directory was removed upstream; an unmatched exclusion aborts pytest.
-      disabledTestPaths = lib.remove "tests/performance/benchmarks/" (old.disabledTestPaths or [ ]);
+      # Preserve nixpkgs' performance-benchmark exclusion at its new upstream path.
+      disabledTestPaths = (lib.remove "tests/performance/benchmarks/" (old.disabledTestPaths or [ ])) ++ [
+        "benchmarks/"
+      ];
     });
     updater = mkUpdater {
       kind = "platform";
