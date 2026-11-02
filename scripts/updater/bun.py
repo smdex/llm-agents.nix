@@ -6,6 +6,7 @@ used by packages that depend on the bun2nix flake input.
 
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 import tempfile
@@ -34,19 +35,50 @@ def regenerate_bun_nix(
 
     """
     try:
-        run_command(
+        parsed = run_command(
             [
                 "nix",
-                "run",
-                f"{flake_root}#bun2nix",
-                "--",
-                "--lock-file",
+                "shell",
+                "--inputs-from",
+                f"{flake_root}#",
+                "nixpkgs#bun",
+                "--command",
+                "bun",
+                "-e",
+                "console.log(JSON.stringify(Bun.JSONC.parse(await Bun.file(process.argv[1]).text())))",
                 str(bun_lock_path),
-                "--output-file",
-                str(bun_nix_output),
             ],
             cwd=flake_root,
         )
+        lock = json.loads(parsed.stdout)
+        # shortcut: bun2nix 2.1 expects 3-field Git tuples; remove when it supports Bun's integrity slot.
+        git_fields_with_integrity = 4
+        for entry in lock["packages"].values():
+            if (
+                isinstance(entry, list)
+                and len(entry) == git_fields_with_integrity
+                and isinstance(entry[0], str)
+                and re.match(r"(?:@[^/]+/)?[^@]+@(?:github:|git\+)", entry[0])
+                and isinstance(entry[-1], str)
+                and entry[-1].startswith("sha512-")
+            ):
+                entry.pop()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            converter_lock = Path(tmpdir) / "bun.lock"
+            converter_lock.write_text(json.dumps(lock))
+            run_command(
+                [
+                    "nix",
+                    "run",
+                    f"{flake_root}#bun2nix",
+                    "--",
+                    "--lock-file",
+                    str(converter_lock),
+                    "--output-file",
+                    str(bun_nix_output),
+                ],
+                cwd=flake_root,
+            )
         # Run the project formatter (deadnix + nixfmt) to strip unused
         # imports and normalise style so CI doesn't fail.
         print(f"Formatting {bun_nix_output.name}...")
