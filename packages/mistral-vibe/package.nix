@@ -267,9 +267,11 @@ python.pkgs.buildPythonApplication {
 
   passthru = {
     category = "AI Coding Agents";
-    tests.opentelemetry-sdk = python.pkgs.opentelemetry-sdk.overridePythonAttrs {
+    tests.opentelemetry-sdk = python.pkgs.opentelemetry-sdk.overridePythonAttrs (old: {
       doCheck = true;
-    };
+      # This directory was removed upstream; an unmatched exclusion aborts pytest.
+      disabledTestPaths = lib.remove "tests/performance/benchmarks/" (old.disabledTestPaths or [ ]);
+    });
     updater = mkUpdater {
       kind = "platform";
       versionSource = {
