@@ -4,6 +4,7 @@
   python3,
   fetchPypi,
   fetchurl,
+  fetchFromGitHub,
   callPackage,
   rustPlatform,
   cargo,
@@ -91,7 +92,7 @@ let
 
   python = python3.override {
     self = python;
-    packageOverrides = _pyfinal: pyprev: {
+    packageOverrides = pyfinal: pyprev: {
       inherit textual-speedups tree-sitter-bash;
 
       # Upstream pins these with `==` and nixpkgs ships newer releases; keep
@@ -103,10 +104,53 @@ let
       # mcp 2.x yields 2 values and breaks every connector/HTTP MCP call.
       mcp = pyprev.mcp_1;
 
+      # Vibe 3.0.4 needs the 1.45 family and its two new exporter distributions.
+      opentelemetry-api = pyprev.opentelemetry-api.overridePythonAttrs {
+        version = "1.45.1";
+        src = fetchFromGitHub {
+          owner = "open-telemetry";
+          repo = "opentelemetry-python";
+          tag = "v1.45.1";
+          hash = "sha256-/WP+0J5Bd/XBpT69YsZaoSfARZwc2pAMVT3KeIjap40=";
+        };
+      };
+      opentelemetry-semantic-conventions = pyprev.opentelemetry-semantic-conventions.overridePythonAttrs {
+        version = "0.66b1";
+      };
+      opentelemetry-exporter-http-transport =
+        pyprev.opentelemetry-exporter-otlp-proto-common.overridePythonAttrs
+          {
+            pname = "opentelemetry-exporter-http-transport";
+            version = "0.66b1";
+            sourceRoot = "${pyfinal.opentelemetry-api.src.name}/exporter/opentelemetry-exporter-http-transport";
+            dependencies = with pyfinal; [
+              opentelemetry-api
+              requests
+              urllib3
+            ];
+            pythonImportsCheck = [ "opentelemetry.exporter.http.transport" ];
+          };
+      opentelemetry-exporter-otlp-common =
+        pyprev.opentelemetry-exporter-otlp-proto-common.overridePythonAttrs
+          {
+            pname = "opentelemetry-exporter-otlp-common";
+            version = "0.66b1";
+            sourceRoot = "${pyfinal.opentelemetry-api.src.name}/exporter/opentelemetry-exporter-otlp-common";
+            dependencies = with pyfinal; [
+              opentelemetry-sdk
+              opentelemetry-exporter-http-transport
+            ];
+            pythonImportsCheck = [ "opentelemetry.exporter.otlp.common" ];
+          };
+
       # 1.40.0 added timing-sensitive tests that flake on loaded builders.
       opentelemetry-exporter-otlp-proto-http =
         pyprev.opentelemetry-exporter-otlp-proto-http.overridePythonAttrs
           (old: {
+            dependencies = old.dependencies ++ [
+              pyfinal.opentelemetry-exporter-http-transport
+              pyfinal.opentelemetry-exporter-otlp-common
+            ];
             disabledTests = (old.disabledTests or [ ]) ++ [
               "test_retry_timeout"
               "test_shutdown_interrupts_retry_backoff"
@@ -138,6 +182,7 @@ python.pkgs.buildPythonApplication {
 
   dependencies = with python.pkgs; [
     agent-client-protocol
+    authlib
     anyio
     cachetools
     croniter
@@ -145,16 +190,22 @@ python.pkgs.buildPythonApplication {
     gitpython
     giturlparse
     google-auth
+    httpcore2
     httpx
+    httpx2
     httpx-sse
     humanize
     jsonpatch
+    joserfc
     keyring
     markdownify
     mcp
+    mcp-types
     miniaudio
     mistralai
     opentelemetry-api
+    opentelemetry-exporter-http-transport
+    opentelemetry-exporter-otlp-common
     opentelemetry-exporter-otlp-proto-http
     opentelemetry-sdk
     opentelemetry-semantic-conventions
@@ -171,12 +222,14 @@ python.pkgs.buildPythonApplication {
     sentry-sdk
     setproctitle
     sounddevice
+    socksio
     textual
     textual-speedups
     tomli-w
     tree-sitter
     tree-sitter-bash
     truststore
+    uuid-utils
     watchfiles
     websockets
     zstandard
