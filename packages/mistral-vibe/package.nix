@@ -267,7 +267,9 @@ python.pkgs.buildPythonApplication {
 
   passthru = {
     category = "AI Coding Agents";
-    tests.opentelemetry-sdk = python.pkgs.opentelemetry-sdk.tests.opentelemetry-sdk;
+    tests.opentelemetry-sdk = python.pkgs.opentelemetry-sdk.overridePythonAttrs {
+      doCheck = true;
+    };
     updater = mkUpdater {
       kind = "platform";
       versionSource = {
