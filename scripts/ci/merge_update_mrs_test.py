@@ -51,6 +51,26 @@ class EligibilityTest(unittest.TestCase):
         ok, _reason = eligible(mr(), **self.kwargs)
         self.assertTrue(ok)
 
+    def test_non_main_source_must_match_target(self) -> None:
+        kwargs = {"bot_username": BOT, "default_branch": "chiki"}
+        self.assertTrue(
+            eligible(
+                mr(source_branch="update-branch/chiki/paseo", target_branch="chiki"),
+                **kwargs,
+            )[0]
+        )
+        for source in (
+            "update/paseo",
+            "update-branch/main/paseo",
+            "update-branch/chiki/foo/bar",
+        ):
+            self.assertFalse(
+                eligible(mr(source_branch=source, target_branch="chiki"), **kwargs)[0]
+            )
+        self.assertFalse(
+            eligible(mr(source_branch="update-branch/chiki/paseo"), **self.kwargs)[0]
+        )
+
     def test_human_author_is_rejected(self) -> None:
         ok, reason = eligible(mr(author={"username": "alice"}), **self.kwargs)
         self.assertFalse(ok)

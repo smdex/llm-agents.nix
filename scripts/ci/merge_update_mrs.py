@@ -88,8 +88,15 @@ def eligible(
     if author != bot_username:
         return False, f"author {author!r} is not the bot {bot_username!r}"
     source = mr.get("source_branch", "")
-    if not re.fullmatch(r"update/[A-Za-z0-9][A-Za-z0-9._+-]*", source):
-        return False, f"source branch {source!r} is not {UPDATE_BRANCH_PREFIX}*"
+    prefix = (
+        UPDATE_BRANCH_PREFIX
+        if default_branch == "main"
+        else f"update-branch/{default_branch}/"
+    )
+    if not source.startswith(prefix) or not re.fullmatch(
+        r"[A-Za-z0-9][A-Za-z0-9._+-]*", source.removeprefix(prefix)
+    ):
+        return False, f"source branch {source!r} is not {prefix}*"
     if mr.get("target_branch") != default_branch:
         return False, f"target branch {mr.get('target_branch')!r} is not the default"
     if mr.get("source_project_id") != mr.get("target_project_id"):

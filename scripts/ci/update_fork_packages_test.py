@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import os
+import subprocess
+import tempfile
 import unittest
+from pathlib import Path
 from typing import Any
 from unittest import mock
 
@@ -63,6 +66,60 @@ class ForkPackagesTest(unittest.TestCase):
         run.assert_called_once()
 
 
+class MainSelectionTest(unittest.TestCase):
+    def test_explicit_shared_package_and_branch(self) -> None:
+        config = mock.Mock()
+        result = mock.Mock(stdout="packages/shared\npackages/fork\n")
+        with (
+            mock.patch.object(
+                driver.sys,
+                "argv",
+                ["driver", "--branch", "chiki", "--packages", "shared"],
+            ),
+            mock.patch.object(driver, "resolve_config", return_value=config),
+            mock.patch.object(driver, "run", return_value=result) as run,
+            mock.patch.object(driver, "fork_packages", return_value=["fork"]) as fork,
+            mock.patch.object(driver, "stash_ci_scripts"),
+            mock.patch.object(
+                driver, "discover_updates", return_value=[{"name": "shared"}]
+            ) as discover,
+            mock.patch.object(driver, "process_package", return_value=True) as process,
+        ):
+            driver.main()
+        fork.assert_called_once_with(explicit=True, branch="chiki")
+        self.assertEqual(discover.call_args.args[0], ["shared"])
+        self.assertEqual(process.call_args.kwargs["default_branch"], "chiki")
+        self.assertEqual(process.call_args.kwargs["allowlist"], frozenset({"shared"}))
+        self.assertTrue(
+            any("origin/chiki" in call.args[0] for call in run.call_args_list)
+        )
+
+    def test_discovery_uses_resolved_environment_branch(self) -> None:
+        with (
+            mock.patch.dict(
+                os.environ, {"DEFAULT_BRANCH": "chiki", "FORK_REF": "origin/main"}
+            ),
+            mock.patch.object(driver.sys, "argv", ["driver"]),
+            mock.patch.object(driver, "resolve_config"),
+            mock.patch.object(driver, "run"),
+            mock.patch.object(driver, "fork_packages", return_value=[]) as fork,
+        ):
+            driver.main()
+        fork.assert_called_once_with(explicit=False, branch="chiki")
+
+    def test_unknown_package_is_rejected(self) -> None:
+        with (
+            mock.patch.object(driver.sys, "argv", ["driver", "--packages", "missing"]),
+            mock.patch.object(driver, "resolve_config"),
+            mock.patch.object(
+                driver, "run", return_value=mock.Mock(stdout="packages/fork\n")
+            ),
+            mock.patch.object(driver, "fork_packages", return_value=["fork"]),
+            self.assertRaisesRegex(ValueError, "Unknown packages: missing"),
+        ):
+            driver.main()
+
+
 class CompanionScopeTest(unittest.TestCase):
     def test_upstream_companion_rejected_before_updating(self) -> None:
         with (
@@ -77,6 +134,64 @@ class CompanionScopeTest(unittest.TestCase):
             self.assertRaisesRegex(RuntimeError, "upstream-owned"),
         ):
             driver.require_fork_only_companions("fork")
+
+    def test_allowlist_only_exempts_named_shared_packages(self) -> None:
+        with (
+            mock.patch.object(
+                driver.gitlab_mr,
+                "allowed_roots",
+                return_value=("packages/shared/", "packages/other/"),
+            ),
+            mock.patch.object(
+                driver,
+                "run",
+                return_value=mock.Mock(stdout="packages/shared\npackages/other\n"),
+            ),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "packages/other"):
+                driver.require_fork_only_companions(
+                    "shared", allowlist=frozenset({"shared"})
+                )
+            driver.require_fork_only_companions(
+                "shared", allowlist=frozenset({"shared", "other"})
+            )
+
+
+class ValidateMrTest(unittest.TestCase):
+    def test_targeted_build_requires_matching_target(self) -> None:
+        script = Path(driver.REPO_ROOT / "scripts/ci/validate-mr.sh")
+        with tempfile.TemporaryDirectory() as tmp:
+            bindir = Path(tmp)
+            log = bindir / "nix.log"
+            (bindir / "git").write_text("#!/bin/sh\nexit 0\n")
+            (bindir / "nix").write_text(
+                '#!/bin/sh\nprintf "%s\\n" "$*" >> "$TEST_LOG"\n'
+            )
+            for name in ("git", "nix"):
+                (bindir / name).chmod(0o755)
+            for source, target, builds in (
+                ("update/foo", "main", True),
+                ("update-branch/chiki/foo", "chiki", True),
+                ("update-branch/main/foo", "chiki", False),
+                ("update-branch/chiki/foo/bar", "chiki", False),
+                ("update/foo", "chiki", False),
+            ):
+                log.write_text("")
+                env = dict(
+                    os.environ,
+                    PATH=f"{tmp}:{os.environ['PATH']}",
+                    TEST_LOG=str(log),
+                    MR_SOURCE_BRANCH=source,
+                    MR_TARGET_BRANCH=target,
+                )
+                subprocess.run(
+                    ["bash", str(script)], env=env, check=True, capture_output=True
+                )
+                self.assertEqual(
+                    "build --accept-flake-config --no-link .#foo" in log.read_text(),
+                    builds,
+                    source,
+                )
 
 
 class RecordingPublish:
@@ -105,6 +220,32 @@ class ProcessPackageTest(unittest.TestCase):
             mock.patch.dict(os.environ, {}, clear=False),
         ):
             return driver.process_package(self.item, stashed_ci=None)  # type: ignore[arg-type]
+
+    def test_branch_and_allowlist_are_forwarded(self) -> None:
+        with (
+            mock.patch.object(driver, "prepare_branch") as prepare,
+            mock.patch.object(driver, "require_fork_only_companions") as guard,
+            mock.patch.object(
+                driver,
+                "run_updater",
+                return_value={"updated": "true", "new_version": "0.12.0"},
+            ),
+        ):
+            self.assertTrue(
+                driver.process_package(
+                    self.item,
+                    stashed_ci=None,
+                    publish=self.publish,
+                    default_branch="chiki",
+                    allowlist=frozenset({"paseo"}),
+                )
+            )  # type: ignore[arg-type]
+        prepare.assert_called_once_with("paseo", default_branch="chiki")
+        guard.assert_called_once_with(
+            "paseo", allowlist=frozenset({"paseo"}), default_branch="chiki"
+        )
+        assert self.publish.kwargs is not None
+        self.assertEqual(self.publish.kwargs["default_branch"], "chiki")
 
     def test_no_changes_publishes_nothing(self) -> None:
         self.assertTrue(self.run_process({"updated": "false"}))

@@ -80,6 +80,63 @@ class SyncTest(unittest.TestCase):
             check=False,
         )
 
+    def test_chiki_rebase_preserves_package_override(self) -> None:
+        old_main = self.git(self.fork, "rev-parse", "HEAD")
+        self.git(self.fork, "checkout", "-qb", "chiki")
+        self.commit(self.fork, "packages/shared/package.nix", "chiki edit\n")
+        self.git(self.fork, "push", "-q", "origin", "chiki")
+        self.git(self.fork, "checkout", "-q", "main")
+        self.commit(self.fork, "packages/shared/package.nix", "main edit\n")
+        self.git(self.fork, "push", "-q", "origin", "main")
+        main = self.git(self.origin, "rev-parse", "main")
+        self.env.update(SYNC_BRANCH="chiki", CHIKI_BASE=old_main)
+        result = self.sync()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.git(self.origin, "rev-parse", "main"), main)
+        self.assertEqual(
+            self.git(self.origin, "show", "chiki:packages/shared/package.nix"),
+            "chiki edit",
+        )
+        self.git(self.origin, "merge-base", "--is-ancestor", "main", "chiki")
+
+    def test_chiki_requires_valid_old_main(self) -> None:
+        self.git(self.fork, "checkout", "-qb", "chiki")
+        self.commit(self.fork, "chiki.txt", "chiki\n")
+        self.git(self.fork, "push", "-q", "origin", "chiki")
+        old = self.git(self.origin, "rev-parse", "chiki")
+        self.git(self.fork, "checkout", "-q", "main")
+        self.commit(self.fork, "main.txt", "main\n")
+        self.git(self.fork, "push", "-q", "origin", "main")
+        self.env["SYNC_BRANCH"] = "chiki"
+        self.assertNotEqual(self.sync().returncode, 0)
+        self.env["CHIKI_BASE"] = self.git(self.origin, "rev-parse", "main")
+        self.assertNotEqual(self.sync().returncode, 0)
+        self.assertEqual(self.git(self.origin, "rev-parse", "chiki"), old)
+
+    def test_chiki_retry_rejects_stale_base_after_main_advances(self) -> None:
+        old_main = self.git(self.fork, "rev-parse", "HEAD")
+        self.git(self.fork, "checkout", "-qb", "chiki")
+        self.commit(self.fork, "packages/shared/package.nix", "override\n")
+        self.git(self.fork, "push", "-q", "origin", "chiki")
+        self.git(self.fork, "checkout", "-q", "main")
+        self.commit(self.fork, "main.txt", "first\n")
+        self.git(self.fork, "push", "-q", "origin", "main")
+        self.env.update(SYNC_BRANCH="chiki", CHIKI_BASE=old_main)
+        first = self.sync()
+        self.assertEqual(first.returncode, 0, first.stderr)
+        self.git(self.fork, "checkout", "-q", "main")
+        self.commit(self.fork, "main.txt", "second\n")
+        self.git(self.fork, "push", "-q", "origin", "main")
+        before = self.git(self.origin, "rev-parse", "chiki")
+        result = self.sync()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("CHIKI_BASE predates", result.stderr)
+        self.assertEqual(self.git(self.origin, "rev-parse", "chiki"), before)
+
+    def test_invalid_branch_is_rejected(self) -> None:
+        self.env["SYNC_BRANCH"] = "other"
+        self.assertNotEqual(self.sync().returncode, 0)
+
     def test_rebases_fork_additions(self) -> None:
         self.commit(self.fork, "packages/fork/package.nix", "fork\n")
         self.git(self.fork, "push", "-q", "origin", "main")

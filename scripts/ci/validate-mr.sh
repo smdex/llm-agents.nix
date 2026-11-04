@@ -56,15 +56,17 @@ if changed 'packages/' || changed 'scripts/generate-package-docs.nu' ||
   git diff --exit-code -- README.md
 fi
 
-case "${source_branch:-}" in
-update/*)
-  package="${source_branch#update/}"
+if [[ $target_branch == main ]]; then
+  prefix='update/'
+else
+  prefix="update-branch/${target_branch}/"
+fi
+package="${source_branch#"$prefix"}"
+if [[ $source_branch == "$prefix"* && $package =~ ^[A-Za-z0-9][A-Za-z0-9._+-]*$ ]]; then
   echo "== targeted build: ${package}"
   nix build --accept-flake-config --no-link ".#${package}"
-  ;;
-*)
-  echo "== targeted build skipped (not an update/<package> branch)"
-  ;;
-esac
+else
+  echo "== targeted build skipped (not an update branch for ${target_branch})"
+fi
 
 echo "== validate-mr: all checks passed"

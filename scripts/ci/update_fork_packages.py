@@ -26,6 +26,7 @@ stage still runs — use allow_failure on this job); 2 = systemic failure
 
 from __future__ import annotations
 
+import argparse
 import json
 import logging
 import os
@@ -146,10 +147,16 @@ def stash_ci_scripts(target: Path) -> Path:
     return target / ".github" / "ci"
 
 
-def fork_packages() -> list[str]:
+def fork_packages(*, explicit: bool = False, branch: str | None = None) -> list[str]:
     """Fork-added package names (directory set difference vs upstream)."""
+    env = dict(os.environ)
+    if explicit:
+        env.pop("FORK_UPDATE_PACKAGES", None)
+    if branch is not None:
+        env["FORK_REF"] = f"origin/{branch}"
     result = run(
         ["bash", str(REPO_ROOT / "scripts" / "ci" / "fork-packages.sh")],
+        env=env,
         check=False,
     )
     if result.returncode != 0:
@@ -206,7 +213,7 @@ def prepare_branch(package: str, *, default_branch: str = "main") -> None:
     fixups on an open MR branch carry into the work tree; a branch that
     no longer rebases cleanly is discarded.
     """
-    branch = f"update/{package}"
+    branch = gitlab_mr.update_branch(package, default_branch)
     run(["git", "fetch", "origin", default_branch], env=resolve_config().git_env())
     # Start from a pristine work tree: a previous package's uncommitted
     # changes must not leak into this update (each GitHub matrix job gets
@@ -260,9 +267,13 @@ def run_updater(package: str, stashed_ci: Path) -> dict[str, str] | None:
     return outputs
 
 
-def require_fork_only_companions(name: str) -> None:
+def require_fork_only_companions(
+    name: str, *, allowlist: frozenset[str] = frozenset(), default_branch: str = "main"
+) -> None:
     """Do not let a fork updater delegate work to upstream-owned companions."""
-    roots = gitlab_mr.allowed_roots(REPO_ROOT, name)
+    roots = gitlab_mr.allowed_roots(
+        REPO_ROOT, name, base_ref=f"origin/{default_branch}"
+    )
     upstream_ref = os.environ.get("UPSTREAM_REF", "main")
     upstream = run(
         [
@@ -276,7 +287,12 @@ def require_fork_only_companions(name: str) -> None:
         ]
     )
     shared = {path.rstrip("/") for path in upstream.stdout.splitlines()}
-    forbidden = [root for root in roots if root.rstrip("/") in shared]
+    forbidden = [
+        root
+        for root in roots
+        if root.rstrip("/") in shared
+        and root.rstrip("/").removeprefix("packages/") not in allowlist
+    ]
     if forbidden:
         message = f"refusing upstream-owned update companions: {forbidden}"
         raise RuntimeError(message)
@@ -287,6 +303,8 @@ def process_package(
     *,
     stashed_ci: Path,
     publish: Callable[..., str] | None = None,
+    default_branch: str = "main",
+    allowlist: frozenset[str] = frozenset(),
 ) -> bool:
     """Update one package and publish its MR; False on failure."""
     if publish is None:
@@ -294,8 +312,10 @@ def process_package(
 
     name = item["name"]
     current = item.get("current_version", "unknown")
-    prepare_branch(name)
-    require_fork_only_companions(name)
+    prepare_branch(name, default_branch=default_branch)
+    require_fork_only_companions(
+        name, allowlist=allowlist, default_branch=default_branch
+    )
 
     outputs = run_updater(name, stashed_ci)
     if outputs is None:
@@ -322,14 +342,45 @@ def process_package(
         current_version=current,
         new_version=new,
         changelog_url=outputs.get("changelog", ""),
+        default_branch=default_branch,
     )
     log.info("%s MR %s (%s -> %s)", action, name, current, new)
     return True
 
 
+def select_packages(
+    requested: list[str] | None, branch: str, fork_only: list[str]
+) -> list[str]:
+    """Validate explicit selections against package directories on the target branch."""
+    if requested is None:
+        return fork_only
+    result = run(
+        ["git", "ls-tree", "-d", "--name-only", f"origin/{branch}", "--", "packages/"]
+    )
+    available = {
+        path.removeprefix("packages/").rstrip("/")
+        for path in result.stdout.splitlines()
+    }
+    missing = set(requested) - available
+    if missing:
+        message = f"Unknown packages: {', '.join(sorted(missing))}"
+        raise ValueError(message)
+    return list(dict.fromkeys(requested))
+
+
 def main() -> None:
     """Discover fork-only updates, run them, publish MRs."""
     logging.basicConfig(level=logging.INFO, format="%(message)s")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--branch", default=None)
+    parser.add_argument(
+        "--packages",
+        nargs="+",
+        help="Explicit package allowlist, including shared overrides",
+    )
+    args = parser.parse_args()
+    branch = args.branch or os.environ.get("DEFAULT_BRANCH", "main")
+    run(["git", "check-ref-format", "--branch", branch])
 
     # The sync stage may have rewritten main after this pipeline's checkout.
     # Fetch it before discovery, and remove runner-persisted URL credentials.
@@ -345,11 +396,18 @@ def main() -> None:
         ]
     )
     run(
-        ["git", "fetch", "origin", "+refs/heads/main:refs/remotes/origin/main"],
+        [
+            "git",
+            "fetch",
+            "origin",
+            f"+refs/heads/{branch}:refs/remotes/origin/{branch}",
+        ],
         env=config.git_env(),
     )
-    run(["git", "checkout", "-B", "main", "origin/main"])
-    packages = fork_packages()
+    run(["git", "checkout", "-B", branch, f"origin/{branch}"])
+    fork_only = fork_packages(explicit=args.packages is not None, branch=branch)
+    allowlist = frozenset(args.packages or ())
+    packages = select_packages(args.packages, branch, fork_only)
     if not packages:
         log.info("No fork-only packages; nothing to do")
         return
@@ -363,8 +421,17 @@ def main() -> None:
 
         failures = 0
         for item in items:
+            if item["name"] not in packages:
+                log.error("Discovery returned unselected package: %s", item["name"])
+                failures += 1
+                continue
             try:
-                if not process_package(item, stashed_ci=stashed_ci):
+                if not process_package(
+                    item,
+                    stashed_ci=stashed_ci,
+                    default_branch=branch,
+                    allowlist=allowlist,
+                ):
                     failures += 1
             except SystemExit as exit_request:
                 # e.g. confinement violation in gitlab_mr: fail this

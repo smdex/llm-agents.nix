@@ -12,6 +12,9 @@
 # the remote head observed by this checkout.
 #
 # Environment:
+#   SYNC_BRANCH       main (default) or chiki
+#   CHIKI_BASE        old main SHA, required when main was rewritten and is
+#                     no longer an ancestor of chiki
 #   UPSTREAM_URL      default https://github.com/numtide/llm-agents.nix.git
 #   UPSTREAM_REF      default main
 #   DEFAULT_BRANCH    default main (must match the repo's default branch;
@@ -29,6 +32,11 @@
 set -euo pipefail
 
 default_branch="${DEFAULT_BRANCH:-main}"
+sync_branch="${SYNC_BRANCH:-main}"
+if [[ $sync_branch != main && $sync_branch != chiki ]]; then
+  echo "ERROR: SYNC_BRANCH must be main or chiki" >&2
+  exit 1
+fi
 upstream_url="${UPSTREAM_URL:-https://github.com/numtide/llm-agents.nix.git}"
 upstream_repo="${UPSTREAM_REPOSITORY:-numtide/llm-agents.nix}"
 upstream_ref="${UPSTREAM_REF:-main}"
@@ -47,7 +55,7 @@ push_result() {
   GIT_CONFIG_COUNT=1 \
     GIT_CONFIG_KEY_0="http.${base%/}.extraHeader" \
     GIT_CONFIG_VALUE_0="Authorization: Basic ${auth}" \
-    git push --force-with-lease="${default_branch}:${base_sha}" "${base%.git}.git" "HEAD:${default_branch}"
+    git push --force-with-lease="refs/heads/${target_branch}:${base_sha}" "${base%.git}.git" "HEAD:refs/heads/${target_branch}"
 }
 
 upstream_update_in_progress() {
@@ -67,6 +75,38 @@ upstream_update_in_progress() {
 
 main() {
   git_identity
+  local target_branch="$default_branch"
+  if [[ $sync_branch == chiki ]]; then
+    target_branch=chiki
+    git fetch origin "+refs/heads/${default_branch}:refs/remotes/origin/${default_branch}" "+refs/heads/chiki:refs/remotes/origin/chiki"
+    git checkout -B chiki origin/chiki
+    local base_sha fork_base upstream
+    base_sha="$(git rev-parse origin/chiki)"
+    upstream="origin/${default_branch}"
+    if git merge-base --is-ancestor "$upstream" HEAD; then
+      echo "chiki already contains ${upstream}"
+      return 0
+    fi
+    if [[ -z ${CHIKI_BASE:-} ]]; then
+      echo "ERROR: CHIKI_BASE (the old main SHA) is required when main is not an ancestor of chiki" >&2
+      return 1
+    fi
+    fork_base="$(git rev-parse --verify "${CHIKI_BASE}^{commit}")"
+    if ! git merge-base --is-ancestor "$fork_base" HEAD; then
+      echo "ERROR: CHIKI_BASE is not an ancestor of chiki" >&2
+      return 1
+    fi
+    # A stale base after a successful sync can replay main commits as chiki
+    # overrides. Require the newest shared ancestor when it descends from it.
+    local shared_base
+    shared_base="$(git merge-base "$upstream" HEAD)"
+    if [[ $shared_base != "$fork_base" ]] && git merge-base --is-ancestor "$fork_base" "$shared_base"; then
+      echo "ERROR: CHIKI_BASE predates the shared main/chiki base; use ${shared_base}" >&2
+      return 1
+    fi
+    rebase_branch
+    return
+  fi
   # Jobs may start from the old pipeline SHA after an earlier sync/merge.
   git fetch origin "+refs/heads/${default_branch}:refs/remotes/origin/${default_branch}"
   git checkout -B "$default_branch" "origin/${default_branch}"
@@ -95,6 +135,10 @@ main() {
   local fork_base
   fork_base="$(git merge-base "$upstream" HEAD)"
 
+  rebase_branch
+}
+
+rebase_branch() {
   export GIT_EDITOR=true
   # Replay only real fork commits: previous syncs leave "sync:
   # regenerate README" commits behind, so drop them from the todo and
@@ -130,7 +174,7 @@ main() {
   fi
 
   push_result
-  echo "Rebased ${default_branch} onto ${upstream}."
+  echo "Rebased ${target_branch} onto ${upstream}."
 }
 
 resolve_rebase_conflicts() {
@@ -154,7 +198,11 @@ resolve_rebase_conflicts() {
         # During a rebase, --ours is upstream. Package files
         # already present upstream are authoritative; README is
         # generated again after the rebase.
-        if git checkout --ours -- "$path"; then
+        local side=--ours
+        if [[ $sync_branch == chiki && $path == packages/* ]]; then
+          side=--theirs
+        fi
+        if git checkout "$side" -- "$path"; then
           git add -- "$path"
         else
           # Also handle modify/delete conflicts where upstream

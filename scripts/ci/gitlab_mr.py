@@ -191,15 +191,23 @@ class MrConfig:
     commit_message: str
 
 
+def update_branch(name: str, default_branch: str) -> str:
+    """Keep non-main update branches separate from the main update flow."""
+    if default_branch == "main":
+        return f"update/{name}"
+    return f"update-branch/{default_branch}/{name}"
+
+
 def build_config(
     *,
     name: str,
     current_version: str,
     new_version: str,
     changelog_url: str,
+    default_branch: str = "main",
 ) -> MrConfig:
     """Build branch, title, body, and commit message for a package update."""
-    branch = f"update/{name}"
+    branch = update_branch(name, default_branch)
     title = f"{name}: {current_version} -> {new_version}"
     body = (
         f"Automated update of {name} from {current_version} to {new_version}.\n\n"
@@ -320,16 +328,20 @@ def publish_package_update(
     current_version: str,
     new_version: str,
     changelog_url: str,
+    default_branch: str | None = None,
 ) -> str:
     """Confinement-check, publish the branch, and open/update its MR."""
+    default_branch = default_branch or os.environ.get("DEFAULT_BRANCH", "main")
     config = build_config(
         name=name,
         current_version=current_version,
         new_version=new_version,
         changelog_url=changelog_url,
+        default_branch=default_branch,
     )
-    allowed = allowed_roots(Path.cwd(), name)
-    check_confinement(Path.cwd(), allowed, name)
+    base_ref = f"origin/{default_branch}"
+    allowed = allowed_roots(Path.cwd(), name, base_ref=base_ref)
+    check_confinement(Path.cwd(), allowed, name, base_ref=base_ref)
 
     gitlab = resolve_config()
     bot_name = os.environ.get("CI_BOT_NAME", BOT_NAME)
@@ -341,7 +353,7 @@ def publish_package_update(
         allowed,
         remote_url=gitlab.http_remote_url(),
         git_env=gitlab.git_env(),
-        default_branch=os.environ.get("DEFAULT_BRANCH", "main"),
+        default_branch=default_branch,
         bot_name=bot_name,
         bot_email=bot_email,
     )
@@ -349,7 +361,7 @@ def publish_package_update(
         gitlab.api(),
         gitlab.project_url_encoded,
         config,
-        default_branch=os.environ.get("DEFAULT_BRANCH", "main"),
+        default_branch=default_branch,
         labels=os.environ.get("MR_LABELS", "dependencies,automated"),
     )
 

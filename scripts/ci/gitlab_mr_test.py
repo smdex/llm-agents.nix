@@ -7,7 +7,9 @@ import tempfile
 import unittest
 from pathlib import Path
 from typing import Any
+from unittest import mock
 
+from ci import gitlab_mr
 from ci.gitlab_api import GitLabApiError
 from ci.gitlab_mr import (
     allowed_roots,
@@ -73,6 +75,16 @@ class BuildConfigTest(unittest.TestCase):
         self.assertEqual(config.title, "paseo: 0.11.0 -> 0.11.2")
         self.assertIn("changelog", config.commit_message)
 
+    def test_non_main_branch_is_separate(self) -> None:
+        config = build_config(
+            name="paseo",
+            current_version="1",
+            new_version="2",
+            changelog_url="",
+            default_branch="chiki",
+        )
+        self.assertEqual(config.branch, "update-branch/chiki/paseo")
+
 
 class RepoFixture:
     """A git repository with a base branch and a dirty work tree."""
@@ -122,6 +134,20 @@ class ConfinementTest(unittest.TestCase):
         allowed = allowed_roots(self.repo.path, "nonexistent")
         self.assertEqual(allowed, ("packages/nonexistent/",))
 
+    def test_target_branch_controls_companions_and_diff(self) -> None:
+        self.repo.run(["git", "checkout", "-q", "-b", "chiki"])
+        (self.repo.path / "packages/foo/update-companions").write_text("baz\n")
+        (self.repo.path / "branch-only").write_text("base\n")
+        self.repo.run(["git", "add", "-A"])
+        self.repo.run(["git", "commit", "-q", "-m", "chiki base"])
+        self.repo.run(["git", "fetch", "-q", "origin"])
+        allowed = allowed_roots(self.repo.path, "foo", base_ref="origin/chiki")
+        self.assertEqual(allowed, ("packages/foo/", "packages/baz/"))
+        (self.repo.path / "packages/foo/package.nix").write_text("new\n")
+        check_confinement(self.repo.path, allowed, "foo", base_ref="origin/chiki")
+        with self.assertRaises(SystemExit):
+            check_confinement(self.repo.path, allowed, "foo", base_ref="origin/main")
+
     def test_changes_inside_package_are_listed(self) -> None:
         (self.repo.path / "packages" / "foo" / "package.nix").write_text("new\n")
         self.assertEqual(
@@ -145,6 +171,32 @@ class ConfinementTest(unittest.TestCase):
         (shared / "package.nix").write_text("x\n")
         with self.assertRaises(SystemExit):
             check_confinement(self.repo.path, ("packages/foo/",), "foo")
+
+
+class PublishTargetTest(unittest.TestCase):
+    def test_publisher_confines_against_target(self) -> None:
+        with (
+            mock.patch.object(
+                gitlab_mr, "allowed_roots", return_value=("packages/foo/",)
+            ) as roots,
+            mock.patch.object(gitlab_mr, "check_confinement") as confinement,
+            mock.patch.object(
+                gitlab_mr,
+                "resolve_config",
+                return_value=mock.Mock(base_url="https://gitlab.example"),
+            ),
+            mock.patch.object(gitlab_mr, "clone_and_publish"),
+            mock.patch.object(gitlab_mr, "create_or_update_mr"),
+        ):
+            gitlab_mr.publish_package_update(
+                name="foo",
+                current_version="1",
+                new_version="2",
+                changelog_url="",
+                default_branch="chiki",
+            )
+        self.assertEqual(roots.call_args.kwargs["base_ref"], "origin/chiki")
+        self.assertEqual(confinement.call_args.kwargs["base_ref"], "origin/chiki")
 
 
 class CreateOrUpdateMrTest(unittest.TestCase):

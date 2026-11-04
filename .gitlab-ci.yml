@@ -3,30 +3,27 @@
 # update-fork,auto-merge}.yml without modifying them; all logic lives in
 # scripts/ci (shared with the Woodpecker pipelines).
 #
-# Stages: sync upstream -> update fork-only packages -> merge validated
-# bot update MRs. The chain runs on schedules and manual web runs of the
-# protected default branch ONLY (GL_TOKEN must be a protected+masked
-# variable, so MR pipelines can never see it). MRs get a validation
-# pipeline whose success (plus Woodpecker statuses, if enabled) is what
-# the merger accepts as evidence.
+# Runs main sync/update/merge, then chiki rebase/update/merge, on the
+# protected default branch for schedules and manual web pipelines only.
+# The pipeline commit must already contain the chiki-capable scripts.
+# MR validation runs without maintenance credentials.
 #
 # Enable the schedule in exactly ONE CI system: either the GitLab
 # schedule below or the Woodpecker cron — not both (they are redundant;
 # resource_group serializes GitLab pipelines only).
 #
-# Required CI/CD variables (masked + protected):
-#   GL_TOKEN   project access token (Maintainer, scope api) used to push
-#              branches and to create/merge MRs
-# Optional:
-#   FORK_UPDATE_PACKAGES  space-separated subset selection of the fork-package
-#              list (default: directory set difference vs upstream)
-#   MERGE_WAIT_TIMEOUT    seconds the merge stage waits for validation
-#              (default 1800)
+# Configure masked, protected GL_TOKEN and GL_CHIKI_TOKEN variables scoped to
+# main-maintenance and chiki-maintenance respectively. Each needs API/push
+# permissions for its branch and update MRs.
+# FORK_UPDATE_PACKAGES and CHIKI_UPDATE_PACKAGES optionally select packages
+# for each branch; otherwise detect fork-only and chiki-modified packages.
+# MERGE_WAIT_TIMEOUT defaults to 1800 seconds.
+# A shared resource group serializes jobs, not entire pipelines: overlapping
+# chains or external writers can make CHIKI_BASE stale, causing a safe failure.
 stages:
   - validate
-  - sync
-  - update
-  - merge
+  - main
+  - chiki
 workflow:
   rules:
     # Scheduled maintenance (configure the schedule for the default branch).
@@ -40,7 +37,7 @@ workflow:
 default:
   # Any image shipping nix works: every script brings its own tools via
   # nix shebangs (see scripts/generate-package-docs.nu for the pattern).
-  image: nixos/nix:latest
+  image: $CI_NIX_IMAGE
 variables:
   NIX_CONFIG: "experimental-features = nix-command flakes"
   GIT_DEPTH: "0"
@@ -51,29 +48,86 @@ variables:
 .maintenance:
   rules:
     - if: '$CI_PIPELINE_SOURCE =~ /\A(schedule|web)\z/ && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-  # Serialize maintenance jobs. Different pipeline chains can interleave;
-  # scripts refresh main and enforce an explicit push lease.
-  resource_group: fork-main-maintenance
-sync-upstream:
+  resource_group: fork-maintenance
+.main-maintenance:
   extends: .maintenance
-  stage: sync
-  script:
-    - ./scripts/ci/sync-upstream.sh
-update-fork-packages:
+  environment:
+    name: main-maintenance
+.chiki-maintenance:
   extends: .maintenance
-  stage: update
-  needs: ["sync-upstream"]
-  # Partial failures (exit 1: some packages failed) must not block
-  # merging the updates that did publish; systemic failures (exit 2)
-  # fail the pipeline.
+  environment:
+    name: chiki-maintenance
+  before_script:
+    - export GL_TOKEN="${GL_CHIKI_TOKEN:?GL_CHIKI_TOKEN is required}"
+.update-packages:
+  # Keep successfully published updates mergeable after partial failures.
   allow_failure:
     exit_codes: [1]
   script:
-    - ./scripts/ci/update_fork_packages.py
+    - |
+      set -f
+      if [ "$UPDATE_BRANCH" = chiki ]; then
+        packages="${CHIKI_UPDATE_PACKAGES:-$(bash scripts/ci/detect-chiki-packages.sh)}"
+        if [ -z "$packages" ]; then exit 0; fi
+        ./scripts/ci/update_fork_packages.py --branch "$UPDATE_BRANCH" --packages $packages
+      elif [ -n "${FORK_UPDATE_PACKAGES:-}" ]; then
+        ./scripts/ci/update_fork_packages.py --branch "$UPDATE_BRANCH" --packages $FORK_UPDATE_PACKAGES
+      else
+        ./scripts/ci/update_fork_packages.py --branch "$UPDATE_BRANCH"
+      fi
+sync-upstream:
+  extends: .main-maintenance
+  stage: main
+  script:
+    - nix shell nixpkgs#git --command git fetch origin "+refs/heads/${CI_DEFAULT_BRANCH}:refs/remotes/origin/${CI_DEFAULT_BRANCH}"
+    - nix shell nixpkgs#git --command sh -c 'printf "CHIKI_BASE=%s\n" "$(git rev-parse "origin/${CI_DEFAULT_BRANCH}")" > chiki-base.env'
+    - ./scripts/ci/sync-upstream.sh
+  artifacts:
+    when: always
+    reports:
+      dotenv: chiki-base.env
+    paths: [chiki-base.env]
+update-fork-packages:
+  extends: [.main-maintenance, .update-packages]
+  stage: main
+  needs: ["sync-upstream"]
+  variables:
+    UPDATE_BRANCH: "$CI_DEFAULT_BRANCH"
 merge-update-mrs:
-  extends: .maintenance
-  stage: merge
+  extends: .main-maintenance
+  stage: main
   needs: ["update-fork-packages"]
+  script:
+    - ./scripts/ci/merge_update_mrs.py
+rebase-chiki:
+  extends: .chiki-maintenance
+  stage: chiki
+  needs:
+    - job: sync-upstream
+      artifacts: true
+    - job: merge-update-mrs
+      artifacts: false
+  variables:
+    SYNC_BRANCH: chiki
+  script:
+    - export CHIKI_BASE="$(cut -d= -f2 chiki-base.env)"
+    - test -n "$CHIKI_BASE"
+    - ./scripts/ci/sync-upstream.sh
+update-chiki-packages:
+  extends: [.chiki-maintenance, .update-packages]
+  stage: chiki
+  needs: ["rebase-chiki"]
+  variables:
+    UPDATE_BRANCH: chiki
+  before_script:
+    - export GL_TOKEN="${GL_CHIKI_TOKEN:?GL_CHIKI_TOKEN is required}"
+    - nix shell nixpkgs#git --command git fetch origin "+refs/heads/main:refs/remotes/origin/main" "+refs/heads/chiki:refs/remotes/origin/chiki"
+merge-chiki-update-mrs:
+  extends: .chiki-maintenance
+  stage: chiki
+  needs: ["update-chiki-packages"]
+  variables:
+    DEFAULT_BRANCH: chiki
   script:
     - ./scripts/ci/merge_update_mrs.py
 validate-update-mr:
