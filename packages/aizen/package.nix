@@ -56,9 +56,11 @@ rustPlatform.buildRustPackage rec {
     versionCheckHomeHook
   ];
 
+  # Nix forbids nested protected-child creation; check the fail-closed policy
+  # without trying to launch another sandbox inside the builder.
   postInstallCheck = ''
-    sandboxOutput=$("$out/bin/aizen" sandbox run 'git --version >/dev/null && printf nix-shell-ok')
-    grep -Fx nix-shell-ok <<< "$sandboxOutput"
+    sandboxStatus=$("$out/bin/aizen" sandbox status)
+    grep -F 'unattended guarded fallback: off (fail-closed)' <<< "$sandboxStatus"
   '';
 
   passthru.category = "AI Coding Agents";
