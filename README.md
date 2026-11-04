@@ -19,6 +19,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>aizen</strong> - AI coding agent with a terminal interface and remote control</summary>
+
+- **Source**: source
+- **License**: Apache-2.0
+- **Homepage**: https://github.com/talmetis-labs/aizen
+- **Usage**: `nix run github:numtide/llm-agents.nix#aizen -- --help`
+- **Nix**: [packages/aizen/package.nix](packages/aizen/package.nix)
+
+</details>
+<details>
 <summary><strong>amp</strong> - CLI for Amp, an agentic coding tool in research preview from Sourcegraph</summary>
 
 - **Source**: binary
