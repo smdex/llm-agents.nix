@@ -9,10 +9,8 @@ An MR is only ever merged when *all* of the following hold:
 * its source branch is ``update/<package>`` and it targets the default
   branch;
 * it carries the ``automated`` label and is neither draft nor WIP;
-* validation is green for its head SHA: either the GitLab
-  ``head_pipeline`` succeeded, or every Woodpecker commit status
-  (``ci/woodpecker/…``, reported by the GitLab forge) succeeded — at
-  least one of the two must exist, otherwise the MR waits;
+* its complete diff changes only package files, excluding the formatter;
+* the GitLab validation job succeeded in an MR pipeline for its head SHA;
 * the head SHA is unchanged: the merge request is re-fetched right
   before merging and the merge call pins that SHA server-side, so any
   push between check and merge aborts the merge.
@@ -51,20 +49,7 @@ UPDATE_BRANCH_PREFIX = "update/"
 REQUIRED_LABEL = "automated"
 REQUIRED_MERGE_STATUS = ("mergeable", "ci_passing")
 
-PENDING_PIPELINE_STATES = (
-    "created",
-    "waiting_for_resource",
-    "preparing",
-    "pending",
-    "running",
-    "manual",
-)
 FAILED_PIPELINE_STATES = ("failed", "canceled", "skipped")
-
-PENDING_STATUS_STATES = ("pending", "running")
-FAILED_STATUS_STATES = ("failed", "error", "canceled")
-
-WOODPECKER_CONTEXT_PREFIX = "ci/woodpecker/"
 
 NOT_MERGEABLE_HTTP = (400, 405, 406, 409)
 
@@ -108,15 +93,6 @@ def eligible(
     return True, "bot update MR"
 
 
-def _woodpecker_states(statuses: list[dict[str, Any]]) -> list[str]:
-    """States of the Woodpecker-reported commit statuses for one SHA."""
-    return [
-        str(status.get("status", ""))
-        for status in statuses
-        if str(status.get("name", "")).startswith(WOODPECKER_CONTEXT_PREFIX)
-    ]
-
-
 def _is_mr_pipeline(pipeline: dict[str, Any], *, api: GitLabApi, project: str) -> bool:
     """External-status-only pipelines do not prove our MR checks ran."""
     details = pipeline
@@ -133,40 +109,35 @@ def validation_state(
 ) -> tuple[Validation, str]:
     """Check the MR's validation evidence for its head SHA."""
     sha = mr.get("sha") or ""
-    pipeline = mr.get("head_pipeline") or None
-    gitlab_ok = False
-
-    if pipeline:
-        status = str(pipeline.get("status", ""))
-        if status in PENDING_PIPELINE_STATES:
-            return Validation.PENDING, f"GitLab pipeline {status}"
-        if status in FAILED_PIPELINE_STATES:
-            return Validation.FAILED, f"GitLab pipeline {status}"
-        if status == "success" and pipeline.get("sha") == sha:
-            gitlab_ok = _is_mr_pipeline(pipeline, api=api, project=project)
-
-    statuses = list(
-        api.paginate(f"/projects/{project}/repository/commits/{sha}/statuses")
-    )
-    woodpecker = _woodpecker_states(statuses if isinstance(statuses, list) else [])
-    woodpecker_ok = False
-    # A maintenance/unrelated workflow is not MR validation evidence.
-    validation_context = os.environ.get(
-        "WOODPECKER_VALIDATION_CONTEXT", "ci/woodpecker/pr/validate-mr"
-    )
-    has_validation = any(
-        status.get("name") == validation_context for status in statuses
-    )
-    if woodpecker:
-        if any(state in PENDING_STATUS_STATES for state in woodpecker):
-            return Validation.PENDING, "Woodpecker status still running"
-        if any(state in FAILED_STATUS_STATES for state in woodpecker):
-            return Validation.FAILED, "Woodpecker status failed"
-        if has_validation and all(state == "success" for state in woodpecker):
-            woodpecker_ok = True
-
-    if gitlab_ok or woodpecker_ok:
-        return Validation.READY, "validation green"
+    if not sha or not mr.get("iid"):
+        return Validation.PENDING, "no validation evidence for head SHA yet"
+    pipelines = [
+        pipeline
+        for pipeline in api.paginate(
+            f"/projects/{project}/merge_requests/{mr['iid']}/pipelines"
+        )
+        if pipeline.get("sha") == sha
+        and _is_mr_pipeline(pipeline, api=api, project=project)
+    ]
+    if pipelines:
+        pipeline = max(pipelines, key=lambda item: item["id"])
+        # External commit statuses can change the aggregate pipeline status.
+        jobs = [
+            job
+            for job in api.paginate(
+                f"/projects/{project}/pipelines/{pipeline['id']}/jobs"
+            )
+            if job.get("name") == "validate-update-mr"
+            and job.get("stage") == "validate"
+        ]
+        if jobs:
+            job = max(jobs, key=lambda item: item["id"])
+            status = str(job.get("status", ""))
+            if status in FAILED_PIPELINE_STATES:
+                return Validation.FAILED, f"GitLab validation job {status}"
+            if status == "success" and (job.get("runner") or {}).get("id"):
+                return Validation.READY, "validation green"
+            return Validation.PENDING, f"GitLab validation job {status or 'unknown'}"
     return Validation.PENDING, "no validation evidence for head SHA yet"
 
 
@@ -176,6 +147,32 @@ def merge_status_ok(mr: dict[str, Any]) -> bool:
     if detailed:
         return detailed in REQUIRED_MERGE_STATUS
     return mr.get("merge_status") == "can_be_merged"
+
+
+def changes_allowed(
+    mr_iid: int, *, api: GitLabApi, project: str, sha: str
+) -> tuple[bool, str]:
+    """Require a complete, head-pinned diff confined to package content."""
+    changes = api.request("GET", f"/projects/{project}/merge_requests/{mr_iid}/changes")
+    refs = changes.get("diff_refs") or {}
+    if (
+        changes.get("overflow") is not False
+        or refs.get("head_sha") != sha
+        or not isinstance(changes.get("changes"), list)
+        or not changes["changes"]
+    ):
+        return False, "MR changes unavailable, incomplete, or stale"
+    for change in changes["changes"]:
+        for key in ("old_path", "new_path"):
+            path = change.get(key)
+            if (
+                not isinstance(path, str)
+                or not path.startswith("packages/")
+                or path == "packages/formatter"
+                or path.startswith("packages/formatter/")
+            ):
+                return False, f"MR changes protected path {path!r}"
+    return True, "package-only changes"
 
 
 def merge_candidate(
@@ -195,6 +192,9 @@ def merge_candidate(
     if fresh.get("state") != "opened":
         return False, f"MR state is {fresh.get('state')}"
     ok, reason = eligible(fresh, bot_username=bot, default_branch=default_branch)
+    if not ok:
+        return False, reason
+    ok, reason = changes_allowed(mr_iid, api=api, project=project, sha=fresh_sha)
     if not ok:
         return False, reason
     state, reason = validation_state(fresh, api=api, project=project)
@@ -304,7 +304,9 @@ def main() -> None:
     project = gitlab.project_url_encoded
     default_branch = resolve_default_branch(api=api, project_path_encoded=project)
     bot = bot_username(api, dict(os.environ))
-    timeout = int(os.environ.get("MERGE_WAIT_TIMEOUT", "1800"))
+    # A GitLab maintenance job can occupy the sole runner needed by validation.
+    default_timeout = "0" if os.environ.get("GITLAB_CI") == "true" else "1800"
+    timeout = int(os.environ.get("MERGE_WAIT_TIMEOUT", default_timeout))
     interval = int(os.environ.get("MERGE_POLL_INTERVAL", "60"))
 
     log.info("Merging bot update MRs as @%s (target: %s)", bot, default_branch)

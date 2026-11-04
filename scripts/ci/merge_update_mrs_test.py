@@ -120,15 +120,56 @@ class FakeApi:
         *,
         fresh_mr: dict[str, Any] | None = None,
         statuses: list[dict[str, Any]] | None = None,
+        pipelines: list[dict[str, Any]] | None = None,
         merge_error: GitLabApiError | None = None,
+        changes: dict[str, Any] | None = None,
     ) -> None:
+        self.changes = (
+            changes
+            if changes is not None
+            else {
+                "overflow": False,
+                "diff_refs": {"head_sha": "a" * 40},
+                "changes": [
+                    {
+                        "old_path": "packages/paseo/package.nix",
+                        "new_path": "packages/paseo/package.nix",
+                    }
+                ],
+            }
+        )
         self.fresh_mr = fresh_mr
-        self.statuses = statuses or []
+        self.statuses = statuses
+        head = (fresh_mr or {}).get("head_pipeline") or {}
+        self.pipelines = (
+            pipelines
+            if pipelines is not None
+            else ([head | {"id": 1}] if head.get("source") else [])
+        )
         self.merge_error = merge_error
         self.calls: list[dict[str, Any]] = []
 
-    def paginate(self, _path: str) -> Iterator[dict[str, Any]]:
-        return iter(self.statuses)
+    def paginate(self, path: str) -> Iterator[dict[str, Any]]:
+        self.calls.append({"kind": "paginate", "path": path})
+        if path.endswith("/pipelines"):
+            return iter(self.pipelines)
+        if path.endswith("/jobs"):
+            if self.statuses is not None:
+                return iter(self.statuses)
+            pipeline_id = int(path.split("/")[-2])
+            pipeline = next(p for p in self.pipelines if p["id"] == pipeline_id)
+            return iter(
+                [
+                    {
+                        "id": 1,
+                        "name": "validate-update-mr",
+                        "stage": "validate",
+                        "status": pipeline.get("status"),
+                        "runner": {"id": 1},
+                    }
+                ]
+            )
+        return iter(self.statuses or [])
 
     def request(self, method: str, path: str, *, json_body: Any = None) -> Any:
         self.calls.append({"kind": method, "path": path, "json_body": json_body})
@@ -136,6 +177,8 @@ class FakeApi:
             if self.merge_error:
                 raise self.merge_error
             return {"state": "merged"}
+        if method == "GET" and path.endswith("/changes"):
+            return self.changes
         if method == "GET" and "/statuses" in path:
             return self.statuses
         if method == "GET":
@@ -145,105 +188,136 @@ class FakeApi:
 
 
 class ValidationStateTest(unittest.TestCase):
-    def setUp(self) -> None:
-        self.api = FakeApi(statuses=[])
-
-    def test_gitlab_pipeline_success_is_ready(self) -> None:
-        state, _detail = validation_state(
-            mr(
-                head_pipeline={
-                    "status": "success",
-                    "sha": "a" * 40,
-                    "source": "merge_request_event",
-                }
-            ),
-            api=self.api,
-            project="1",
-        )
+    def test_validation_job_not_aggregate_pipeline_status(self) -> None:
+        pipeline = {
+            "id": 3,
+            "sha": "a" * 40,
+            "source": "merge_request_event",
+            "status": "failed",
+        }
+        job = {
+            "id": 10,
+            "name": "validate-update-mr",
+            "stage": "validate",
+            "status": "success",
+            "runner": {"id": 1},
+        }
+        api = FakeApi(pipelines=[pipeline], statuses=[job])
+        state, _ = validation_state(mr(), api=api, project="1")
         self.assertIs(state, Validation.READY)
+        self.assertEqual(api.calls[1]["path"], "/projects/1/pipelines/3/jobs")
 
-    def test_external_pipeline_success_is_not_mr_validation(self) -> None:
-        state, _detail = validation_state(
-            mr(
-                head_pipeline={
-                    "status": "success",
-                    "sha": "a" * 40,
-                    "source": "external",
-                }
+    def test_latest_real_pipeline_for_exact_sha(self) -> None:
+        for status, expected in (
+            ("success", Validation.READY),
+            ("running", Validation.PENDING),
+            ("failed", Validation.FAILED),
+        ):
+            with self.subTest(status=status):
+                api = FakeApi(
+                    pipelines=[
+                        {
+                            "id": 5,
+                            "sha": "a" * 40,
+                            "source": "external",
+                            "status": "failed",
+                        },
+                        {
+                            "id": 3,
+                            "sha": "a" * 40,
+                            "source": "merge_request_event",
+                            "status": status,
+                        },
+                        {
+                            "id": 2,
+                            "sha": "a" * 40,
+                            "source": "merge_request_event",
+                            "status": "success",
+                        },
+                        {
+                            "id": 4,
+                            "sha": "b" * 40,
+                            "source": "merge_request_event",
+                            "status": "success",
+                        },
+                    ]
+                )
+                state, _ = validation_state(
+                    mr(
+                        head_pipeline={
+                            "status": "failed",
+                            "source": "external",
+                            "sha": "a" * 40,
+                        }
+                    ),
+                    api=api,
+                    project="1",
+                )
+                self.assertIs(state, expected)
+                self.assertEqual(
+                    api.calls[0]["path"], "/projects/1/merge_requests/7/pipelines"
+                )
+
+    def test_validation_job_evidence(self) -> None:
+        pipeline = {
+            "id": 3,
+            "sha": "a" * 40,
+            "source": "merge_request_event",
+            "status": "success",
+        }
+        job = {
+            "id": 10,
+            "name": "validate-update-mr",
+            "stage": "validate",
+            "runner": {"id": 1},
+        }
+        for jobs, expected in (
+            ([], Validation.PENDING),
+            ([job | {"status": "running"}], Validation.PENDING),
+            ([job | {"status": "failed"}], Validation.FAILED),
+            ([job | {"status": "skipped"}], Validation.FAILED),
+            ([job | {"status": "success", "runner": None}], Validation.PENDING),
+            ([job | {"status": "success", "stage": "external"}], Validation.PENDING),
+            (
+                [job | {"status": "success"}, job | {"id": 11, "status": "running"}],
+                Validation.PENDING,
             ),
-            api=self.api,
-            project="1",
-        )
+            (
+                [job | {"status": "success"}, job | {"id": 11, "status": "failed"}],
+                Validation.FAILED,
+            ),
+        ):
+            with self.subTest(jobs=jobs):
+                state, _ = validation_state(
+                    mr(), api=FakeApi(pipelines=[pipeline], statuses=jobs), project="1"
+                )
+                self.assertIs(state, expected)
+
+    def test_missing_or_external_evidence_is_pending(self) -> None:
+        for pipelines in (
+            [],
+            [{"id": 1, "sha": "a" * 40, "source": "external", "status": "failed"}],
+        ):
+            with self.subTest(pipelines=pipelines):
+                state, _ = validation_state(
+                    mr(), api=FakeApi(pipelines=pipelines), project="1"
+                )
+                self.assertIs(state, Validation.PENDING)
+
+    def test_missing_sha_is_pending(self) -> None:
+        state, _ = validation_state(mr(sha=""), api=FakeApi(), project="1")
         self.assertIs(state, Validation.PENDING)
 
-    def test_gitlab_pipeline_running_is_pending(self) -> None:
-        state, detail = validation_state(
-            mr(head_pipeline={"status": "running", "sha": "a" * 40}),
-            api=self.api,
-            project="1",
-        )
-        self.assertIs(state, Validation.PENDING)
-        self.assertIn("running", detail)
+    def test_source_is_fetched_when_missing(self) -> None:
+        class Api(FakeApi):
+            def request(self, method: str, path: str, *, json_body: Any = None) -> Any:
+                self.calls.append({"kind": method, "path": path, "body": json_body})
+                return {"source": "merge_request_event"}
 
-    def test_gitlab_pipeline_failed_is_failed(self) -> None:
-        state, _detail = validation_state(
-            mr(head_pipeline={"status": "failed", "sha": "a" * 40}),
-            api=self.api,
-            project="1",
-        )
-        self.assertIs(state, Validation.FAILED)
-
-    def test_stale_pipeline_sha_is_not_evidence(self) -> None:
-        state, _detail = validation_state(
-            mr(head_pipeline={"status": "success", "sha": "b" * 40}),
-            api=self.api,
-            project="1",
-        )
-        self.assertIs(state, Validation.PENDING)
-
-    def test_woodpecker_success_is_ready(self) -> None:
-        api = FakeApi(
-            statuses=[{"name": "ci/woodpecker/pr/validate-mr", "status": "success"}]
-        )
-        state, _detail = validation_state(mr(), api=api, project="1")
+        api = Api(pipelines=[{"id": 3, "sha": "a" * 40, "status": "success"}])
+        state, _ = validation_state(mr(), api=api, project="1")
         self.assertIs(state, Validation.READY)
-
-    def test_woodpecker_running_is_pending(self) -> None:
-        api = FakeApi(
-            statuses=[{"name": "ci/woodpecker/pr/validate-mr", "status": "running"}]
-        )
-        state, _detail = validation_state(mr(), api=api, project="1")
-        self.assertIs(state, Validation.PENDING)
-
-    def test_woodpecker_failed_is_failed(self) -> None:
-        api = FakeApi(
-            statuses=[{"name": "ci/woodpecker/pr/validate-mr", "status": "failed"}]
-        )
-        state, detail = validation_state(mr(), api=api, project="1")
-        self.assertIs(state, Validation.FAILED)
-        self.assertIn("failed", detail)
-
-    def test_mixed_woodpecker_statuses_fail_closed(self) -> None:
-        api = FakeApi(
-            statuses=[
-                {"name": "ci/woodpecker/pr/validate-mr", "status": "success"},
-                {"name": "ci/woodpecker/pipeline/other", "status": "failed"},
-            ]
-        )
-        state, _detail = validation_state(mr(), api=api, project="1")
-        self.assertIs(state, Validation.FAILED)
-
-    def test_unrelated_success_is_not_validation_evidence(self) -> None:
-        api = FakeApi(
-            statuses=[{"name": "ci/woodpecker/cron/maintenance", "status": "success"}]
-        )
-        state, _detail = validation_state(mr(), api=api, project="1")
-        self.assertIs(state, Validation.PENDING)
-
-    def test_no_evidence_is_pending_never_ready(self) -> None:
-        state, detail = validation_state(mr(), api=self.api, project="1")
-        self.assertIs(state, Validation.PENDING)
-        self.assertIn("no validation", detail)
+        self.assertEqual(api.calls[1]["path"], "/projects/1/pipelines/3")
 
 
 class MergeCandidateTest(unittest.TestCase):
@@ -274,6 +348,54 @@ class MergeCandidateTest(unittest.TestCase):
         self.assertEqual(merge_call["json_body"]["sha"], "a" * 40)
         self.assertTrue(merge_call["json_body"]["squash"])
         self.assertTrue(merge_call["json_body"]["remove_source_branch"])
+
+    def test_changes_guard(self) -> None:
+        for old, new, allowed in (
+            ("packages/paseo/package.nix", "packages/paseo/package.nix", True),
+            ("packages/companion/update.py", "packages/companion/update.py", True),
+            (".gitlab-ci.yml", ".gitlab-ci.yml", False),
+            ("scripts/ci/validate-mr.sh", "scripts/ci/validate-mr.sh", False),
+            (".github/ci/check_maintainers.py", "packages/paseo/file", False),
+            ("packages/paseo/file", "packages/formatter/treefmt.nix", False),
+        ):
+            with self.subTest(old=old, new=new):
+                api = FakeApi(
+                    fresh_mr=self.mergeable_mr(),
+                    changes={
+                        "overflow": False,
+                        "diff_refs": {"head_sha": "a" * 40},
+                        "changes": [{"old_path": old, "new_path": new}],
+                    },
+                )
+                done, _ = merge_candidate(
+                    7,
+                    api=api,
+                    project="1",
+                    observed_sha="a" * 40,
+                    bot=BOT,
+                    default_branch="main",
+                )
+                self.assertEqual(done, allowed)
+                self.assertEqual(any(c["kind"] == "PUT" for c in api.calls), allowed)
+
+    def test_incomplete_or_stale_changes_refused(self) -> None:
+        for changes in (
+            {},
+            {"overflow": True},
+            {"overflow": False, "diff_refs": {"head_sha": "b" * 40}, "changes": [{}]},
+        ):
+            with self.subTest(changes=changes):
+                api = FakeApi(fresh_mr=self.mergeable_mr(), changes=changes)
+                done, _ = merge_candidate(
+                    7,
+                    api=api,
+                    project="1",
+                    observed_sha="a" * 40,
+                    bot=BOT,
+                    default_branch="main",
+                )
+                self.assertFalse(done)
+                self.assertFalse(any(c["kind"] == "PUT" for c in api.calls))
 
     def test_head_sha_guard_blocks_moved_mr(self) -> None:
         api = FakeApi(fresh_mr=self.mergeable_mr() | {"sha": "b" * 40})
@@ -391,14 +513,37 @@ class MergeCandidateTest(unittest.TestCase):
 
 
 class MainExitTest(unittest.TestCase):
-    def run_main(self, mrs: list[dict[str, Any]]) -> None:
+    def run_main(
+        self, mrs: list[dict[str, Any]], *, env: dict[str, str] | None = None
+    ) -> None:
         class Api(FakeApi):
             def paginate(self, path: str, **_kwargs: Any) -> Iterator[dict[str, Any]]:
                 if path.endswith("/merge_requests"):
                     return iter(mrs)
-                return iter(self.statuses)
+                if path.endswith("/pipelines"):
+                    item = next(
+                        item for item in mrs if f"/{item['iid']}/pipelines" in path
+                    )
+                    head = item.get("head_pipeline") or {}
+                    return iter([head | {"id": 1}] if head.get("source") else [])
+                if path.endswith("/jobs"):
+                    head = mrs[0].get("head_pipeline") or {}
+                    return iter(
+                        [
+                            {
+                                "id": 1,
+                                "name": "validate-update-mr",
+                                "stage": "validate",
+                                "status": head.get("status"),
+                                "runner": {"id": 1},
+                            }
+                        ]
+                    )
+                return iter(self.statuses or [])
 
             def request(self, method: str, path: str, *, json_body: Any = None) -> Any:
+                if method == "GET" and path.endswith("/changes"):
+                    return self.changes
                 if method == "GET" and "/merge_requests/" in path:
                     return next(
                         item for item in mrs if path.endswith(f"/{item['iid']}")
@@ -412,7 +557,11 @@ class MainExitTest(unittest.TestCase):
                 merge_update_mrs, "resolve_default_branch", return_value="main"
             ),
             patch.object(merge_update_mrs, "bot_username", return_value=BOT),
-            patch.dict("os.environ", {"MERGE_WAIT_TIMEOUT": "0"}),
+            patch.dict(
+                "os.environ",
+                env if env is not None else {"MERGE_WAIT_TIMEOUT": "0"},
+                clear=True,
+            ),
             patch("sys.argv", ["merge_update_mrs.py"]),
         ):
             config.return_value.api.return_value = api
@@ -428,6 +577,14 @@ class MainExitTest(unittest.TestCase):
         with self.assertRaises(SystemExit) as exit_code:
             self.run_main([mr()])
         self.assertEqual(exit_code.exception.code, 1)
+
+    def test_gitlab_pending_does_not_wait_for_occupied_runner(self) -> None:
+        with (
+            patch.object(merge_update_mrs.time, "sleep") as sleep,
+            self.assertRaises(SystemExit),
+        ):
+            self.run_main([mr()], env={"GITLAB_CI": "true"})
+        sleep.assert_not_called()
 
     def test_failed_ineligible_mr_does_not_fail(self) -> None:
         self.run_main(

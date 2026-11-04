@@ -1,194 +1,142 @@
-# GitLab + Woodpecker fork maintenance CI
+# GitLab fork maintenance CI
 
-This fork runs its maintenance flow — **sync upstream → update fork-only
-packages → merge validated update MRs** — on a **GitLab-hosted** copy of
-the repository, with [Woodpecker CI] attached to that GitLab instance via
-the **GitLab forge**. This document is the contract between those two
-systems; the GitHub workflows in `.github/workflows/` (upstream-owned,
-never modified by the fork) remain the reference implementation.
-
-## Assumptions
-
-1. **The repository is hosted on GitLab** (self-managed or gitlab.com) as
-   a fork/mirror of `github:numtide/llm-agents.nix`, with the default
-   branch `main` (the upstream updater stack assumes `origin/main`).
-1. **Woodpecker CI uses the GitLab forge**: the repo is enabled in
-   Woodpecker, Woodpecker clones over the GitLab API, and reports commit
-   statuses named `ci/woodpecker/...` back to GitLab. Woodpecker does
-   *not* need push access of its own; pushes use the `GL_TOKEN` secret.
-1. Either system can drive the maintenance chain, but **enable the
-   schedule in exactly one of them** (GitLab pipeline schedule *or*
-   Woodpecker cron). The chain is idempotent (ancestor fast path,
-   guarded merges), but running both just duplicates work.
-
-## Files
-
-| File | Role |
-| --- | --- |
-| `.gitlab-ci.yml` | GitLab: scheduled maintenance chain + MR validation pipeline |
-| `.woodpecker/maintenance.yaml` | Woodpecker: same chain, on `cron`/`manual` events only |
-| `.woodpecker/validate-mr.yaml` | Woodpecker: validation pipeline for MRs (`pull_request` event) |
-| `scripts/ci/fork-packages.sh` | fork-added packages = directory set difference `packages/` vs upstream |
-| `scripts/ci/sync-upstream.sh` | rebase `main` onto upstream, regenerate README, force-with-lease push |
-| `scripts/ci/update_fork_packages.py` | per-package driver around the unmodified `.github/ci` updater |
-| `scripts/ci/gitlab_mr.py` | confinement check, pristine-clone publish, MR create/update, downgrade guard |
-| `scripts/ci/merge_update_mrs.py` | guarded merger for bot update MRs |
-| `scripts/ci/validate-mr.sh` | MR checks: treefmt gate, maintainers, README regen, targeted build |
-| `checks/ci-tests.nix` | runs `scripts/ci/*_test.py` under `nix flake check` |
-
-Every shell/python entry point carries a nix shebang
-(`nix shell --inputs-from .# …`), so any runner image that ships `nix`
-is sufficient — no other tooling is preinstalled by the jobs.
+GitLab is the only CI driver for this fork; the former Woodpecker pipelines
+are not used. Scheduled or manually started pipelines on the protected default
+branch run **main sync → main updates → main merge → chiki rebase → chiki
+updates → chiki merge → GitHub mirror**. GitLab merge request pipelines run
+validation separately. Plain pushes do not start a pipeline. The pipeline
+commit must already contain the chiki-capable scripts.
 
 ## Setup
 
-1. **Token**: create a GitLab *project access token* with the Maintainer
-   role and `api` scope (push + MR create/merge). The merger resolves
-   the bot identity from the token itself (`GET /user`), so MR author
-   checks always match.
-   - GitLab: add it as a **masked + protected** CI/CD variable `GL_TOKEN`.
-     *Protected* is what keeps it away from MR pipelines — combined with
-     the `workflow: rules` (schedule/web/merge_request only) the token is
-     only ever visible to maintenance jobs on the protected `main`.
-     Keep `update/*` unprotected and do not enable protected-variable access
-     for MR pipelines. In Woodpecker, restrict the secret to cron/manual
-     events, never pull requests.
-   - Woodpecker: add it as a repository **secret** named `GL_TOKEN`, and
-     only the `maintenance.yaml` steps declare it.
-1. **GitLab**: protect `main`, allow the project bot to push/merge, and
-   enable **Allow force push** for `main` (required for the leased rebase
-   push). Limit direct pushes to trusted maintainers/the bot. Enable runners with a nix-capable image
-   (`nixos/nix` is the default in `.gitlab-ci.yml`), and add a pipeline
-   schedule on `main` (e.g. every 30 minutes — no-op runs are cheap).
-1. **Woodpecker** (if it drives the chain): add a cron for
-   `maintenance.yaml` on `main`. `validate-mr.yaml` needs no secrets.
-   Allow at least two concurrent pipelines so waiting maintenance does not
-   block MR validation. Serialize scheduled maintenance runs (do not start
-   a second manual maintenance run while one is active).
+1. Host the fork on GitLab with default branch `main` and an existing `chiki`
+   branch. Protect both branches, restrict direct and force pushes to trusted
+   maintainers and the appropriate bot, and allow the bot to merge its MRs.
+   Protect `maintenance/chiki-base`, `maintenance/github-main`, and
+   `maintenance/github-chiki` from other writers; the bots need permission to
+   update them, including force pushes where required. Keep update branches
+   unprotected and do not enable protected-variable access for MR pipelines.
+1. Configure masked, protected GitLab CI/CD variables `GL_TOKEN` and
+   `GL_CHIKI_TOKEN`, scoped to the `main-maintenance` and `chiki-maintenance`
+   environments respectively. Each project access token needs the necessary
+   API, push and merge permissions for its branch and update MRs. The main
+   token also updates the GitHub mirror checkpoints; the chiki token updates
+   `maintenance/chiki-base`. The merger resolves the bot user from the token
+   unless `CI_BOT_USERNAME` overrides it.
+1. Configure a masked, protected `GITHUB_MIRROR_TOKEN` scoped to
+   `main-maintenance`, with GitHub repository contents read/write permission
+   and permission to update the protected `main` and `chiki` refs. The mirror
+   destination is fixed to the GitHub repository in `.gitlab-ci.yml` and
+   checked by `scripts/ci/mirror_github.py`. Treat GitHub as a follower, not an
+   independently writable source. Store credentials only in CI variables;
+   never put token values in this document, URLs, commands, or logs. MR
+   validation needs none of these maintenance credentials.
+1. Set `CI_NIX_IMAGE` to a Nix-capable image. Provision runners tagged
+   `usa-docker-nix` for ordinary jobs, including MR validation, and runners
+   tagged `usa-docker-ci-control` for the two merge jobs. Control runners must
+   also support the configured image and Nix. Give validation independent
+   capacity while mergers wait, or the pipeline can deadlock waiting for its
+   own MR checks. The shared `fork-maintenance` resource group serializes jobs,
+   not whole pipelines: avoid overlapping scheduled and manual maintenance
+   pipelines.
+1. Bootstrap the protected checkpoints before enabling a schedule. Set
+   `maintenance/chiki-base` to the **verified main commit last incorporated in
+   chiki**, which must be an ancestor of chiki; do not guess it from a current
+   merge base after a rebase. Set `maintenance/github-main` and
+   `maintenance/github-chiki` to the respective **verified current GitHub
+   branch tips**. Both GitHub branches and all three GitLab checkpoints must
+   already exist. If history or ownership is uncertain, stop and investigate
+   before creating or changing a checkpoint. Use trusted, authenticated Git
+   tooling without embedding credentials in remote URLs.
+1. Create a GitLab schedule for `main`. A manual web pipeline on `main` also
+   runs maintenance; a web or scheduled pipeline on another branch does not.
 
-## The chain
+## Maintenance chain
 
-### 1. Sync upstream (`sync-upstream.sh`)
+### Main sync and updates
 
-Port of `.github/workflows/sync-upstream.yml`:
+`scripts/ci/sync-upstream.sh` fetches upstream `main`, rebases the fork's main
+stack when needed, regenerates README package documentation, and pushes with a
+lease anchored to the observed remote tip. Only README and package conflicts
+are automatically resolved, using upstream's side for main; unexpected
+conflicts, a non-linear result, or a stale lease stop the push. Its upstream
+GitHub workflow gate is **best effort**: an unreachable API does not block the
+sync.
 
-- best-effort gate: skip while upstream's own `update.yml` workflow is
-  mid-run (unreachable API = not blocked);
-- fast path when `upstream/main` is already an ancestor;
-- `git rebase -i --onto upstream/main --empty=drop` with the
-  `sync: regenerate README` commits dropped from the todo;
-- conflicts are auto-resolved only for `README.md` and `packages/*`
-  (upstream side wins during the rebase); anything else aborts;
-- the result must be linear (`--ff`-able stack of fork commits, no merge
-  commits) before anything is pushed;
-- README package docs are regenerated (`scripts/generate-package-docs.nu`);
-- push with `--force-with-lease=main:<observed remote sha>`, so any
-  concurrent change (e.g. a just-merged MR) refuses the push instead of
-  being clobbered.
+`scripts/ci/fork-packages.sh` discovers fork-only packages by directory set
+difference against upstream, not by history. `FORK_UPDATE_PACKAGES` optionally
+selects existing package directories explicitly, including shared overrides.
+`update_fork_packages.py` reuses upstream discovery and update
+scripts, checks companion eligibility, strips credential variables from updater
+processes, guards against version downgrades unless `ALLOW_DOWNGRADE=1`, and
+publishes confined changes from a pristine clone to `update/<package>` MRs.
+Packages are processed sequentially. Exit code 1 means partial package failures
+and is allowed by the job so published updates can still be merged; systemic
+failures stop the chain.
 
-### 2. Update fork-only packages (`update_fork_packages.py`)
+### Chiki rebase and updates
 
-**Fork-only packages are the directory set difference** of `packages/` on
-`main` minus `packages/` on `upstream/main` (`fork-packages.sh`) — *not*
-a git-history diff, so upstream packages modified by the fork are not
-touched. `FORK_UPDATE_PACKAGES` can select a subset of that list; shared
-upstream or nonexistent package names are rejected.
+The chiki sync rebases the stack since `maintenance/chiki-base` onto current
+main. The checkpoint must be an ancestor of chiki, and main must not be older
+than the checkpoint. Chiki package conflicts prefer chiki's side; README
+conflicts use main's side and the README is regenerated. The chiki branch and
+checkpoint advance together in an atomic, leased push. A missing or invalid
+checkpoint, unexpected conflict, failed ancestry check, or lease failure stops
+the operation.
 
-For each package, reusing the upstream CI scripts unmodified:
+By default `detect-chiki-packages.sh` selects existing package directories
+changed between main and chiki; `CHIKI_UPDATE_PACKAGES` overrides that selection.
+An empty selection skips updates. Chiki update branches are named
+`update-branch/chiki/<package>` and target chiki.
 
-1. `.github/ci/discovery.py` builds the matrix (versions, hidden
-   packages, companions).
-1. The `update/<package>` branch is reused/rebased onto `main` (manual
-   fixups on open MRs carry over), with a hard reset + clean before each
-   package so no state leaks between iterations.
-1. `.github/ci/update.py package <name>` runs from a **stashed copy** of
-   the CI scripts, inside the devshell (for `nix-update` et al.) wrapped
-   with `nix shell nixpkgs#python3`, and with **credential variables removed
-   from its environment** (`GL_TOKEN`, `CI_JOB_TOKEN`, `GITHUB_TOKEN`,
-   `GH_TOKEN`, clone URLs, and variables named with TOKEN/PASSWORD/SECRET/
-   PRIVATE_KEY) plus git hooks/fsmonitor disabled. Trusted git operations
-   authenticate with environment-only headers, not token-bearing URLs or argv.
-   Companions that belong to upstream are rejected before any updater runs.
-1. A **downgrade guard** (`is_downgrade`) refuses to publish version
-   regressions (set `ALLOW_DOWNGRADE=1` to override) — the fork updater
-   stack has no built-in protection against them.
-1. `gitlab_mr.py` publishes: confinement check (only
-   `packages/<name>/` and its `update-companions` may differ from
-   `main`), then a pristine shallow clone (never the updater's checkout)
-   is force-pushed, and the MR is created/updated with the labels
-   `dependencies,automated`.
+### Guarded merges
 
-Exit codes: `0` clean, `1` some packages failed (others still publish;
-the merge stage still runs — job uses `allow_failure: [1]`), `2`
-systemic failure.
+`merge_update_mrs.py` considers only same-project, non-draft MRs authored by
+the relevant bot, targeting the configured branch, with both `dependencies`
+and `automated` labels and the appropriate update branch prefix. It requires
+success from the latest GitLab `merge_request_event` pipeline for the MR head
+SHA; external status alone is insufficient. It also requires a mergeable
+status, re-fetches and rechecks the MR, and pins the head SHA in the merge
+request. A moved head or rejected merge is not merged. Pending validation and
+transient merge refusals are polled; failed validation is refused. In these
+GitLab jobs `MERGE_WAIT_TIMEOUT` is explicitly 1800 seconds; unresolved or
+refused eligible MRs make the merge job fail and block later stages.
 
-### 3. Merge validated update MRs (`merge_update_mrs.py`)
+### GitHub mirror
 
-Replaces `auto-merge.yml`. Polls open MRs and merges one only when **all**
-of the following hold:
+After both merge jobs succeed, `mirror_github.py` fetches GitLab `main`,
+`chiki`, and both mirror checkpoints, and requires main to be an ancestor of
+chiki. It fetches the two GitHub tips and proceeds only if the **pair** equals
+either the checkpoint pair or the current GitLab source pair. It re-fetches
+GitLab sources and checkpoints before pushing, then updates both GitHub refs
+atomically with per-ref force-with-lease; it advances both GitLab checkpoints
+atomically with leases afterwards. This also permits recovery when the GitHub
+push succeeded but checkpoint advancement failed: rerun after verifying the
+state. Missing refs, divergence, changed source/checkpoints, or failed atomic
+pushes fail the job rather than overwrite unverified history. Investigate and
+reconcile deliberately; never reset checkpoints merely to silence a failure.
 
-- author is the token's bot user, source branch is `update/<package>`,
-  target is the default branch in the same project, labels `dependencies`
-  and `automated` present, not draft/WIP;
-- validation is green for the MR's **head SHA**: the GitLab
-  `head_pipeline` succeeded (with `pipeline.sha == mr.sha` and source
-  `merge_request_event`, not an external-status-only pipeline) **and/or**
-  every `ci/woodpecker/...` commit status for that SHA succeeded, including
-  `ci/woodpecker/pr/validate-mr`. If your server customizes status names,
-  set `WOODPECKER_VALIDATION_CONTEXT` to its exact MR-validation context; at
-  least one source of evidence must exist — otherwise the MR waits;
-- GitLab reports the MR mergeable;
-- the MR is re-fetched immediately before merging and the merge call
-  pins that SHA server-side (`sha` parameter), so any push between check
-  and merge aborts the merge (HTTP 400/405/406/409 are retried until
-  `MERGE_WAIT_TIMEOUT`, default 1800 s, not treated as job failures).
+## MR validation
 
-**Human or arbitrary pending MRs are never merged** — they fail
-eligibility on author/branch/label before any validation is inspected.
+`validate-mr.sh` runs on GitLab `merge_request_event` pipelines without
+maintenance credentials. It runs treefmt with `--fail-on-change`, conditionally
+checks maintainers and README regeneration based on changed paths, and builds
+the target package for a valid update branch for the MR target. A full
+`nix flake check` is not run by this script. Ensure GitLab's protected-variable
+and runner configuration actually preserves this credential boundary.
 
-### MR validation (`validate-mr.sh`)
-
-Runs on `merge_request_event` (GitLab) and `pull_request` (Woodpecker):
-
-- treefmt gate (`--fail-on-change`; a full `nix flake check` is
-  deliberately not run — currently blocked by an unrelated insecure
-  electron dependency),
-- maintainers check for new packages (`.github/ci/check_maintainers.py`,
-  path-filtered),
-- README regeneration check (path-filtered),
-- targeted `nix build .#<package>` for `update/<package>` branches.
-
-## Local testing
+## Local testing and limitations
 
 ```console
-$ cd scripts && python3 -m unittest discover -s ci -p '*_test.py' -t . -v   # unit tests
-$ nix build .#checks.x86_64-linux.ci-tests                                  # same, hermetic
-$ nix fmt                                                                  # formatters + shellcheck + ruff
+$ cd scripts && python3 -m unittest discover -s ci -p '*_test.py' -t . -v
+$ nix build .#checks.x86_64-linux.ci-tests
+$ nix fmt
 ```
 
-## Limitations
-
-- Credential environment filtering and pristine publishing are not an OS
-  isolation boundary against hostile package code. Run only trusted fork
-  updaters on dedicated ephemeral runners; bubblewrap can be unavailable
-  in containers and the reused updater falls back to unsandboxed execution.
-  Do not run adversarial updater code alongside push credentials.
-- Not exercised against a live GitLab/Woodpecker instance here; API
-  interactions are covered by unit tests with fake transports only.
-- The maintenance jobs are sequential per package (no matrix fan-out as
-  on GitHub); a package with a slow updater delays the rest.
-- `update_fork_packages.py` hardcodes `main` as the base branch because
-  the reused upstream `update.py` diffs against `origin/main`.
-
-## Validation evidence
-
-The workflow YAML passes `woodpecker-cli 3.18.0 lint`. Default status
-context naming is grounded in Woodpecker v3.18.0
-[`cmd/server/flags.go`](https://github.com/woodpecker-ci/woodpecker/blob/v3.18.0/cmd/server/flags.go)
-(`ci/woodpecker/<event>/<workflow>`, pull requests use `pr`). Confirm the
-exact context on your instance before enabling merging. GitLab commit
-status parsing follows the REST
-[`name` / `status` response fields](https://docs.gitlab.com/api/commits/#list-commit-statuses),
-not the `context` / `state` names used when posting a status.
-
-[woodpecker ci]: https://woodpecker-ci.org
+Credential filtering and pristine publishing are not an OS isolation boundary
+against hostile package code. Use trusted updaters on dedicated ephemeral
+runners; the reused updater can fall back to unsandboxed execution when
+bubblewrap is unavailable. Do not run adversarial updater code alongside push
+credentials. Unit tests use fake transports; verify runner permissions, branch
+protection and pipeline behavior on the actual GitLab instance before relying
+on automation.

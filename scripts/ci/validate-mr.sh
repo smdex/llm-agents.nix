@@ -15,7 +15,7 @@
 #   4. targeted package build: for update/<package> branches, build the
 #      updated package from the MR's source branch.
 #
-# Environment (set by .gitlab-ci.yml / .woodpecker/validate-mr.yaml):
+# Environment (set by .gitlab-ci.yml):
 #   MR_SOURCE_BRANCH  update/<package> branch (auto-detected from
 #                     CI_MERGE_REQUEST_SOURCE_BRANCH_NAME /
 #                     CI_COMMIT_SOURCE_BRANCH / CI_SOURCE_BRANCH)
