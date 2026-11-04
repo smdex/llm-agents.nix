@@ -28,6 +28,9 @@ rustPlatform.buildRustPackage rec {
     substituteInPlace build.rs \
       --replace-fail 'use std::time::{SystemTime, UNIX_EPOCH};' 'use std::time::UNIX_EPOCH;' \
       --replace-fail 'SystemTime::now()' 'UNIX_EPOCH'
+    # Toolchains and their dynamic libraries live in the store, not FHS roots.
+    substituteInPlace src/sandbox/policy.rs \
+      --replace-fail '"/dev", "/run", "/var",' '"/dev", "/run", "/var", "/nix/store",'
   '';
 
   nativeBuildInputs = [ makeWrapper ];
@@ -52,6 +55,11 @@ rustPlatform.buildRustPackage rec {
     versionCheckHook
     versionCheckHomeHook
   ];
+
+  postInstallCheck = ''
+    sandboxOutput=$("$out/bin/aizen" sandbox run 'git --version >/dev/null && printf nix-shell-ok')
+    grep -Fx nix-shell-ok <<< "$sandboxOutput"
+  '';
 
   passthru.category = "AI Coding Agents";
 
