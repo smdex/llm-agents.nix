@@ -38,6 +38,22 @@ default:
   # Any image shipping nix works: every script brings its own tools via
   # nix shebangs (see scripts/generate-package-docs.nu for the pattern).
   image: $CI_NIX_IMAGE
+  tags: [usa-docker-nix]
+  before_script:
+    - |
+      export PATH="/nix/var/nix/profiles/default/bin:$PATH"
+      if command -v determinate-nixd >/dev/null 2>&1; then
+        if ! NIX_REMOTE=daemon nix store ping >/dev/null 2>&1; then
+          rm -f /nix/var/nix/daemon-socket/socket
+          nohup env -u NIX_REMOTE nix-daemon --daemon >/tmp/nix-daemon.log 2>&1 &
+          for i in $(seq 1 60); do
+            NIX_REMOTE=daemon nix store ping >/dev/null 2>&1 && break
+            sleep 0.5
+          done
+        fi
+        export NIX_REMOTE=daemon
+        nix store ping
+      fi
 variables:
   NIX_CONFIG: "experimental-features = nix-command flakes"
   GIT_DEPTH: "0"
@@ -58,6 +74,7 @@ variables:
   environment:
     name: chiki-maintenance
   before_script:
+    - !reference [default, before_script]
     - export GL_TOKEN="${GL_CHIKI_TOKEN:?GL_CHIKI_TOKEN is required}"
 .update-packages:
   # Keep successfully published updates mergeable after partial failures.
@@ -120,6 +137,7 @@ update-chiki-packages:
   variables:
     UPDATE_BRANCH: chiki
   before_script:
+    - !reference [default, before_script]
     - export GL_TOKEN="${GL_CHIKI_TOKEN:?GL_CHIKI_TOKEN is required}"
     - nix shell nixpkgs#git --command git fetch origin "+refs/heads/main:refs/remotes/origin/main" "+refs/heads/chiki:refs/remotes/origin/chiki"
 merge-chiki-update-mrs:
