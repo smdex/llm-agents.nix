@@ -5,6 +5,8 @@
   fetchFromGitHub,
   pkg-config,
   openssl,
+  git,
+  makeWrapper,
   versionCheckHook,
   versionCheckHomeHook,
 }:
@@ -35,9 +37,16 @@ rustPlatform.buildRustPackage rec {
     "xerj"
   ];
 
-  nativeBuildInputs = [ pkg-config ];
+  nativeBuildInputs = [
+    pkg-config
+    makeWrapper
+  ];
   buildInputs = [ openssl ];
   env.OPENSSL_NO_VENDOR = "1";
+
+  postInstall = ''
+    wrapProgram $out/bin/xerj --prefix PATH : ${lib.makeBinPath [ git ]}
+  '';
 
   doInstallCheck = true;
   nativeInstallCheckInputs = [
