@@ -865,6 +865,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>wintermolt</strong> - Native AI assistant with multiple backends, MCP, and chat bridges</summary>
+
+- **Source**: source
+- **License**: Apache-2.0
+- **Homepage**: https://github.com/lupin4/wintermolt
+- **Usage**: `nix run github:numtide/llm-agents.nix#wintermolt -- --help`
+- **Nix**: [packages/wintermolt/package.nix](packages/wintermolt/package.nix)
+
+</details>
+<details>
 <summary><strong>zeroclaw</strong> - Fast, small, and fully autonomous AI assistant infrastructure</summary>
 
 - **Source**: source
