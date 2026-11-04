@@ -17,8 +17,8 @@ rustPlatform.buildRustPackage (finalAttrs: {
   src = fetchFromGitHub {
     owner = "smdex";
     repo = "jcode";
-    rev = "8a9af26fd4a2e8def577b4ce6974b534a9d126d0";
-    hash = "sha256-C0AHAmKA9FT0ACQMJbWoGIlCUdMrEsr3JauysOeEfC4=";
+    rev = "46fefe8796bf13fbcf450534ceb8e6eafac62b6a";
+    hash = "sha256-pwJSnASRPDMM5tMDWmFk/miSlDCUMFaGTBRMAxbaMdA=";
   };
 
   cargoHash = "sha256-vXMBNnX23yt7CSmnRXmR8MAuMx3i3SGDJApJx611c/g=";
