@@ -13,8 +13,8 @@
 #
 # Environment:
 #   SYNC_BRANCH       main (default) or chiki
-#   CHIKI_BASE        old main SHA, required when main was rewritten and is
-#                     no longer an ancestor of chiki
+#   maintenance/chiki-base on origin records the main commit used by chiki;
+#                     bootstrap it manually to the verified old main commit
 #   UPSTREAM_URL      default https://github.com/numtide/llm-agents.nix.git
 #   UPSTREAM_REF      default main
 #   DEFAULT_BRANCH    default main (must match the repo's default branch;
@@ -49,13 +49,25 @@ git_identity() {
 
 push_result() {
   # Keep the push token out of argv, git config, and logs.
+  set +x
   local base="${GL_PROJECT_URL:?GL_PROJECT_URL is required for pushing}"
-  local auth
+  base="${base%/}"
+  local push_url="${base%.git}.git" auth
   auth="$(printf 'oauth2:%s' "${GL_TOKEN:?GL_TOKEN is required for pushing}" | base64 | tr -d '\n')"
-  GIT_CONFIG_COUNT=1 \
-    GIT_CONFIG_KEY_0="http.${base%/}.extraHeader" \
-    GIT_CONFIG_VALUE_0="Authorization: Basic ${auth}" \
-    git push --force-with-lease="refs/heads/${target_branch}:${base_sha}" "${base%.git}.git" "HEAD:refs/heads/${target_branch}"
+  local -a push_args=(--force-with-lease="refs/heads/${target_branch}:${base_sha}")
+  local -a refspecs=("HEAD:refs/heads/${target_branch}")
+  if [[ $sync_branch == chiki ]]; then
+    push_args+=(--atomic --force-with-lease="refs/heads/maintenance/chiki-base:${fork_base}")
+    refspecs+=("${upstream_sha}:refs/heads/maintenance/chiki-base")
+  fi
+  GIT_CONFIG_COUNT=5 \
+    GIT_CONFIG_KEY_0=http.extraHeader GIT_CONFIG_VALUE_0='' \
+    GIT_CONFIG_KEY_1="http.${push_url}.extraHeader" GIT_CONFIG_VALUE_1='' \
+    GIT_CONFIG_KEY_2="http.${push_url}.extraHeader" GIT_CONFIG_VALUE_2="Authorization: Basic ${auth}" \
+    GIT_CONFIG_KEY_3=credential.helper GIT_CONFIG_VALUE_3='' \
+    GIT_CONFIG_KEY_4="credential.${push_url}.helper" GIT_CONFIG_VALUE_4='' \
+    GIT_TRACE=0 GIT_TRACE_CURL=0 GIT_CURL_VERBOSE=0 GIT_TRACE_REDACT=1 \
+    git push "${push_args[@]}" "$push_url" "${refspecs[@]}"
 }
 
 upstream_update_in_progress() {
@@ -78,31 +90,26 @@ main() {
   local target_branch="$default_branch"
   if [[ $sync_branch == chiki ]]; then
     target_branch=chiki
-    git fetch origin "+refs/heads/${default_branch}:refs/remotes/origin/${default_branch}" "+refs/heads/chiki:refs/remotes/origin/chiki"
+    # Fetch the marker explicitly: a missing remote ref must never reuse a stale local ref.
+    git fetch origin "+refs/heads/${default_branch}:refs/remotes/origin/${default_branch}" "+refs/heads/chiki:refs/remotes/origin/chiki" "+refs/heads/maintenance/chiki-base:refs/remotes/origin/maintenance/chiki-base"
     git checkout -B chiki origin/chiki
-    local base_sha fork_base upstream
+    local base_sha fork_base upstream upstream_sha
     base_sha="$(git rev-parse origin/chiki)"
-    upstream="origin/${default_branch}"
-    if git merge-base --is-ancestor "$upstream" HEAD; then
-      echo "chiki already contains ${upstream}"
-      return 0
-    fi
-    if [[ -z ${CHIKI_BASE:-} ]]; then
-      echo "ERROR: CHIKI_BASE (the old main SHA) is required when main is not an ancestor of chiki" >&2
-      return 1
-    fi
-    fork_base="$(git rev-parse --verify "${CHIKI_BASE}^{commit}")"
+    fork_base="$(git rev-parse 'origin/maintenance/chiki-base^{commit}')"
+    upstream_sha="$(git rev-parse "origin/${default_branch}^{commit}")"
+    upstream="$upstream_sha"
     if ! git merge-base --is-ancestor "$fork_base" HEAD; then
-      echo "ERROR: CHIKI_BASE is not an ancestor of chiki" >&2
+      echo "ERROR: maintenance/chiki-base is not an ancestor of chiki" >&2
       return 1
     fi
-    # A stale base after a successful sync can replay main commits as chiki
-    # overrides. Require the newest shared ancestor when it descends from it.
-    local shared_base
-    shared_base="$(git merge-base "$upstream" HEAD)"
-    if [[ $shared_base != "$fork_base" ]] && git merge-base --is-ancestor "$fork_base" "$shared_base"; then
-      echo "ERROR: CHIKI_BASE predates the shared main/chiki base; use ${shared_base}" >&2
+    if [[ $upstream_sha != "$fork_base" ]] && git merge-base --is-ancestor "$upstream_sha" "$fork_base"; then
+      echo "ERROR: origin/${default_branch} is older than maintenance/chiki-base" >&2
       return 1
+    fi
+    if git merge-base --is-ancestor "$upstream" HEAD; then
+      push_result
+      echo "chiki already contains origin/${default_branch}"
+      return 0
     fi
     rebase_branch
     return

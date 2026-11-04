@@ -8,10 +8,12 @@ from __future__ import annotations
 
 import unittest
 from typing import TYPE_CHECKING, Any
+from unittest.mock import patch
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+from ci import merge_update_mrs
 from ci.gitlab_api import GitLabApiError
 from ci.merge_update_mrs import (
     Validation,
@@ -386,6 +388,54 @@ class MergeCandidateTest(unittest.TestCase):
                 bot=BOT,
                 default_branch="main",
             )
+
+
+class MainExitTest(unittest.TestCase):
+    def run_main(self, mrs: list[dict[str, Any]]) -> None:
+        class Api(FakeApi):
+            def paginate(self, path: str, **_kwargs: Any) -> Iterator[dict[str, Any]]:
+                if path.endswith("/merge_requests"):
+                    return iter(mrs)
+                return iter(self.statuses)
+
+            def request(self, method: str, path: str, *, json_body: Any = None) -> Any:
+                if method == "GET" and "/merge_requests/" in path:
+                    return next(
+                        item for item in mrs if path.endswith(f"/{item['iid']}")
+                    )
+                return super().request(method, path, json_body=json_body)
+
+        api = Api()
+        with (
+            patch.object(merge_update_mrs, "resolve_config") as config,
+            patch.object(
+                merge_update_mrs, "resolve_default_branch", return_value="main"
+            ),
+            patch.object(merge_update_mrs, "bot_username", return_value=BOT),
+            patch.dict("os.environ", {"MERGE_WAIT_TIMEOUT": "0"}),
+            patch("sys.argv", ["merge_update_mrs.py"]),
+        ):
+            config.return_value.api.return_value = api
+            config.return_value.project_url_encoded = "1"
+            merge_update_mrs.main()
+
+    def test_failed_eligible_validation_exits_nonzero(self) -> None:
+        with self.assertRaises(SystemExit) as exit_code:
+            self.run_main([mr(head_pipeline={"status": "failed"})])
+        self.assertEqual(exit_code.exception.code, 1)
+
+    def test_pending_eligible_validation_times_out_nonzero(self) -> None:
+        with self.assertRaises(SystemExit) as exit_code:
+            self.run_main([mr()])
+        self.assertEqual(exit_code.exception.code, 1)
+
+    def test_failed_ineligible_mr_does_not_fail(self) -> None:
+        self.run_main(
+            [mr(author={"username": "alice"}, head_pipeline={"status": "failed"})]
+        )
+
+    def test_successful_merge_does_not_fail(self) -> None:
+        self.run_main([MergeCandidateTest().mergeable_mr()])
 
 
 if __name__ == "__main__":

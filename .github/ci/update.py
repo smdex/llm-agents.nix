@@ -80,12 +80,12 @@ def sandbox_wrap(cmd: list[str], name: str) -> list[str]:
 
 
 def git_has_changes() -> bool:
-    """Check if the branch differs from origin/main.
-
-    Diffing against origin/main also catches commits already on a reused
-    update/* branch that never made it into a pull request.
-    """
-    return run(["git", "diff", "--quiet", "origin/main"], check=False).returncode != 0
+    """Check for worktree or reused-branch changes against the target branch."""
+    target = os.environ.get("UPDATE_BASE_REF", "origin/main")
+    result = run(["git", "diff", "--quiet", target], check=False)
+    if result.returncode not in (0, 1):
+        raise subprocess.CalledProcessError(result.returncode, result.args)
+    return result.returncode == 1
 
 
 def run_update_command(cmd: list[str], error_label: str) -> None:

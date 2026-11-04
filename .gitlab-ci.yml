@@ -18,8 +18,8 @@
 # FORK_UPDATE_PACKAGES and CHIKI_UPDATE_PACKAGES optionally select packages
 # for each branch; otherwise detect fork-only and chiki-modified packages.
 # MERGE_WAIT_TIMEOUT defaults to 1800 seconds.
-# A shared resource group serializes jobs, not entire pipelines: overlapping
-# chains or external writers can make CHIKI_BASE stale, causing a safe failure.
+# A shared resource group serializes jobs, not entire pipelines. A protected
+# maintenance/chiki-base branch records the last main incorporated by chiki.
 stages:
   - validate
   - main
@@ -69,6 +69,11 @@ variables:
   extends: .maintenance
   environment:
     name: main-maintenance
+  before_script:
+    - !reference [default, before_script]
+    - |
+      printf 'source=%s ref=%s protected=%s environment=%s\n' "$CI_PIPELINE_SOURCE" "$CI_COMMIT_REF_NAME" "$CI_COMMIT_REF_PROTECTED" "$CI_ENVIRONMENT_NAME"
+      : "${GL_TOKEN:?GL_TOKEN is unavailable}"
 .chiki-maintenance:
   extends: .maintenance
   environment:
@@ -96,14 +101,7 @@ sync-upstream:
   extends: .main-maintenance
   stage: main
   script:
-    - nix shell nixpkgs#git --command git fetch origin "+refs/heads/${CI_DEFAULT_BRANCH}:refs/remotes/origin/${CI_DEFAULT_BRANCH}"
-    - nix shell nixpkgs#git --command sh -c 'printf "CHIKI_BASE=%s\n" "$(git rev-parse "origin/${CI_DEFAULT_BRANCH}")" > chiki-base.env'
     - ./scripts/ci/sync-upstream.sh
-  artifacts:
-    when: always
-    reports:
-      dotenv: chiki-base.env
-    paths: [chiki-base.env]
 update-fork-packages:
   extends: [.main-maintenance, .update-packages]
   stage: main
@@ -119,16 +117,10 @@ merge-update-mrs:
 rebase-chiki:
   extends: .chiki-maintenance
   stage: chiki
-  needs:
-    - job: sync-upstream
-      artifacts: true
-    - job: merge-update-mrs
-      artifacts: false
+  needs: ["merge-update-mrs"]
   variables:
     SYNC_BRANCH: chiki
   script:
-    - export CHIKI_BASE="$(cut -d= -f2 chiki-base.env)"
-    - test -n "$CHIKI_BASE"
     - ./scripts/ci/sync-upstream.sh
 update-chiki-packages:
   extends: [.chiki-maintenance, .update-packages]

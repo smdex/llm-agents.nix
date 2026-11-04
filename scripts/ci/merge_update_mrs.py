@@ -248,6 +248,7 @@ def sweep_once(
         )
     )
     waiting: list[str] = []
+    refused.clear()
     for summary in sorted(mrs, key=lambda item: item.get("created_at", "")):
         ok, _why = eligible(summary, bot_username=bot, default_branch=default_branch)
         if not ok:
@@ -335,6 +336,8 @@ def main() -> None:
     log.info("=== Merge summary: %d merged, %d refused ===", len(merged), len(refused))
     for title, reason in sorted(refused.items()):
         log.info("  refused: %s (%s)", title, reason)
+    if refused or waiting:
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

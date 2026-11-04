@@ -84,12 +84,19 @@ class SyncTest(unittest.TestCase):
         old_main = self.git(self.fork, "rev-parse", "HEAD")
         self.git(self.fork, "checkout", "-qb", "chiki")
         self.commit(self.fork, "packages/shared/package.nix", "chiki edit\n")
-        self.git(self.fork, "push", "-q", "origin", "chiki")
+        self.git(
+            self.fork,
+            "push",
+            "-q",
+            "origin",
+            "chiki",
+            f"{old_main}:refs/heads/maintenance/chiki-base",
+        )
         self.git(self.fork, "checkout", "-q", "main")
         self.commit(self.fork, "packages/shared/package.nix", "main edit\n")
         self.git(self.fork, "push", "-q", "origin", "main")
         main = self.git(self.origin, "rev-parse", "main")
-        self.env.update(SYNC_BRANCH="chiki", CHIKI_BASE=old_main)
+        self.env["SYNC_BRANCH"] = "chiki"
         result = self.sync()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.git(self.origin, "rev-parse", "main"), main)
@@ -98,6 +105,9 @@ class SyncTest(unittest.TestCase):
             "chiki edit",
         )
         self.git(self.origin, "merge-base", "--is-ancestor", "main", "chiki")
+        self.assertEqual(
+            self.git(self.origin, "rev-parse", "maintenance/chiki-base"), main
+        )
 
     def test_chiki_requires_valid_old_main(self) -> None:
         self.git(self.fork, "checkout", "-qb", "chiki")
@@ -109,29 +119,117 @@ class SyncTest(unittest.TestCase):
         self.git(self.fork, "push", "-q", "origin", "main")
         self.env["SYNC_BRANCH"] = "chiki"
         self.assertNotEqual(self.sync().returncode, 0)
-        self.env["CHIKI_BASE"] = self.git(self.origin, "rev-parse", "main")
+        self.git(
+            self.fork, "push", "-q", "origin", "main:refs/heads/maintenance/chiki-base"
+        )
         self.assertNotEqual(self.sync().returncode, 0)
         self.assertEqual(self.git(self.origin, "rev-parse", "chiki"), old)
 
-    def test_chiki_retry_rejects_stale_base_after_main_advances(self) -> None:
+    def test_chiki_retry_uses_durable_base_after_main_advances(self) -> None:
         old_main = self.git(self.fork, "rev-parse", "HEAD")
         self.git(self.fork, "checkout", "-qb", "chiki")
         self.commit(self.fork, "packages/shared/package.nix", "override\n")
-        self.git(self.fork, "push", "-q", "origin", "chiki")
+        self.git(
+            self.fork,
+            "push",
+            "-q",
+            "origin",
+            "chiki",
+            f"{old_main}:refs/heads/maintenance/chiki-base",
+        )
         self.git(self.fork, "checkout", "-q", "main")
         self.commit(self.fork, "main.txt", "first\n")
         self.git(self.fork, "push", "-q", "origin", "main")
-        self.env.update(SYNC_BRANCH="chiki", CHIKI_BASE=old_main)
+        self.env["SYNC_BRANCH"] = "chiki"
         first = self.sync()
         self.assertEqual(first.returncode, 0, first.stderr)
         self.git(self.fork, "checkout", "-q", "main")
+        self.git(self.fork, "reset", "--hard", old_main)
         self.commit(self.fork, "main.txt", "second\n")
-        self.git(self.fork, "push", "-q", "origin", "main")
-        before = self.git(self.origin, "rev-parse", "chiki")
+        self.git(self.fork, "push", "-q", "--force", "origin", "main")
+        result = self.sync()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            self.git(self.origin, "rev-parse", "maintenance/chiki-base"),
+            self.git(self.origin, "rev-parse", "main"),
+        )
+        self.git(self.origin, "merge-base", "--is-ancestor", "main", "chiki")
+
+    def test_chiki_noop_updates_marker(self) -> None:
+        old = self.git(self.fork, "rev-parse", "HEAD")
+        self.commit(self.fork, "main.txt", "main\n")
+        self.git(
+            self.fork,
+            "push",
+            "-q",
+            "origin",
+            "main",
+            "main:chiki",
+            f"{old}:refs/heads/maintenance/chiki-base",
+        )
+        self.env["SYNC_BRANCH"] = "chiki"
+        result = self.sync()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            self.git(self.origin, "rev-parse", "maintenance/chiki-base"),
+            self.git(self.origin, "rev-parse", "main"),
+        )
+
+    def test_chiki_rejects_main_rollback(self) -> None:
+        old_main = self.git(self.fork, "rev-parse", "HEAD")
+        self.commit(self.fork, "main.txt", "new main\n")
+        marker = self.git(self.fork, "rev-parse", "HEAD")
+        self.git(self.fork, "checkout", "-qb", "chiki")
+        self.commit(self.fork, "override.txt", "override\n")
+        chiki = self.git(self.fork, "rev-parse", "HEAD")
+        self.git(
+            self.fork,
+            "push",
+            "-q",
+            "origin",
+            "chiki",
+            f"{marker}:refs/heads/maintenance/chiki-base",
+        )
+        self.env["SYNC_BRANCH"] = "chiki"
         result = self.sync()
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("CHIKI_BASE predates", result.stderr)
+        self.assertIn("older than maintenance/chiki-base", result.stderr)
+        self.assertEqual(self.git(self.origin, "rev-parse", "main"), old_main)
+        self.assertEqual(self.git(self.origin, "rev-parse", "chiki"), chiki)
+        self.assertEqual(
+            self.git(self.origin, "rev-parse", "maintenance/chiki-base"), marker
+        )
+
+    def test_chiki_marker_race_rejects_both_updates(self) -> None:
+        old = self.git(self.fork, "rev-parse", "HEAD")
+        previous = self.git(self.fork, "rev-parse", "HEAD^")
+        script = (
+            "#!/bin/sh\n"
+            f"git --git-dir='{self.origin}' update-ref refs/heads/maintenance/chiki-base {previous}\n"
+        )
+        self.git(self.fork, "checkout", "-qb", "chiki")
+        self.commit(self.fork, "scripts/generate-package-docs.nu", script)
+        self.git(
+            self.fork,
+            "push",
+            "-q",
+            "origin",
+            "chiki",
+            f"{old}:refs/heads/maintenance/chiki-base",
+        )
+        before = self.git(self.origin, "rev-parse", "chiki")
+        self.git(self.fork, "checkout", "-q", "main")
+        self.commit(self.fork, "main.txt", "main\n")
+        self.git(self.fork, "push", "-q", "origin", "main")
+        main = self.git(self.origin, "rev-parse", "main")
+        self.env["SYNC_BRANCH"] = "chiki"
+        result = self.sync()
+        self.assertNotEqual(result.returncode, 0)
         self.assertEqual(self.git(self.origin, "rev-parse", "chiki"), before)
+        self.assertEqual(
+            self.git(self.origin, "rev-parse", "maintenance/chiki-base"), previous
+        )
+        self.assertEqual(self.git(self.origin, "rev-parse", "main"), main)
 
     def test_invalid_branch_is_rejected(self) -> None:
         self.env["SYNC_BRANCH"] = "other"
@@ -150,6 +248,46 @@ class SyncTest(unittest.TestCase):
             self.git(self.origin, "show", "main:packages/shared/package.nix"),
             "new upstream",
         )
+
+    def test_push_uses_exact_url_and_isolates_credentials(self) -> None:
+        url = "https://gitlab.example/group/project.git"
+        self.git(self.fork, "config", "http.extraHeader", "Authorization: inherited")
+        self.git(
+            self.fork, "config", f"http.{url}.extraHeader", "Authorization: scoped"
+        )
+        self.git(self.fork, "config", "credential.helper", "inherited-helper")
+        self.git(self.fork, "config", f"credential.{url}.helper", "scoped-helper")
+        git = shutil.which("git")
+        assert git is not None
+        wrapper = self.root / "bin/git"
+        wrapper.write_text(
+            "#!/usr/bin/env bash\n"
+            "if [[ $1 == push ]]; then\n"
+            f'  "{git}" config --get-urlmatch http.extraHeader "$PUSH_URL" > "$CAPTURE"\n'
+            f'  "{git}" config --get-urlmatch credential.helper "$PUSH_URL" >> "$CAPTURE"\n'
+            '  printf "%s\\n" "$*" >> "$CAPTURE"\n'
+            "  exit 0\n"
+            "fi\n"
+            f'exec "{git}" "$@"\n'
+        )
+        wrapper.chmod(0o755)
+        self.env.update(
+            GL_PROJECT_URL="https://gitlab.example/group/project/",
+            PUSH_URL=url,
+            CAPTURE=str(self.root / "capture"),
+            GIT_CONFIG_COUNT="1",
+            GIT_CONFIG_KEY_0="http.extraHeader",
+            GIT_CONFIG_VALUE_0="Authorization: environment",
+        )
+        self.commit(self.upstream, "new.txt", "upstream\n")
+        result = self.sync()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        lines = (self.root / "capture").read_text().splitlines()
+        self.assertEqual(lines[0], "Authorization: Basic b2F1dGgyOnRlc3QtdG9rZW4=")
+        self.assertEqual(lines[1], "")
+        self.assertIn(url, lines[2])
+        self.assertNotIn("test-token", result.stdout + result.stderr + lines[2])
+        self.assertNotIn("b2F1dGgyOnRlc3QtdG9rZW4=", result.stdout + result.stderr)
 
     def test_shared_package_conflict_uses_upstream(self) -> None:
         self.commit(self.fork, "packages/shared/package.nix", "fork edit\n")

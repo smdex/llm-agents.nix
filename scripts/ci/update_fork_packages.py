@@ -144,7 +144,11 @@ def stash_ci_scripts(target: Path) -> Path:
             shutil.rmtree(destination)
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copytree(REPO_ROOT / source, destination)
-    return target / ".github" / "ci"
+    stashed_ci = target / ".github" / "ci"
+    shutil.copytree(
+        REPO_ROOT / "scripts" / "updater", stashed_ci / "updater", dirs_exist_ok=True
+    )
+    return stashed_ci
 
 
 def fork_packages(*, explicit: bool = False, branch: str | None = None) -> list[str]:
@@ -242,11 +246,15 @@ def prepare_branch(package: str, *, default_branch: str = "main") -> None:
         run(["git", "checkout", "-B", branch, f"origin/{default_branch}"])
 
 
-def run_updater(package: str, stashed_ci: Path) -> dict[str, str] | None:
+def run_updater(
+    package: str, stashed_ci: Path, *, default_branch: str = "main"
+) -> dict[str, str] | None:
     """Run the stashed update.py for one package; None on failure."""
     with tempfile.NamedTemporaryFile("w", delete=False) as output_file:
         output_path = output_file.name
-    env = sanitized_updater_env({"GITHUB_OUTPUT": output_path})
+    env = sanitized_updater_env(
+        {"GITHUB_OUTPUT": output_path, "UPDATE_BASE_REF": f"origin/{default_branch}"}
+    )
     result = run(
         python_in_devshell(stashed_ci / "update.py", "package", package),
         env=env,
@@ -317,7 +325,7 @@ def process_package(
         name, allowlist=allowlist, default_branch=default_branch
     )
 
-    outputs = run_updater(name, stashed_ci)
+    outputs = run_updater(name, stashed_ci, default_branch=default_branch)
     if outputs is None:
         log.error("Update failed for %s", name)
         return False

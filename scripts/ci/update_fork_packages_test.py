@@ -51,6 +51,27 @@ class SanitizedUpdaterEnvTest(unittest.TestCase):
         self.assertNotIn("GL_TOKEN", env)
 
 
+class StashTest(unittest.TestCase):
+    def test_stashed_updater_imports_outside_repo(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            stashed = driver.stash_ci_scripts(Path(tmp))
+            result = subprocess.run(
+                ["python3", str(stashed / "update.py"), "--help"],
+                cwd=tmp,
+                env={"PATH": os.environ["PATH"]},
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_updater_receives_target_branch(self) -> None:
+        result = mock.Mock(returncode=1, stdout="", stderr="failed")
+        with mock.patch.object(driver, "run", return_value=result) as run:
+            driver.run_updater("paseo", Path("ci"), default_branch="chiki")
+        self.assertEqual(run.call_args.kwargs["env"]["UPDATE_BASE_REF"], "origin/chiki")
+
+
 class ForkPackagesTest(unittest.TestCase):
     def test_selection_is_validated_by_detection_script(self) -> None:
         env = {"FORK_UPDATE_PACKAGES": "paseo pi-perplexity"}
@@ -229,7 +250,7 @@ class ProcessPackageTest(unittest.TestCase):
                 driver,
                 "run_updater",
                 return_value={"updated": "true", "new_version": "0.12.0"},
-            ),
+            ) as updater,
         ):
             self.assertTrue(
                 driver.process_package(
@@ -240,6 +261,7 @@ class ProcessPackageTest(unittest.TestCase):
                     allowlist=frozenset({"paseo"}),
                 )
             )  # type: ignore[arg-type]
+        updater.assert_called_once_with("paseo", None, default_branch="chiki")
         prepare.assert_called_once_with("paseo", default_branch="chiki")
         guard.assert_called_once_with(
             "paseo", allowlist=frozenset({"paseo"}), default_branch="chiki"

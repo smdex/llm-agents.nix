@@ -86,7 +86,9 @@ def discover_packages(
     )
     if result.returncode != 0:
         log.error("Failed to evaluate packages: %s", result.stderr)
-        return []
+        raise subprocess.CalledProcessError(
+            result.returncode, result.args, output=result.stdout, stderr=result.stderr
+        )
 
     versions: dict[str, str | None] = json.loads(result.stdout)
     # An explicit filter overrides companion handling.
