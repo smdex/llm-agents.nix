@@ -1768,6 +1768,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>xerj</strong> - Search engine and MCP server for code, documents, and agent memory</summary>
+
+- **Source**: source
+- **License**: Apache-2.0
+- **Homepage**: https://github.com/xerj-org/xerj
+- **Usage**: `nix run github:numtide/llm-agents.nix#xerj -- --help`
+- **Nix**: [packages/xerj/package.nix](packages/xerj/package.nix)
+
+</details>
+<details>
 <summary><strong>zat</strong> - Code outline viewer for LLM coding agents — shows exported symbols with line numbers</summary>
 
 - **Source**: source
