@@ -79,6 +79,8 @@ buildNpmPackage (finalAttrs: {
   buildPhase = ''
     runHook preBuild
 
+    npm run postinstall
+
     # Native deps (terminal emulation; libuv-linked on Linux).
     # node-gyp-build skips compilation when a matching prebuilt binary exists,
     # so remove the bundled prebuilds first to force a real build.
