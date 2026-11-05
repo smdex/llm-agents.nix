@@ -13,16 +13,16 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "cass";
-  version = "0.10.0";
+  version = "0.11.0";
 
   src = fetchFromGitHub {
     owner = "Dicklesworthstone";
     repo = "coding_agent_session_search";
     tag = "v${version}";
-    hash = "sha256-7spfk9GwgmF9+yEUG4waMsPILzVOjCaHio9OxnquIhk=";
+    hash = "sha256-2WNdm6p/GkxNXC4VNbPzADIoLWjXlPCiWS235OaKiiI=";
   };
 
-  cargoHash = "sha256-RMiGL8fbi2T5tY6fLEkmlyJIKDD7vZIzV3OdE5LXETY=";
+  cargoHash = "sha256-ImMhI9HzWfN0BjGI8vB6ihW/bmdFK6rzT1aVOSrrpX8=";
 
   # Dependencies are now registry crates. Patch the extracted vendor tree,
   # retaining the scalar fallback for intrinsics unsupported by stable Rust.
