@@ -155,6 +155,43 @@ class SyncTest(unittest.TestCase):
         )
         self.git(self.origin, "merge-base", "--is-ancestor", "main", "chiki")
 
+    def test_chiki_rebases_onto_rewritten_main_from_marker(self) -> None:
+        common = self.git(self.fork, "rev-parse", "HEAD")
+        self.commit(self.fork, "old-main.txt", "old main\n")
+        marker = self.git(self.fork, "rev-parse", "HEAD")
+        self.git(self.fork, "checkout", "-qb", "chiki")
+        self.commit(self.fork, "packages/shared/package.nix", "chiki override\n")
+        self.git(
+            self.fork,
+            "push",
+            "-q",
+            "origin",
+            "chiki",
+            f"{marker}:refs/heads/maintenance/chiki-base",
+        )
+        self.git(self.fork, "checkout", "-q", "main")
+        self.git(self.fork, "reset", "--hard", common)
+        self.commit(self.fork, "new-main.txt", "rewritten main\n")
+        self.git(self.fork, "push", "-q", "--force", "origin", "main")
+        main = self.git(self.origin, "rev-parse", "main")
+        self.env["SYNC_BRANCH"] = "chiki"
+        result = self.sync()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.git(self.origin, "merge-base", "--is-ancestor", main, "chiki")
+        self.assertEqual(
+            self.git(self.origin, "rev-parse", "maintenance/chiki-base"), main
+        )
+        self.assertEqual(
+            self.git(self.origin, "show", "chiki:packages/shared/package.nix"),
+            "chiki override",
+        )
+        self.assertEqual(
+            self.git(self.origin, "ls-tree", "--name-only", "chiki", "old-main.txt"), ""
+        )
+        self.assertEqual(
+            self.git(self.origin, "rev-list", "--count", "main..chiki"), "1"
+        )
+
     def test_chiki_noop_updates_marker(self) -> None:
         old = self.git(self.fork, "rev-parse", "HEAD")
         self.commit(self.fork, "main.txt", "main\n")

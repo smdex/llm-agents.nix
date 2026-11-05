@@ -525,9 +525,14 @@ class MainExitTest(unittest.TestCase):
                         item for item in mrs if f"/{item['iid']}/pipelines" in path
                     )
                     head = item.get("head_pipeline") or {}
-                    return iter([head | {"id": 1}] if head.get("source") else [])
+                    return iter(
+                        [head | {"id": item["iid"]}] if head.get("source") else []
+                    )
                 if path.endswith("/jobs"):
-                    head = mrs[0].get("head_pipeline") or {}
+                    item = next(
+                        item for item in mrs if f"/pipelines/{item['iid']}/jobs" in path
+                    )
+                    head = item.get("head_pipeline") or {}
                     return iter(
                         [
                             {
@@ -570,13 +575,23 @@ class MainExitTest(unittest.TestCase):
 
     def test_failed_eligible_validation_exits_nonzero(self) -> None:
         with self.assertRaises(SystemExit) as exit_code:
-            self.run_main([mr(head_pipeline={"status": "failed"})])
-        self.assertEqual(exit_code.exception.code, 1)
+            self.run_main(
+                [
+                    mr(
+                        head_pipeline={
+                            "status": "failed",
+                            "sha": "a" * 40,
+                            "source": "merge_request_event",
+                        }
+                    )
+                ]
+            )
+        self.assertEqual(exit_code.exception.code, 3)
 
     def test_pending_eligible_validation_times_out_nonzero(self) -> None:
         with self.assertRaises(SystemExit) as exit_code:
             self.run_main([mr()])
-        self.assertEqual(exit_code.exception.code, 1)
+        self.assertEqual(exit_code.exception.code, 3)
 
     def test_gitlab_pending_does_not_wait_for_occupied_runner(self) -> None:
         with (
@@ -593,6 +608,28 @@ class MainExitTest(unittest.TestCase):
 
     def test_successful_merge_does_not_fail(self) -> None:
         self.run_main([MergeCandidateTest().mergeable_mr()])
+
+    def test_failed_and_successful_mrs_exit_partial(self) -> None:
+        successful = MergeCandidateTest().mergeable_mr()
+        failed = mr(
+            iid=8, head_pipeline=successful["head_pipeline"] | {"status": "failed"}
+        )
+        with (
+            self.assertLogs(merge_update_mrs.log, level="INFO") as logs,
+            self.assertRaises(SystemExit) as exit_code,
+        ):
+            self.run_main([failed, successful])
+        self.assertEqual(exit_code.exception.code, 3)
+        self.assertTrue(any("1 merged, 1 refused" in line for line in logs.output))
+
+    def test_unhandled_error_propagates(self) -> None:
+        with (
+            patch.object(
+                merge_update_mrs, "sweep_once", side_effect=RuntimeError("boom")
+            ),
+            self.assertRaisesRegex(RuntimeError, "boom"),
+        ):
+            self.run_main([])
 
 
 if __name__ == "__main__":

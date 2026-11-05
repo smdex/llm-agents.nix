@@ -86,7 +86,11 @@ variables:
     - |
       set -f
       if [ "$UPDATE_BRANCH" = chiki ]; then
-        packages="${CHIKI_UPDATE_PACKAGES:-$(bash scripts/ci/detect-chiki-packages.sh)}"
+        if [ -n "${CHIKI_UPDATE_PACKAGES:-}" ]; then
+          packages="$CHIKI_UPDATE_PACKAGES"
+        else
+          packages="$(bash scripts/ci/detect-chiki-packages.sh)" || exit 2
+        fi
         if [ -z "$packages" ]; then exit 0; fi
         ./scripts/ci/update_fork_packages.py --branch "$UPDATE_BRANCH" --packages $packages
       elif [ -n "${FORK_UPDATE_PACKAGES:-}" ]; then
@@ -112,6 +116,8 @@ merge-update-mrs:
     MERGE_WAIT_TIMEOUT: "1800"
   stage: main
   needs: ["update-fork-packages"]
+  allow_failure:
+    exit_codes: [3]
   script:
     - ./scripts/ci/merge_update_mrs.py
 rebase-chiki:
@@ -137,6 +143,8 @@ merge-chiki-update-mrs:
   tags: [usa-docker-ci-control]
   stage: chiki
   needs: ["update-chiki-packages"]
+  allow_failure:
+    exit_codes: [3]
   variables:
     DEFAULT_BRANCH: chiki
     MERGE_WAIT_TIMEOUT: "1800"

@@ -99,12 +99,15 @@ SHA; external status alone is insufficient. It also requires a mergeable
 status, re-fetches and rechecks the MR, and pins the head SHA in the merge
 request. A moved head or rejected merge is not merged. Pending validation and
 transient merge refusals are polled; failed validation is refused. In these
-GitLab jobs `MERGE_WAIT_TIMEOUT` is explicitly 1800 seconds; unresolved or
-refused eligible MRs make the merge job fail and block later stages.
+GitLab jobs `MERGE_WAIT_TIMEOUT` is explicitly 1800 seconds. Unresolved or
+refused eligible MRs produce exit code 3, allowed as a warning so later jobs
+can continue. Other nonzero exit codes, including infrastructure errors, fail
+the job and block the chain.
 
 ### GitHub mirror
 
-After both merge jobs succeed, `mirror_github.py` fetches GitLab `main`,
+After both merge sweeps complete successfully or with an allowed warning (not
+after each individual merge), `mirror_github.py` fetches GitLab `main`,
 `chiki`, and both mirror checkpoints, and requires main to be an ancestor of
 chiki. It fetches the two GitHub tips and proceeds only if the **pair** equals
 either the checkpoint pair or the current GitLab source pair. It re-fetches

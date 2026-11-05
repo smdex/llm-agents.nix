@@ -339,7 +339,7 @@ def main() -> None:
     for title, reason in sorted(refused.items()):
         log.info("  refused: %s (%s)", title, reason)
     if refused or waiting:
-        raise SystemExit(1)
+        raise SystemExit(3)
 
 
 if __name__ == "__main__":
