@@ -12,16 +12,16 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "aizen";
-  version = "0.7.3";
+  version = "0.7.4";
 
   src = fetchFromGitHub {
     owner = "talmetis-labs";
     repo = "aizen";
     tag = "v${version}";
-    hash = "sha256-2c/n7dKBvs/7URi8+JO9Kn3FyPyOyrnodUdTH5Yopow=";
+    hash = "sha256-dla9CcP1ycEQq22LtL9/RbLm4ySa3ihxijpgarf4BOs=";
   };
 
-  cargoHash = "sha256-/ldPpC8P94F+LhiUVUg+LSpvROPgBPIke8PiryZK3ic=";
+  cargoHash = "sha256-ovVBEkwsbDwcUJF5aeaVhpXznOuBy7K80Pfu+vIx75I=";
 
   # Upstream seeds prompt obfuscation from the build clock; keep builds reproducible.
   postPatch = ''
