@@ -38,13 +38,13 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "goose-desktop";
-  version = "1.58.1";
+  version = "1.59.0";
 
   src = fetchFromGitHub {
     owner = "aaif-goose";
     repo = "goose";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-HParN7kv/F5rP8RRzl7EkJM5mYYOboCe9p1KDGCQgvA=";
+    hash = "sha256-0fAyv3ppEbe2Z2FAg8Y4NS4blEwpVbDd+Bz/ie1nwhk=";
   };
 
   sourceRoot = "${finalAttrs.src.name}/ui";
