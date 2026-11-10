@@ -1,0 +1,249 @@
+{
+  "version": "0.64.15",
+  "hash": "sha256-izWGyrzK3D+MlCY13zDXztHerI7nvUS00iTsBFr8aPw=",
+  "pnpmDeps": "sha256-s/e/xaSrCgeRZ0OeanQJOBFtG6EapVHFuczxvRnKIZA=",
+  "cargoCliDeps": "sha256-5tJUQhoJ1detsq2tQsXyLersQObjpEyAtF8/fec7xps=",
+  "cargoAppDeps": "sha256-EF5OL+wobXzG+gavYJrpxh/RES6YiS88Iq9dm37gKCA=",
+  "submodules": {
+    "vendor/tinyagents": {
+      "owner": "tinyhumansai",
+      "repo": "tinyagents",
+      "rev": "c8b5c1f255421f74cfebe7604d0743fde0ca6195",
+      "hash": "sha256-IojpZdyjiJrcbx1Rv3kjDpb2A7Kb2x5wzwyjyK3IzCE="
+    },
+    "vendor/tinyagents/vendor/tinyinference": {
+      "owner": "tinyhumansai",
+      "repo": "tinyinference",
+      "rev": "a32eec8138d7be0978dd232ec9f93af33945dbe6",
+      "hash": "sha256-Al+59Sm4ZpC58SyxM+2PteveMLAWMlFN7thENl8ATIQ="
+    },
+    "vendor/tinyagents/vendor/tinyliveagents": {
+      "owner": "tinyhumansai",
+      "repo": "tinyliveagents",
+      "rev": "91664e7af86feadac7759e5e5cdc64354b712277",
+      "hash": "sha256-XBh61Qi0K1KUy6sw0Ci2S6fTZ4ib0FaBwkOcEs43FGE="
+    },
+    "vendor/tinyagents/vendor/tinytools": {
+      "owner": "tinyhumansai",
+      "repo": "tinytools",
+      "rev": "68163b164551a9a0126945a07d06d80474504c0a",
+      "hash": "sha256-556w57Wqxe86KdWidfKQ9y9wtMb+uriNhHcX49NYiPg="
+    },
+    "vendor/tinybox": {
+      "owner": "tinyhumansai",
+      "repo": "tinybox",
+      "rev": "8b3c7c9a208c9240e8ce3af7902722652aba7b47",
+      "hash": "sha256-k3L+EqTYlT0nisdsUJiW+nX0zG//CX9o/lzUpOhqARg="
+    },
+    "vendor/tinybox/vendor/tinybus": {
+      "owner": "tinyhumansai",
+      "repo": "tinybus",
+      "rev": "65741c3828f7e8e055abbfb5ca8ae688559e490a",
+      "hash": "sha256-MPvWRqK9Cpey6KNVOMm1fAr67oNsKPG4xRF78vTGetg="
+    },
+    "vendor/tinybus": {
+      "owner": "tinyhumansai",
+      "repo": "tinybus",
+      "rev": "356bb24f30d7863d81569c7e1f07a7ae60feda48",
+      "hash": "sha256-YEyDTOXyR7l8wCpAE5TOF9b3ZXXKlz1eLRn1FWQ8qgE="
+    },
+    "vendor/tinychannels": {
+      "owner": "tinyhumansai",
+      "repo": "tinychannels",
+      "rev": "bb54fd4114733b85828bd15aa86ff12ab9a100cc",
+      "hash": "sha256-7aZziq+jZs49nigDUccVm/kmuaWxlx03N6jvkY1ogj8="
+    },
+    "vendor/tinychannels/vendor/tinybus": {
+      "owner": "tinyhumansai",
+      "repo": "tinybus",
+      "rev": "65741c3828f7e8e055abbfb5ca8ae688559e490a",
+      "hash": "sha256-MPvWRqK9Cpey6KNVOMm1fAr67oNsKPG4xRF78vTGetg="
+    },
+    "vendor/tinycomputer": {
+      "owner": "tinyhumansai",
+      "repo": "tinycomputer",
+      "rev": "2b0ee5c6a0ab5f349cdf45c05041832362820f0f",
+      "hash": "sha256-5lJmt52qbJTmUt9igw4+rtC7A3MhrkIxZsdErpEtMMg="
+    },
+    "vendor/tinycomputer/vendor/agent-browser": {
+      "owner": "tinyhumansai",
+      "repo": "agent-browser",
+      "rev": "cb1ac5885996325eacb31276fa95f5064ce0e12f",
+      "hash": "sha256-N1evgqL7RbQiu9E5sbqvx4QMED+NRXcAjMiqRjuhpow="
+    },
+    "vendor/tinycomputer/vendor/agent-desktop": {
+      "owner": "lahfir",
+      "repo": "agent-desktop",
+      "rev": "dd6c47397e32373ceba22c9c045dc8b0217edbf8",
+      "hash": "sha256-ZuU3nXrNmYe7Pvk5oY7ovmDOD7ejOaevlSfwrE2cItc="
+    },
+    "vendor/tinycomputer/vendor/tinybus": {
+      "owner": "tinyhumansai",
+      "repo": "tinybus",
+      "rev": "65741c3828f7e8e055abbfb5ca8ae688559e490a",
+      "hash": "sha256-MPvWRqK9Cpey6KNVOMm1fAr67oNsKPG4xRF78vTGetg="
+    },
+    "vendor/tinycomputer/vendor/tinyinference": {
+      "owner": "tinyhumansai",
+      "repo": "tinyinference",
+      "rev": "fd0993efd890be94a86c25ef871ac555109b7706",
+      "hash": "sha256-Ka8+Iz+uCUJWMyJUgtGlBhdOmiOSZIIwDVajtIEu1FY="
+    },
+    "vendor/tinyconnectors": {
+      "owner": "tinyhumansai",
+      "repo": "tinyconnectors",
+      "rev": "ca3d5ffd12db5bf0cbca662649320152c9455747",
+      "hash": "sha256-a6Q3HHwhOgJOG6PfBOwQOan9YUjuGMgWw0Og4ZqcSAw="
+    },
+    "vendor/tinyconnectors/vendor/tinybus": {
+      "owner": "tinyhumansai",
+      "repo": "tinybus",
+      "rev": "65741c3828f7e8e055abbfb5ca8ae688559e490a",
+      "hash": "sha256-MPvWRqK9Cpey6KNVOMm1fAr67oNsKPG4xRF78vTGetg="
+    },
+    "vendor/tinydocs": {
+      "owner": "tinyhumansai",
+      "repo": "tinydocs",
+      "rev": "7bec4165d9838550b7c21ded7943f7aff7d53817",
+      "hash": "sha256-7Td6VRzJvrazp3Np25nUv2jpuupKzalf+2YokEOO8Hg="
+    },
+    "vendor/tinydocs/vendor/tinybus": {
+      "owner": "tinyhumansai",
+      "repo": "tinybus",
+      "rev": "65741c3828f7e8e055abbfb5ca8ae688559e490a",
+      "hash": "sha256-MPvWRqK9Cpey6KNVOMm1fAr67oNsKPG4xRF78vTGetg="
+    },
+    "vendor/tinyflows": {
+      "owner": "tinyhumansai",
+      "repo": "tinyflows",
+      "rev": "a48f7c57b535cdd2af3951594cb5a2ca7a91eb6c",
+      "hash": "sha256-Kc2Lfll8QOFw22UlRcL759KATIzcrh8jERykuXA9wWc="
+    },
+    "vendor/tinyhosts": {
+      "owner": "tinyhumansai",
+      "repo": "tinyhosts",
+      "rev": "7913e1bf005e37efae73a6c9d45b5b0f9cc2d47c",
+      "hash": "sha256-r1yu0p61YbWRLvpGJbI9syV3LRvaY711ehYWMr13h+A="
+    },
+    "vendor/tinyhosts/vendor/tinybus": {
+      "owner": "tinyhumansai",
+      "repo": "tinybus",
+      "rev": "65741c3828f7e8e055abbfb5ca8ae688559e490a",
+      "hash": "sha256-MPvWRqK9Cpey6KNVOMm1fAr67oNsKPG4xRF78vTGetg="
+    },
+    "vendor/tinyhumans-sdk": {
+      "owner": "tinyhumansai",
+      "repo": "sdk",
+      "rev": "c16849db6d855165bc162213136db69f5bca031a",
+      "hash": "sha256-QFvHAzesvxpjl7iiE9rKMYWvnII2WdY3ZQ+DLKzRk+U="
+    },
+    "vendor/tinyjuice": {
+      "owner": "tinyhumansai",
+      "repo": "tinyjuice",
+      "rev": "27160102817c4730caebb43d8c365f852b2e8014",
+      "hash": "sha256-JOO2ed07MNtzA3u1DHbdgk8uNMA8bm1VDiUIC/Ye864="
+    },
+    "vendor/tinyjuice/vendor/tinyagents": {
+      "owner": "tinyhumansai",
+      "repo": "tinyagents",
+      "rev": "3c411b4408de2ceb5b5d3f6df93703ec3b61c1cb",
+      "hash": "sha256-iaWm1T2XRaVE+78AO2pJN5IOYGzr/YOAEy9f4PJV3xM="
+    },
+    "vendor/tinyjuice/vendor/tinyagents/vendor/tinyinference": {
+      "owner": "tinyhumansai",
+      "repo": "tinyinference",
+      "rev": "fd0993efd890be94a86c25ef871ac555109b7706",
+      "hash": "sha256-Ka8+Iz+uCUJWMyJUgtGlBhdOmiOSZIIwDVajtIEu1FY="
+    },
+    "vendor/tinyjuice/vendor/tinyagents/vendor/tinytools": {
+      "owner": "tinyhumansai",
+      "repo": "tinytools",
+      "rev": "d92c4484077fbe5a6d1f050b1c54ca20e2304833",
+      "hash": "sha256-fQeZ0YCX+/MZ3L4HcfZrDmQAeODebQ7JDVJIiblIdBk="
+    },
+    "vendor/tinyjuice/vendor/tinybus": {
+      "owner": "tinyhumansai",
+      "repo": "tinybus",
+      "rev": "65741c3828f7e8e055abbfb5ca8ae688559e490a",
+      "hash": "sha256-MPvWRqK9Cpey6KNVOMm1fAr67oNsKPG4xRF78vTGetg="
+    },
+    "vendor/tinymcp": {
+      "owner": "tinyhumansai",
+      "repo": "tinymcp",
+      "rev": "ab2de39180d9dadd897b382fef80d1ad9f7d25eb",
+      "hash": "sha256-LRYraAVTGyvZkw9XSzAAIHqMqGDly/tLul9h/KagJDM="
+    },
+    "vendor/tinymcp/vendor/tinybus": {
+      "owner": "tinyhumansai",
+      "repo": "tinybus",
+      "rev": "65741c3828f7e8e055abbfb5ca8ae688559e490a",
+      "hash": "sha256-MPvWRqK9Cpey6KNVOMm1fAr67oNsKPG4xRF78vTGetg="
+    },
+    "vendor/tinymemory": {
+      "owner": "tinyhumansai",
+      "repo": "tinymemory",
+      "rev": "004763036e8ac6af36059ef5bcefed537d55a888",
+      "hash": "sha256-umjiZwyDlzcEeQuPjspO97LVqALA3MP9S7ynDAPZSvc="
+    },
+    "vendor/tinyruntime": {
+      "owner": "tinyhumansai",
+      "repo": "tinyruntime",
+      "rev": "b55d4d8334c2c9cf952290860291135ebc271168",
+      "hash": "sha256-6VXguZzwmzjpiDBU5xN/OIrtZRe4S6TrTRzDUwlQxX4="
+    },
+    "vendor/tinyruntime/vendor/tinybus": {
+      "owner": "tinyhumansai",
+      "repo": "tinybus",
+      "rev": "65741c3828f7e8e055abbfb5ca8ae688559e490a",
+      "hash": "sha256-MPvWRqK9Cpey6KNVOMm1fAr67oNsKPG4xRF78vTGetg="
+    },
+    "vendor/tinysearch": {
+      "owner": "tinyhumansai",
+      "repo": "tinysearch",
+      "rev": "40ac1e5ce5e0c4385ab0f94e3149d928585d8083",
+      "hash": "sha256-DjWn22o3o/Zf2MJn0H/J/PKkLy86lDD6V2ddTY6m/wI="
+    },
+    "vendor/tinysearch/vendor/tinybus": {
+      "owner": "tinyhumansai",
+      "repo": "tinybus",
+      "rev": "65741c3828f7e8e055abbfb5ca8ae688559e490a",
+      "hash": "sha256-MPvWRqK9Cpey6KNVOMm1fAr67oNsKPG4xRF78vTGetg="
+    },
+    "vendor/tinyskills": {
+      "owner": "tinyhumansai",
+      "repo": "tinyskills",
+      "rev": "d25ef3203e47241566ee288099a63f8e8b570bc2",
+      "hash": "sha256-sy5qchXthzp8UjSBF69CuaXTAdQssS9cwsMOMh22pUc="
+    },
+    "vendor/tinyskills/vendor/tinybus": {
+      "owner": "tinyhumansai",
+      "repo": "tinybus",
+      "rev": "65741c3828f7e8e055abbfb5ca8ae688559e490a",
+      "hash": "sha256-MPvWRqK9Cpey6KNVOMm1fAr67oNsKPG4xRF78vTGetg="
+    },
+    "vendor/tinyvoice": {
+      "owner": "tinyhumansai",
+      "repo": "tinyvoice",
+      "rev": "c395725afbed5ef3055a68b1acfbbe6d5c666ac8",
+      "hash": "sha256-oPVjaLnZlDjQ5lzxQsNZbZsr6MqcWDiNNBwCTF3qLio="
+    },
+    "vendor/tinyvoice/vendor/tinybus": {
+      "owner": "tinyhumansai",
+      "repo": "tinybus",
+      "rev": "65741c3828f7e8e055abbfb5ca8ae688559e490a",
+      "hash": "sha256-MPvWRqK9Cpey6KNVOMm1fAr67oNsKPG4xRF78vTGetg="
+    },
+    "vendor/tinywallet": {
+      "owner": "tinyhumansai",
+      "repo": "tinywallet",
+      "rev": "b53917764e08d90abdc1403ac40e74fc552530e2",
+      "hash": "sha256-yXQLxGWSPjbkNowTq44zYAraernu8BDtu4GN7aJ/Npk="
+    },
+    "vendor/tinywallet/vendor/tinybus": {
+      "owner": "tinyhumansai",
+      "repo": "tinybus",
+      "rev": "65741c3828f7e8e055abbfb5ca8ae688559e490a",
+      "hash": "sha256-MPvWRqK9Cpey6KNVOMm1fAr67oNsKPG4xRF78vTGetg="
+    }
+  }
+}

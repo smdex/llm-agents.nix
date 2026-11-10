@@ -49,6 +49,11 @@ inputs."nixpkgs".lib.extend (
         githubId = 25513724;
         name = "Bad3r";
       };
+      viniciuspalma = {
+        github = "viniciuspalma";
+        githubId = 3676032;
+        name = "Vinícius Palma";
+      };
       chernistry = {
         github = "chernistry";
         githubId = 73943355;
