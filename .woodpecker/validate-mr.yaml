@@ -1,0 +1,25 @@
+# Validation pipeline for fork update MRs (Woodpecker on the GitLab forge).
+#
+# This is the evidence the guarded merger (maintenance.yaml, step
+# merge-update-mrs) accepts: it merges a bot update MR only when every
+# status reported for its head SHA — GitLab head_pipeline and Woodpecker
+# commit statuses (ci/woodpecker/...) — is green.
+#
+# Checks: treefmt gate, maintainers check and README regeneration check
+# (both reused from the upstream GitHub PR checks), and a targeted
+# `nix build` of the updated package from the update/<package> branch.
+# No secrets: validation must run on untrusted MR code.
+when:
+  event: pull_request
+clone:
+  git:
+    image: woodpeckerci/plugin-git
+    # Full history (the default, no depth setting): needed for the
+    # path-filtered checks and check_maintainers.py.
+steps:
+  validate-update-mr:
+    image: nixos/nix:latest
+    environment:
+      NIX_CONFIG: "experimental-features = nix-command flakes"
+    commands:
+      - ./scripts/ci/validate-mr.sh

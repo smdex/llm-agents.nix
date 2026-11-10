@@ -1,0 +1,167 @@
+# Fork maintenance pipeline for the GitLab-hosted mirror of
+# numtide/llm-agents.nix. Mirrors .github/workflows/{sync-upstream,
+# update-fork,auto-merge}.yml without modifying them; all logic lives in
+# scripts/ci.
+#
+# Runs main sync/update/merge, then chiki rebase/update/merge, on the
+# protected default branch for schedules and manual web pipelines only.
+# The pipeline commit must already contain the chiki-capable scripts.
+# MR validation runs without maintenance credentials.
+#
+# Configure masked, protected GL_TOKEN and GL_CHIKI_TOKEN variables scoped to
+# main-maintenance and chiki-maintenance respectively. Each needs API/push
+# permissions for its branch and update MRs.
+# FORK_UPDATE_PACKAGES and CHIKI_UPDATE_PACKAGES optionally select packages
+# for each branch; otherwise detect fork-only and chiki-modified packages.
+# MERGE_WAIT_TIMEOUT defaults to 0 in GitLab CI to avoid blocking its runner.
+# A shared resource group serializes jobs, not entire pipelines. A protected
+# maintenance/chiki-base branch records the last main incorporated by chiki.
+stages:
+  - validate
+  - main
+  - chiki
+  - mirror
+workflow:
+  rules:
+    # Scheduled maintenance (configure the schedule for the default branch).
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    # Manual "Run pipeline" from the UI.
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    # Validation pipelines for merge requests.
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    # Plain pushes never trigger this pipeline.
+    - when: never
+default:
+  # Any image shipping nix works: every script brings its own tools via
+  # nix shebangs (see scripts/generate-package-docs.nu for the pattern).
+  image: $CI_NIX_IMAGE
+  tags: [usa-docker-nix]
+  before_script:
+    - |
+      export PATH="/nix/var/nix/profiles/default/bin:$PATH"
+      if command -v determinate-nixd >/dev/null 2>&1; then
+        if ! NIX_REMOTE=daemon nix store ping >/dev/null 2>&1; then
+          rm -f /nix/var/nix/daemon-socket/socket
+          nohup env -u NIX_REMOTE nix-daemon --daemon >/tmp/nix-daemon.log 2>&1 &
+          for i in $(seq 1 60); do
+            NIX_REMOTE=daemon nix store ping >/dev/null 2>&1 && break
+            sleep 0.5
+          done
+        fi
+        export NIX_REMOTE=daemon
+        nix store ping
+      fi
+variables:
+  NIX_CONFIG: "experimental-features = nix-command flakes"
+  GIT_DEPTH: "0"
+  GL_SERVER_URL: "$CI_SERVER_URL"
+  GL_PROJECT_PATH: "$CI_PROJECT_PATH"
+  DEFAULT_BRANCH: "$CI_DEFAULT_BRANCH"
+  GL_PROJECT_URL: "$CI_PROJECT_URL"
+.maintenance:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE =~ /\A(schedule|web)\z/ && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  resource_group: fork-maintenance
+.main-maintenance:
+  extends: .maintenance
+  environment:
+    name: main-maintenance
+  before_script:
+    - !reference [default, before_script]
+    - |
+      printf 'source=%s ref=%s protected=%s environment=%s\n' "$CI_PIPELINE_SOURCE" "$CI_COMMIT_REF_NAME" "$CI_COMMIT_REF_PROTECTED" "$CI_ENVIRONMENT_NAME"
+      : "${GL_TOKEN:?GL_TOKEN is unavailable}"
+.chiki-maintenance:
+  extends: .maintenance
+  environment:
+    name: chiki-maintenance
+  before_script:
+    - !reference [default, before_script]
+    - export GL_TOKEN="${GL_CHIKI_TOKEN:?GL_CHIKI_TOKEN is required}"
+.update-packages:
+  # Keep successfully published updates mergeable after partial failures.
+  allow_failure:
+    exit_codes: [1]
+  script:
+    - |
+      set -f
+      if [ "$UPDATE_BRANCH" = chiki ]; then
+        if [ -n "${CHIKI_UPDATE_PACKAGES:-}" ]; then
+          packages="$CHIKI_UPDATE_PACKAGES"
+        else
+          packages="$(bash scripts/ci/detect-chiki-packages.sh)" || exit 2
+        fi
+        if [ -z "$packages" ]; then exit 0; fi
+        ./scripts/ci/update_fork_packages.py --branch "$UPDATE_BRANCH" --packages $packages
+      elif [ -n "${FORK_UPDATE_PACKAGES:-}" ]; then
+        ./scripts/ci/update_fork_packages.py --branch "$UPDATE_BRANCH" --packages $FORK_UPDATE_PACKAGES
+      else
+        ./scripts/ci/update_fork_packages.py --branch "$UPDATE_BRANCH"
+      fi
+sync-upstream:
+  extends: .main-maintenance
+  stage: main
+  script:
+    - ./scripts/ci/sync-upstream.sh
+update-fork-packages:
+  extends: [.main-maintenance, .update-packages]
+  stage: main
+  needs: ["sync-upstream"]
+  variables:
+    UPDATE_BRANCH: "$CI_DEFAULT_BRANCH"
+merge-update-mrs:
+  extends: .main-maintenance
+  tags: [usa-docker-ci-control]
+  variables:
+    MERGE_WAIT_TIMEOUT: "1800"
+  stage: main
+  needs: ["update-fork-packages"]
+  allow_failure:
+    exit_codes: [3]
+  script:
+    - ./scripts/ci/merge_update_mrs.py
+rebase-chiki:
+  extends: .chiki-maintenance
+  stage: chiki
+  needs: ["merge-update-mrs"]
+  variables:
+    SYNC_BRANCH: chiki
+  script:
+    - ./scripts/ci/sync-upstream.sh
+update-chiki-packages:
+  extends: [.chiki-maintenance, .update-packages]
+  stage: chiki
+  needs: ["rebase-chiki"]
+  variables:
+    UPDATE_BRANCH: chiki
+  before_script:
+    - !reference [default, before_script]
+    - export GL_TOKEN="${GL_CHIKI_TOKEN:?GL_CHIKI_TOKEN is required}"
+    - nix shell nixpkgs#git --command git fetch origin "+refs/heads/main:refs/remotes/origin/main" "+refs/heads/chiki:refs/remotes/origin/chiki"
+merge-chiki-update-mrs:
+  extends: .chiki-maintenance
+  tags: [usa-docker-ci-control]
+  stage: chiki
+  needs: ["update-chiki-packages"]
+  allow_failure:
+    exit_codes: [3]
+  variables:
+    DEFAULT_BRANCH: chiki
+    MERGE_WAIT_TIMEOUT: "1800"
+  script:
+    - ./scripts/ci/merge_update_mrs.py
+mirror-github:
+  extends: .main-maintenance
+  stage: mirror
+  needs: ["merge-chiki-update-mrs"]
+  variables:
+    GITLAB_MIRROR_URL: "$CI_PROJECT_URL.git"
+    GITHUB_MIRROR_URL: "https://github.com/smdex/llm-agents.nix.git"
+  script:
+    - nix shell nixpkgs#python3 nixpkgs#git --command python3 scripts/ci/mirror_github.py
+validate-update-mr:
+  stage: validate
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - MR_SOURCE_BRANCH="$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" MR_TARGET_BRANCH="$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" ./scripts/ci/validate-mr.sh
