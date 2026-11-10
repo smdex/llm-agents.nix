@@ -1,0 +1,65 @@
+# Fork maintenance for the GitLab-hosted mirror of numtide/llm-agents.nix,
+# driven by Woodpecker CI on the GitLab forge (see docs/ci-gitlab-woodpecker.md).
+#
+# Chain: sync upstream -> update fork-only packages -> merge validated bot
+# update MRs. Runs ONLY on cron and manual events of the default branch:
+# never on push events (the sync pushes, which would loop) and never on MR
+# events (MRs are validated by validate-mr.yaml).
+#
+# Setup:
+#   * Add a Woodpecker cron for this pipeline on the default branch
+#     (e.g. every 30 minutes; the ancestor fast path makes no-ops cheap).
+#     Enable the schedule in exactly ONE CI system — either this cron or
+#     the GitLab CI schedule, not both.
+#   * Add a repository secret named GL_TOKEN (project access token,
+#     Maintainer, scope api). Secrets are only exposed to this pipeline's
+#     steps; validate-mr.yaml declares none.
+#
+# Every step brings its own tools via nix shebangs; the image only needs nix.
+when:
+  event: [cron, manual]
+  # Cron must be configured for the default branch; manual runs are
+  # restricted to it as well.
+  branch: main
+clone:
+  git:
+    image: woodpeckerci/plugin-git
+    # Full history (the default, no depth setting): the sync step rebases
+    # the whole fork stack. Note the clone is shared by all steps of one
+    # pipeline run; publishing always re-clones from the remote, so a
+    # force-pushed main during the sync step is picked up there.
+steps:
+  sync-upstream:
+    image: nixos/nix:latest
+    environment:
+      NIX_CONFIG: "experimental-features = nix-command flakes"
+      GL_TOKEN:
+        from_secret: GL_TOKEN
+      GL_PROJECT_URL: "${CI_REPO_LINK}"
+      DEFAULT_BRANCH: "${CI_REPO_DEFAULT_BRANCH}"
+      UPSTREAM_URL: "https://github.com/numtide/llm-agents.nix.git"
+      UPSTREAM_REF: "main"
+    commands:
+      - ./scripts/ci/sync-upstream.sh
+  update-fork-packages:
+    depends_on: [sync-upstream]
+    image: nixos/nix:latest
+    environment:
+      NIX_CONFIG: "experimental-features = nix-command flakes"
+      GL_TOKEN:
+        from_secret: GL_TOKEN
+      GL_PROJECT_URL: "${CI_REPO_LINK}"
+      DEFAULT_BRANCH: "${CI_REPO_DEFAULT_BRANCH}"
+    commands:
+      - ./scripts/ci/update_fork_packages.py || test "$?" -eq 1
+  merge-update-mrs:
+    depends_on: [update-fork-packages]
+    image: nixos/nix:latest
+    environment:
+      NIX_CONFIG: "experimental-features = nix-command flakes"
+      GL_TOKEN:
+        from_secret: GL_TOKEN
+      GL_PROJECT_URL: "${CI_REPO_LINK}"
+      DEFAULT_BRANCH: "${CI_REPO_DEFAULT_BRANCH}"
+    commands:
+      - ./scripts/ci/merge_update_mrs.py
