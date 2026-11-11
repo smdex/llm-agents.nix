@@ -296,9 +296,11 @@ class SyncTest(unittest.TestCase):
         self.git(self.fork, "config", f"credential.{url}.helper", "scoped-helper")
         git = shutil.which("git")
         assert git is not None
+        bash = shutil.which("bash")
+        assert bash is not None
         wrapper = self.root / "bin/git"
         wrapper.write_text(
-            "#!/usr/bin/env bash\n"
+            f"#!{bash}\n"
             "if [[ $1 == push ]]; then\n"
             f'  "{git}" config --get-urlmatch http.extraHeader "$PUSH_URL" > "$CAPTURE"\n'
             f'  "{git}" config --get-urlmatch credential.helper "$PUSH_URL" >> "$CAPTURE"\n'
