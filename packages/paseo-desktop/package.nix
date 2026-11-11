@@ -37,18 +37,18 @@
 
 buildNpmPackage (finalAttrs: {
   pname = "paseo-desktop";
-  version = "0.15.4";
+  version = "0.16.0-smdex.2";
 
   src = fetchFromGitHub {
-    owner = "getpaseo";
+    owner = "smdex";
     repo = "paseo";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-zqD9MrqYZ6S3O72b5y+7P0iJgIMf4MRq1zgcqBcyhko=";
+    hash = "sha256-Uo1lS9D2xW/i0Aw3r80d5x6OxDRQjMv+oCRL0XbJRE0=";
   };
 
   nodejs = nodejs_22;
 
-  npmDepsHash = "sha256-a8IgSFKtCzql2c2hCbhxxXnSzEUHRC6dGnBuQhgN2Jg=";
+  npmDepsHash = "sha256-ObHi7JSIfJaat9r1F+9sSh0AlVguQltZBVwVsTwsDDA=";
   npmDepsFetcherVersion = 2;
 
   # Prevent onnxruntime-node's install script from running during automatic
@@ -203,7 +203,7 @@ buildNpmPackage (finalAttrs: {
   meta = {
     description = "Voice-controlled desktop development environment for AI coding agents";
     homepage = "https://paseo.sh";
-    changelog = "https://github.com/getpaseo/paseo/releases/tag/v${finalAttrs.version}";
+    changelog = "https://github.com/smdex/paseo/releases/tag/v${finalAttrs.version}";
     license = lib.licenses.asl20;
     sourceProvenance = [ lib.sourceTypes.fromSource ];
     maintainers = with flake.lib.maintainers; [ smdex ];

@@ -18,23 +18,21 @@
   # `overrideAttrs` gymnastics.
   npmDepsHash ?
     {
-      x86_64-linux = "sha256-0KME5hEqTcSpyl75yqzODdTE0ZyZjZBiTLC35Q3zg4A=";
-      aarch64-linux = "sha256-AgIKnoKgWctPEOKm1rbOgmJ96i7Mqx5+CBnwJ//O4TM=";
-      aarch64-darwin = "sha256-pOBcgoyNe+Wd3MhihTyviwxj7gtpQEH+zSKDlNqH9Os=";
+      x86_64-linux = "sha256-vNjHqtCpwnqK4rjCwF2eKk21LtP4/coCWjOQKByJQc8=";
+      aarch64-linux = "sha256-rSYhfc9srlvZmbLF6Qo9V6n5pyf16qi1xdpfN+LjYCQ=";
+      aarch64-darwin = "sha256-5aUi0b0/5dPXsDa3Fox95kxW+sbv4vRxhqVPwHSaAGg=";
     }
-    .${stdenv.hostPlatform.system} or "sha256-GnIe69Nt0ka/OQsrE6ykirU8rZ35SoOSnkZbl0C94MI=",
+    .${stdenv.hostPlatform.system} or "sha256-ObHi7JSIfJaat9r1F+9sSh0AlVguQltZBVwVsTwsDDA=",
 }:
 
 buildNpmPackage rec {
   pname = "paseo";
-  version = "0.15.0-smdex.2";
-  # Pin the fork's verified feature revision rather than its stale release tag.
-
+  version = "0.16.0-smdex.2";
   src = fetchFromGitHub {
     owner = "smdex";
     repo = "paseo";
-    rev = "5bf8843f827fc227be2a77ab0b8185ee83b51e5e";
-    hash = "sha256-kSZstBxiyOkeXLV/kp57ETcB3ep8AnTUoHp/4DO3pVU=";
+    tag = "v${version}";
+    hash = "sha256-Uo1lS9D2xW/i0Aw3r80d5x6OxDRQjMv+oCRL0XbJRE0=";
   };
 
   nodejs = nodejs_22;
@@ -76,15 +74,6 @@ buildNpmPackage rec {
 
   # Don't use the default npm build hook — we need a custom build sequence
   dontNpmBuild = true;
-
-  # Expo evaluates native version metadata even for web exports. Upstream's
-  # native-version parser rejects our fork suffix; preserve it everywhere else.
-  # Run after npm ci so workspace manifests and the dependency lock stay intact.
-  preBuild = ''
-    substituteInPlace packages/app/app.config.js \
-      --replace-fail 'getNativeReleaseVersion(pkg.version)' \
-      'getNativeReleaseVersion(pkg.version.replace(/-smdex(?:\.[0-9]+)?$/, ""))'
-  '';
 
   buildPhase = ''
     runHook preBuild
@@ -156,7 +145,7 @@ buildNpmPackage rec {
   meta = {
     description = "Self-hosted daemon for AI coding agents (server + CLI)";
     homepage = "https://github.com/getpaseo/paseo";
-    changelog = "https://github.com/smdex/paseo/commits/${src.rev}";
+    changelog = "https://github.com/smdex/paseo/releases/tag/v${version}";
     license = lib.licenses.asl20;
     sourceProvenance = with lib.sourceTypes; [ fromSource ];
     maintainers = with flake.lib.maintainers; [ smdex ];
