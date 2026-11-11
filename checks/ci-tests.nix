@@ -19,14 +19,15 @@ pkgs.runCommand "ci-tests-check"
     ];
   }
   ''
-    mkdir -p packages
+    mkdir -p packages .github
     cp -r ${flake}/scripts scripts
+    cp -r ${flake}/.github/ci .github/ci
     cp -r ${flake}/packages/vibe-kanban packages/
-    chmod -R +w scripts packages
+    chmod -R +w scripts packages .github
     cd scripts
     export HOME=$TMPDIR
     export PYTHONDONTWRITEBYTECODE=1
-    python3 -m unittest discover -s ci -p '*_test.py' -t . -v
+    PYTHONPATH=$PWD/.. python3 -m unittest discover -s ci -p '*_test.py' -t . -v
     PYTHONPATH=$PWD python3 ../packages/vibe-kanban/update_test.py -v
     touch $out
   ''
