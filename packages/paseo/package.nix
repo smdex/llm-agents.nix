@@ -18,21 +18,21 @@
   # `overrideAttrs` gymnastics.
   npmDepsHash ?
     {
-      x86_64-linux = "sha256-vNjHqtCpwnqK4rjCwF2eKk21LtP4/coCWjOQKByJQc8=";
-      aarch64-linux = "sha256-rSYhfc9srlvZmbLF6Qo9V6n5pyf16qi1xdpfN+LjYCQ=";
-      aarch64-darwin = "sha256-5aUi0b0/5dPXsDa3Fox95kxW+sbv4vRxhqVPwHSaAGg=";
+      x86_64-linux = "sha256-wuhp8/s5x9lkxKVUoGVVBd/O4SJjqGAxlOSY41KHYEs=";
+      aarch64-linux = "sha256-xm8BqVvwWdW9YWF89qg8nhlaAzeukaW+hcgDWJKv7jY=";
+      aarch64-darwin = "sha256-H5wmnkb+IZ2b+mplNg3rkL4/yJ/N71Bi5gmXHLFuqdQ=";
     }
-    .${stdenv.hostPlatform.system} or "sha256-ObHi7JSIfJaat9r1F+9sSh0AlVguQltZBVwVsTwsDDA=",
+    .${stdenv.hostPlatform.system} or "sha256-eD211xBbhBcOMuv/79qTd/7AuE0+3SFuO806Vqs3mAA=",
 }:
 
 buildNpmPackage rec {
   pname = "paseo";
-  version = "0.16.0-smdex.2";
+  version = "0.16.0-smdex.3";
   src = fetchFromGitHub {
     owner = "smdex";
     repo = "paseo";
     tag = "v${version}";
-    hash = "sha256-Uo1lS9D2xW/i0Aw3r80d5x6OxDRQjMv+oCRL0XbJRE0=";
+    hash = "sha256-y39tqADxey/NKfnpEpu42gPdgcU3Wb/rjX13aJHK4fA=";
   };
 
   nodejs = nodejs_22;
