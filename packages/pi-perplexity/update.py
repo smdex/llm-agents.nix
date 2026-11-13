@@ -25,7 +25,7 @@ def update(pkg_dir: Path) -> None:
         msg = "Expected a full published Git commit"
         raise ValueError(msg)
     manifest = fetch_json(
-        f"https://raw.githubusercontent.com/smdex/pi-perplexity/{rev}/cli/package.json"
+        f"https://raw.githubusercontent.com/smdex/pi-perplexity/{rev}/package.json"
     )
     version = manifest.get("version") if isinstance(manifest, dict) else None
     if not isinstance(version, str) or not re.fullmatch(

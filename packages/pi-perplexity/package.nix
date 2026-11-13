@@ -14,11 +14,10 @@ let
     repo = "pi-perplexity";
     inherit (hashes) rev hash;
   };
-  cli = "${src}/cli";
   bunDeps = stdenvNoCC.mkDerivation {
     pname = "pplx-bun-deps";
     inherit version;
-    src = cli;
+    src = src;
     nativeBuildInputs = [ bun ];
     buildPhase = ''
       export HOME=$TMPDIR XDG_CACHE_HOME=$TMPDIR/xdg-cache
@@ -37,7 +36,7 @@ in
 stdenvNoCC.mkDerivation {
   pname = "pplx";
   inherit version;
-  src = cli;
+  src = src;
   nativeBuildInputs = [ bun ];
   buildPhase = ''
     cp -R ${bunDeps}/node_modules ./node_modules
@@ -49,7 +48,7 @@ stdenvNoCC.mkDerivation {
     install -Dm644 pplx.js $out/lib/pplx/pplx.js
     install -Dm755 pplx.js $out/bin/pplx
     patchShebangs $out/bin/pplx
-    install -Dm644 ${cli}/skills/perplexity-cli/SKILL.md $out/share/pplx/skills/perplexity-cli/SKILL.md
+    install -Dm644 ${src}/skills/perplexity-cli/SKILL.md $out/share/pplx/skills/perplexity-cli/SKILL.md
   '';
   doInstallCheck = true;
   nativeInstallCheckInputs = [ versionCheckHook ];
