@@ -1368,6 +1368,16 @@ Nix packages for AI coding agents and development tools. Automatically updated d
 
 </details>
 <details>
+<summary><strong>sheprd</strong> - Native GPUI client for an existing local Herdr daemon (Sheprd, renamed from herdr-gpui)</summary>
+
+- **Source**: source
+- **License**: Apache-2.0
+- **Homepage**: https://herdrui.dev
+- **Usage**: `nix run github:numtide/llm-agents.nix#sheprd -- --help`
+- **Nix**: [packages/sheprd/package.nix](packages/sheprd/package.nix)
+
+</details>
+<details>
 <summary><strong>sidecar</strong> - Terminal-based development companion for AI coding agents</summary>
 
 - **Source**: source
