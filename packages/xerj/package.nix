@@ -1,6 +1,10 @@
 {
   lib,
   flake,
+  stdenv,
+  callPackage,
+  makeRustPlatform,
+  cargo,
   rustPlatform,
   fetchFromGitHub,
   pkg-config,
@@ -11,19 +15,32 @@
   versionCheckHomeHook,
 }:
 
-rustPlatform.buildRustPackage rec {
+let
+  # candle-core fails llvm.x86.avx512.vpdpbusd.512 intrinsic signature check under
+  # nixpkgs Rust/LLVM21 on x86_64-linux; build that platform with the vtcode-pinned
+  # rust1.99.1 (LLVM22) toolchain. Other platforms keep the default rustPlatform.
+  rustPlatform' =
+    if stdenv.hostPlatform.isx86_64 && stdenv.hostPlatform.isLinux then
+      makeRustPlatform {
+        rustc = callPackage ../vtcode/rust-toolchain.nix { };
+        inherit cargo;
+      }
+    else
+      rustPlatform;
+in
+rustPlatform'.buildRustPackage rec {
   pname = "xerj";
-  version = "1.0.0-rc.100";
+  version = "1.0.0-rc.102";
 
   src = fetchFromGitHub {
     owner = "xerj-org";
     repo = "xerj";
     tag = "v${version}";
-    hash = "sha256-vtO+HFiBvzTmZrNcx9oMTfCGIpBnQYtVoVTHEY4HEmE=";
+    hash = "sha256-hACHohJJ4FCNXP13X16sy7IxiX6KAPi/clp+AIzTNTc=";
   };
 
   sourceRoot = "source/engine";
-  cargoHash = "sha256-8WKumTxOQnr8tO2AaV1KpNOcI1I9+CwH4TTSqpt78yM=";
+  cargoHash = "sha256-SNP9oR3WRsoe26hePiQliiFegyl/i1rADgXPRxnL91w=";
 
   cargoBuildFlags = [
     "-p"
