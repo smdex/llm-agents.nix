@@ -72,6 +72,60 @@ class StashTest(unittest.TestCase):
         self.assertEqual(run.call_args.kwargs["env"]["UPDATE_BASE_REF"], "origin/chiki")
 
 
+class UpdaterRetryTest(unittest.TestCase):
+    def test_transient_failure_restarts_cleanly_and_discards_stale_output(self) -> None:
+        calls = 0
+
+        def run(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+            nonlocal calls
+            calls += 1
+            output = Path(kwargs["env"]["GITHUB_OUTPUT"])
+            self.assertEqual(output.read_text(), "")
+            if calls == 1:
+                output.write_text("updated=true\nnew_version=bogus\n")
+                return subprocess.CompletedProcess(
+                    cmd, 1, "http.client.IncompleteRead:", ""
+                )
+            output.write_text("updated=false\n")
+            return subprocess.CompletedProcess(cmd, 0, "", "")
+
+        with (
+            mock.patch.object(driver, "run", side_effect=run),
+            mock.patch.object(driver, "prepare_branch") as prepare,
+            mock.patch.object(driver.time, "sleep") as sleep,
+        ):
+            self.assertEqual(
+                driver.run_updater("xerj", Path("ci"), default_branch="chiki"),
+                {"updated": "false"},
+            )
+        prepare.assert_called_once_with("xerj", default_branch="chiki")
+        sleep.assert_called_once_with(2)
+        self.assertEqual(calls, 2)
+
+    def test_network_retries_are_bounded(self) -> None:
+        result = subprocess.CompletedProcess([], 1, "http.client.IncompleteRead:", "")
+        with (
+            mock.patch.object(driver, "run", return_value=result) as run,
+            mock.patch.object(driver, "prepare_branch") as prepare,
+            mock.patch.object(driver.time, "sleep"),
+        ):
+            self.assertIsNone(driver.run_updater("xerj", Path("ci")))
+        self.assertEqual(run.call_count, 3)
+        self.assertEqual(prepare.call_count, 2)
+
+    def test_permanent_errors_are_not_retried(self) -> None:
+        result = subprocess.CompletedProcess([], 1, "HTTP Error 404: Not Found", "")
+        with (
+            mock.patch.object(driver, "run", return_value=result) as run,
+            mock.patch.object(driver, "prepare_branch") as prepare,
+            mock.patch.object(driver.time, "sleep") as sleep,
+        ):
+            self.assertIsNone(driver.run_updater("pi-perplexity", Path("ci")))
+        run.assert_called_once()
+        prepare.assert_not_called()
+        sleep.assert_not_called()
+
+
 class ForkPackagesTest(unittest.TestCase):
     def test_selection_is_validated_by_detection_script(self) -> None:
         env = {"FORK_UPDATE_PACKAGES": "paseo pi-perplexity"}
@@ -271,6 +325,10 @@ class ProcessPackageTest(unittest.TestCase):
 
     def test_no_changes_publishes_nothing(self) -> None:
         self.assertTrue(self.run_process({"updated": "false"}))
+        self.assertIsNone(self.publish.kwargs)
+
+    def test_missing_update_result_is_failure_not_no_changes(self) -> None:
+        self.assertFalse(self.run_process({}))
         self.assertIsNone(self.publish.kwargs)
 
     def test_updater_failure_reports_failure(self) -> None:
