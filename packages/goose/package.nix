@@ -56,7 +56,11 @@ rustPlatform.buildRustPackage rec {
   nativeInstallCheckInputs = [ versionCheckHook ];
   versionCheckProgram = "${placeholder "out"}/bin/goosed";
 
-  passthru.category = "AI Coding Agents";
+  passthru = {
+    category = "AI Coding Agents";
+    # Later releases removed goose-server; this is a legacy compatibility pin.
+    skipUpdate = true;
+  };
 
   meta = {
     description = "Legacy Goose server for the Electron desktop integration";

@@ -1,6 +1,6 @@
 #!/usr/bin/env nix
 #! nix shell --inputs-from .# nixpkgs#python3 --command python3
 
-"""Goose TUI follows the legacy Goose 1.x source release used by goose-cli."""
+"""The legacy TUI frontend and its private ACP backend are manually pinned."""
 
-print("goose-tui is locked to goose-cli; run packages/goose-cli/update.py")
+print("goose-tui is manually pinned; review its frontend and goose2/cli.nix together")
