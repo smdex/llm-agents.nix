@@ -109,6 +109,39 @@ class SyncTest(unittest.TestCase):
             self.git(self.origin, "rev-parse", "maintenance/chiki-base"), main
         )
 
+    def test_chiki_marker_before_shared_fork_commits_does_not_replay_them(self) -> None:
+        upstream_base = self.git(self.fork, "rev-parse", "HEAD")
+        self.commit(self.fork, "scripts/ci/shared.py", "shared fork infrastructure\n")
+        self.git(self.fork, "checkout", "-qb", "chiki")
+        self.commit(self.fork, "packages/shared/package.nix", "chiki override\n")
+        self.git(
+            self.fork,
+            "push",
+            "-q",
+            "origin",
+            "main",
+            "chiki",
+            f"{upstream_base}:refs/heads/maintenance/chiki-base",
+        )
+        self.git(self.fork, "checkout", "-q", "main")
+        self.commit(self.fork, "scripts/ci/shared.py", "updated main infrastructure\n")
+        self.git(self.fork, "push", "-q", "origin", "main")
+        self.env["SYNC_BRANCH"] = "chiki"
+        result = self.sync()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            self.git(self.origin, "show", "chiki:scripts/ci/shared.py"),
+            "updated main infrastructure",
+        )
+        self.assertEqual(
+            self.git(self.origin, "show", "chiki:packages/shared/package.nix"),
+            "chiki override",
+        )
+        self.assertEqual(
+            self.git(self.origin, "rev-parse", "maintenance/chiki-base"),
+            self.git(self.origin, "rev-parse", "main"),
+        )
+
     def test_chiki_requires_valid_old_main(self) -> None:
         self.git(self.fork, "checkout", "-qb", "chiki")
         self.commit(self.fork, "chiki.txt", "chiki\n")

@@ -57,7 +57,7 @@ push_result() {
   local -a push_args=(--force-with-lease="refs/heads/${target_branch}:${base_sha}")
   local -a refspecs=("HEAD:refs/heads/${target_branch}")
   if [[ $sync_branch == chiki ]]; then
-    push_args+=(--atomic --force-with-lease="refs/heads/maintenance/chiki-base:${fork_base}")
+    push_args+=(--atomic --force-with-lease="refs/heads/maintenance/chiki-base:${marker_sha}")
     refspecs+=("${upstream_sha}:refs/heads/maintenance/chiki-base")
   fi
   GIT_CONFIG_COUNT=5 \
@@ -93,9 +93,10 @@ main() {
     # Fetch the marker explicitly: a missing remote ref must never reuse a stale local ref.
     git fetch origin "+refs/heads/${default_branch}:refs/remotes/origin/${default_branch}" "+refs/heads/chiki:refs/remotes/origin/chiki" "+refs/heads/maintenance/chiki-base:refs/remotes/origin/maintenance/chiki-base"
     git checkout -B chiki origin/chiki
-    local base_sha fork_base upstream upstream_sha
+    local base_sha fork_base marker_sha upstream upstream_sha
     base_sha="$(git rev-parse origin/chiki)"
     fork_base="$(git rev-parse 'origin/maintenance/chiki-base^{commit}')"
+    marker_sha="$fork_base"
     upstream_sha="$(git rev-parse "origin/${default_branch}^{commit}")"
     upstream="$upstream_sha"
     if ! git merge-base --is-ancestor "$fork_base" HEAD; then
@@ -105,6 +106,14 @@ main() {
     if [[ $upstream_sha != "$fork_base" ]] && git merge-base --is-ancestor "$upstream_sha" "$fork_base"; then
       echo "ERROR: origin/${default_branch} is older than maintenance/chiki-base" >&2
       return 1
+    fi
+    # A manually bootstrapped marker may name an upstream commit rather than
+    # the fork main already shared by both branches. Do not replay that shared
+    # infrastructure. For rewritten main, keep the durable marker as before.
+    local common_base
+    common_base="$(git merge-base "$upstream" HEAD)"
+    if git merge-base --is-ancestor "$fork_base" "$common_base"; then
+      fork_base="$common_base"
     fi
     if git merge-base --is-ancestor "$upstream" HEAD; then
       push_result
