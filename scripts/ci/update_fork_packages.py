@@ -207,7 +207,9 @@ def discover_updates(packages: list[str], stashed_ci: Path) -> list[dict[str, st
     discovered = {item["name"] for item in items}
     skipped = [package for package in packages if package not in discovered]
     if skipped:
-        log.info("no version attribute / hidden from discovery: %s", " ".join(skipped))
+        log.info(
+            "Skipped by discovery (skipUpdate or no version): %s", " ".join(skipped)
+        )
     return items
 
 
@@ -256,7 +258,8 @@ def run_updater(
     env = sanitized_updater_env(
         {"GITHUB_OUTPUT": output_path, "UPDATE_BASE_REF": f"origin/{default_branch}"}
     )
-    for attempt in range(3):
+    attempts = 3
+    for attempt in range(attempts):
         # A failed updater may leave partial hashes or output behind. Reuse the
         # original branch, not those edits, when retrying a broken connection.
         Path(output_path).write_text("")
@@ -279,11 +282,14 @@ def run_updater(
                 "HTTP Error 504:",
             )
         )
-        if not transient or attempt == 2:
+        if not transient or attempt + 1 == attempts:
             log.error("updater failed for %s: %s", package, result.stderr.strip())
             return None
         log.warning(
-            "Transient network failure for %s; retrying (%d/3)", package, attempt + 2
+            "Transient network failure for %s; retrying (%d/%d)",
+            package,
+            attempt + 2,
+            attempts,
         )
         time.sleep(2 ** (attempt + 1))
         prepare_branch(package, default_branch=default_branch)
