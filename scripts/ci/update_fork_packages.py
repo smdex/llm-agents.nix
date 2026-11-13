@@ -1,5 +1,5 @@
 #!/usr/bin/env nix
-#! nix shell --inputs-from .# nixpkgs#python3 nixpkgs#git --command python3
+#! nix shell --inputs-from .# nixpkgs#python3 nixpkgs#git nixpkgs#coreutils --command python3
 """Drive fork-only package updates and publish them as GitLab MRs.
 
 Fork-only packages are the directory set difference ``packages/`` on the
@@ -259,19 +259,30 @@ def run_updater(
         {"GITHUB_OUTPUT": output_path, "UPDATE_BASE_REF": f"origin/{default_branch}"}
     )
     attempts = 3
+    timeout = os.environ.get("PACKAGE_UPDATE_TIMEOUT", "1800")
+    log.info("Updating %s (updater limit: %ss)", package, timeout)
     for attempt in range(attempts):
         # A failed updater may leave partial hashes or output behind. Reuse the
         # original branch, not those edits, when retrying a broken connection.
         Path(output_path).write_text("")
         result = run(
-            python_in_devshell(stashed_ci / "update.py", "package", package),
+            [
+                "timeout",
+                "--kill-after=30s",
+                f"{timeout}s",
+                *python_in_devshell(stashed_ci / "update.py", "package", package),
+            ],
             env=env,
             check=False,
         )
         if result.stdout:
             sys.stdout.write(result.stdout)
+            sys.stdout.flush()
         if result.returncode == 0:
             break
+        if result.returncode in (124, 137):
+            log.error("updater timed out for %s after %ss", package, timeout)
+            return None
         transient = any(
             error in result.stdout + result.stderr
             for error in (
