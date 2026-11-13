@@ -56,16 +56,16 @@ in
 buildNpmPackage rec {
   npmDepsFetcherVersion = 2;
   pname = "ruflo";
-  version = "3.77.0";
+  version = "3.77.1";
 
   src = fetchFromGitHub {
     owner = "ruvnet";
     repo = "ruflo";
     tag = "v${version}";
-    hash = "sha256-PTkuJiclLXUVRSo/3KkIOVfEqePReparCU+GutAMYF8=";
+    hash = "sha256-4dvmtVxRDY9qgC4JzkMq+bf8rr9Sl40rmZuqLKCl3g8=";
   };
 
-  npmDepsHash = "sha256-+sZK0iErgP95TilGFKJIjRAT4he60pYfKhzP9pReRtc=";
+  npmDepsHash = "sha256-iV48H+nRsGVyJbdKZ+2L9Y43g3GLLyh4hosT8xokIQc=";
   makeCacheWritable = true;
 
   nativeBuildInputs = [ makeWrapper ];
