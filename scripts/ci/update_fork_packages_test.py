@@ -73,6 +73,40 @@ class StashTest(unittest.TestCase):
 
 
 class UpdaterRetryTest(unittest.TestCase):
+    def test_updater_has_a_default_process_group_deadline(self) -> None:
+        result = subprocess.CompletedProcess([], 0, "", "")
+        with (
+            mock.patch.dict(os.environ, {}, clear=True),
+            mock.patch.object(driver, "run", return_value=result) as run,
+        ):
+            self.assertEqual(driver.run_updater("sheprd", Path("ci")), {})
+        self.assertEqual(
+            run.call_args.args[0][:3], ["timeout", "--kill-after=30s", "1800s"]
+        )
+
+    def test_timeout_is_configurable_and_not_retried(self) -> None:
+        for code in (124, 137):
+            with (
+                self.subTest(returncode=code),
+                mock.patch.dict(os.environ, {"PACKAGE_UPDATE_TIMEOUT": "60"}),
+                mock.patch.object(
+                    driver,
+                    "run",
+                    return_value=subprocess.CompletedProcess(
+                        [], code, "HTTP Error 503: Service Unavailable", ""
+                    ),
+                ) as run,
+                mock.patch.object(driver, "prepare_branch") as prepare,
+                mock.patch.object(driver.time, "sleep") as sleep,
+                self.assertLogs(driver.log, level="ERROR") as logs,
+            ):
+                self.assertIsNone(driver.run_updater("sheprd", Path("ci")))
+                run.assert_called_once()
+                self.assertEqual(run.call_args.args[0][2], "60s")
+                self.assertIn("timed out for sheprd after 60s", logs.output[0])
+                prepare.assert_not_called()
+                sleep.assert_not_called()
+
     def test_transient_failure_restarts_cleanly_and_discards_stale_output(self) -> None:
         calls = 0
 

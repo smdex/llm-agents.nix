@@ -27,7 +27,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   # The source's release_version::numeric() only accepts YYYYMMDD.COUNTER;
   # a fork-suffixed value is rejected as malformed, so the env stamps the
   # upstream release base while the nix version identifies the fork tag.
-  env.HERDR_RELEASE_VERSION = "20261112.1";
+  env.HERDR_RELEASE_VERSION = lib.head (lib.splitString "-smdex." finalAttrs.version);
 
   src = fetchFromGitHub {
     owner = "smdex";

@@ -79,6 +79,8 @@ variables:
     - !reference [default, before_script]
     - export GL_TOKEN="${GL_CHIKI_TOKEN:?GL_CHIKI_TOKEN is required}"
 .update-packages:
+  # A slow dependency refresh must not consume the entire batch's budget.
+  timeout: 3h
   # Keep successfully published updates mergeable after partial failures.
   allow_failure:
     exit_codes: [1]
