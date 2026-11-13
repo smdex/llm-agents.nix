@@ -45,7 +45,8 @@ class CliUpdaterTest(unittest.TestCase):
         ):
             run_update(self.pkg)
         source.assert_not_called()
-        self.assertIn("/cli/package.json", fetch.call_args.args[0])
+        self.assertIn("/package.json", fetch.call_args.args[0])
+        self.assertNotIn("/cli/", fetch.call_args.args[0])
         self.assertEqual(json.loads(self.file.read_text()), self.original)
 
     def test_same_version_new_commit_refreshes_source_and_real_dependency_hasher(
