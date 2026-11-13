@@ -34,6 +34,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -255,16 +256,37 @@ def run_updater(
     env = sanitized_updater_env(
         {"GITHUB_OUTPUT": output_path, "UPDATE_BASE_REF": f"origin/{default_branch}"}
     )
-    result = run(
-        python_in_devshell(stashed_ci / "update.py", "package", package),
-        env=env,
-        check=False,
-    )
-    if result.stdout:
-        sys.stdout.write(result.stdout)
-    if result.returncode != 0:
-        log.error("updater failed for %s: %s", package, result.stderr.strip())
-        return None
+    for attempt in range(3):
+        # A failed updater may leave partial hashes or output behind. Reuse the
+        # original branch, not those edits, when retrying a broken connection.
+        Path(output_path).write_text("")
+        result = run(
+            python_in_devshell(stashed_ci / "update.py", "package", package),
+            env=env,
+            check=False,
+        )
+        if result.stdout:
+            sys.stdout.write(result.stdout)
+        if result.returncode == 0:
+            break
+        transient = any(
+            error in result.stdout + result.stderr
+            for error in (
+                "http.client.IncompleteRead:",
+                "ConnectionResetError:",
+                "HTTP Error 502:",
+                "HTTP Error 503:",
+                "HTTP Error 504:",
+            )
+        )
+        if not transient or attempt == 2:
+            log.error("updater failed for %s: %s", package, result.stderr.strip())
+            return None
+        log.warning(
+            "Transient network failure for %s; retrying (%d/3)", package, attempt + 2
+        )
+        time.sleep(2 ** (attempt + 1))
+        prepare_branch(package, default_branch=default_branch)
 
     outputs: dict[str, str] = {}
     with Path(output_path).open() as handle:
@@ -329,9 +351,12 @@ def process_package(
     if outputs is None:
         log.error("Update failed for %s", name)
         return False
-    if outputs.get("updated") != "true":
-        log.info("No changes for %s", name)
+    if outputs.get("updated") == "false":
+        log.info("No package changes for %s (discovered version: %s)", name, current)
         return True
+    if outputs.get("updated") != "true":
+        log.error("Updater for %s did not report an update result", name)
+        return False
 
     new = outputs.get("new_version", "unknown")
     allow_downgrade = os.environ.get("ALLOW_DOWNGRADE", "") == "1"
