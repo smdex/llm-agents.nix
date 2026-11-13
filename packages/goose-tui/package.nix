@@ -98,7 +98,11 @@ stdenv.mkDerivation (finalAttrs: {
     version="$(node -p "require('./text/package.json').version")"
   '';
 
-  passthru.category = "AI Coding Agents";
+  passthru = {
+    category = "AI Coding Agents";
+    # Legacy frontend with a separately verified private ACP backend.
+    skipUpdate = true;
+  };
 
   meta = with lib; {
     description = "TypeScript terminal UI for Goose";
