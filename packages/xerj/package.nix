@@ -20,6 +20,8 @@ let
   # candle-core fails llvm.x86.avx512.vpdpbusd.512 intrinsic signature check under
   # nixpkgs Rust/LLVM21 on x86_64-linux; build that platform with the vtcode-pinned
   # rust1.99.1 (LLVM22) toolchain. Other platforms keep the default rustPlatform.
+  # The pinned rustc is not the nixpkgs-wrapped rustc, so runtime rpaths are
+  # missing; formatelf fixes them on Linux using the declared runtime libraries.
   rustPlatform' =
     if stdenv.hostPlatform.isx86_64 && stdenv.hostPlatform.isLinux then
       makeRustPlatform {
@@ -60,7 +62,7 @@ rustPlatform'.buildRustPackage rec {
     makeWrapper
   ]
   ++ lib.optionals stdenv.hostPlatform.isLinux [ formatelf ];
-  buildInputs = [ openssl ];
+  buildInputs = [ openssl ] ++ lib.optionals stdenv.hostPlatform.isLinux [ stdenv.cc.cc.lib ];
   env.OPENSSL_NO_VENDOR = "1";
 
   postInstall = ''
