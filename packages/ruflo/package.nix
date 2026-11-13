@@ -12,8 +12,8 @@
 let
   nativeDeps = {
     ruvector-attention-linux-x64-gnu = fetchzip {
-      url = "https://registry.npmjs.org/@ruvector/attention-linux-x64-gnu/-/attention-linux-x64-gnu-0.1.31.tgz";
-      hash = "sha256-kskyJQm8fUdTP8TDJbsY5ILkyJJIWUFCf+leR98ph6c=";
+      url = "https://registry.npmjs.org/@ruvector/attention-linux-x64-gnu/-/attention-linux-x64-gnu-2.2.3.tgz";
+      hash = "sha256-rqqAR7nNagRmq0UbnGCw828uZy7J25sjlnITAthFfXE=";
     };
     ruvector-gnn-linux-x64-gnu = fetchzip {
       url = "https://registry.npmjs.org/@ruvector/gnn-linux-x64-gnu/-/gnn-linux-x64-gnu-0.1.25.tgz";
@@ -44,8 +44,8 @@ let
       hash = "sha256-g7BWuHjC4G7vK0BB0SLULykB0hfunNenqr80eNEb6CA=";
     };
     ruvector-sona-linux-x64-gnu = fetchzip {
-      url = "https://registry.npmjs.org/@ruvector/sona-linux-x64-gnu/-/sona-linux-x64-gnu-0.1.5.tgz";
-      hash = "sha256-wYN62cgI3sRSkrcri2I+7NyETDklfRAQpFW4SYzXOh0=";
+      url = "https://registry.npmjs.org/@ruvector/sona-linux-x64-gnu/-/sona-linux-x64-gnu-0.1.11.tgz";
+      hash = "sha256-vzR3rLUMpUw3pbYsJ4wiO0k+S96xbMiQNYiMJsinlqM=";
     };
     ruvector-tiny-dancer-linux-x64-gnu = fetchzip {
       url = "https://registry.npmjs.org/@ruvector/tiny-dancer-linux-x64-gnu/-/tiny-dancer-linux-x64-gnu-0.1.22.tgz";
@@ -56,16 +56,16 @@ in
 buildNpmPackage rec {
   npmDepsFetcherVersion = 2;
   pname = "ruflo";
-  version = "3.71.4";
+  version = "3.77.0";
 
   src = fetchFromGitHub {
     owner = "ruvnet";
     repo = "ruflo";
     tag = "v${version}";
-    hash = "sha256-fPP7whZdy+JjNJnlPAiEn2Y+WCGTjO295b4mIJYmA4g=";
+    hash = "sha256-PTkuJiclLXUVRSo/3KkIOVfEqePReparCU+GutAMYF8=";
   };
 
-  npmDepsHash = "sha256-Tr0LLZb1rH+VzyqkpfC4JuZGGawfTQ6Sosq1IfQv3o0=";
+  npmDepsHash = "sha256-+sZK0iErgP95TilGFKJIjRAT4he60pYfKhzP9pReRtc=";
   makeCacheWritable = true;
 
   nativeBuildInputs = [ makeWrapper ];
