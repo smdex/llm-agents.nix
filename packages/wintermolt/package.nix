@@ -3,7 +3,7 @@
   flake,
   stdenv,
   fetchFromGitHub,
-  zig_0_15,
+  zig_0_16,
   pkg-config,
   curl,
   sqlite,
@@ -13,17 +13,17 @@
 
 stdenv.mkDerivation rec {
   pname = "wintermolt";
-  version = "0.5.0";
+  version = "0.7.0";
 
   src = fetchFromGitHub {
     owner = "lupin4";
     repo = "wintermolt";
     tag = "v${version}";
-    hash = "sha256-9t85SmW2z0csC6ThRrnsjS/ei56EJbdECDm/23H/DVk=";
+    hash = "sha256-VZeKChfWrifRXUZUsJoekhFv/Lb5HeqVtUD57bHDtVM=";
   };
 
   nativeBuildInputs = [
-    zig_0_15.hook
+    zig_0_16.hook
     pkg-config
   ];
   buildInputs = [
