@@ -11,6 +11,7 @@
   openssl,
   git,
   makeWrapper,
+  formatelf,
   versionCheckHook,
   versionCheckHomeHook,
 }:
@@ -57,7 +58,8 @@ rustPlatform'.buildRustPackage rec {
   nativeBuildInputs = [
     pkg-config
     makeWrapper
-  ];
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isLinux [ formatelf ];
   buildInputs = [ openssl ];
   env.OPENSSL_NO_VENDOR = "1";
 
