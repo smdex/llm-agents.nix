@@ -23,7 +23,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   pname = "sheprd";
   # Release tag from the sheprd-labs/sheprd rename; published as the smdex
   # fork tag on GitHub and mirrored to gitlab smaximov/sheprd.
-  version = "20261112.1-smdex.2";
+  version = "20261113.1-smdex.1";
   # The source's release_version::numeric() only accepts YYYYMMDD.COUNTER;
   # a fork-suffixed value is rejected as malformed, so the env stamps the
   # upstream release base while the nix version identifies the fork tag.
@@ -33,7 +33,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     owner = "smdex";
     repo = "herdr-gpui";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-kwLC9VW4FHOB6RgUX30EFXcdQLytqMeuoY0RjCI5JdM=";
+    hash = "sha256-MRuHe8AkzU7Ydf3L8V2LYMVniwJNmXWIH7Luebzf334=";
   };
 
   cargoHash = "sha256-WZv1lGiMVcIBmBbg2wIkJR0qdeN531yrbj77sykNvL0=";
