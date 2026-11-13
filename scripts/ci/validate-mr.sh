@@ -6,8 +6,8 @@
 #
 # Runs (mirroring the GitHub PR checks plus a targeted build):
 #   1. treefmt formatting/lint gate (--fail-on-change); a full
-#      `nix flake check` is deliberately NOT run — it is currently
-#      blocked by an unrelated insecure electron dependency.
+#      `nix flake check` would build every package, so the targeted
+#      package build below bounds validation time and disk usage.
 #   2. maintainers check for newly added packages (reuses
 #      .github/ci/check_maintainers.py) — only when packages/** changed.
 #   3. README regeneration check (reuses scripts/generate-package-docs.nu)
