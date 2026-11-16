@@ -3,13 +3,13 @@
 
 """Update script for vibe-kanban package.
 
-vibe-kanban is the rare GitHub project where the release tag carries a
-timestamp suffix (`v0.1.44-20260424091429`). nix-update can't parse
-that, and the package layers a second prebuilt-zip asset on top of the
-normal source + cargoHash + npmDepsHash for a baked-in react-virtuoso
-licence key, so we drive the update through hashes.json by hand.
+vibe-kanban release tags carry either a dash-separated timestamp
+(`v0.1.44-20260424091429`) or a dot-separated epoch (`v0.1.46.1794744340`).
+The package also needs a prebuilt asset for its baked-in react-virtuoso
+licence key, in addition to source, cargoHash and npmDepsHash.
 """
 
+import re
 import sys
 from pathlib import Path
 
@@ -33,15 +33,18 @@ REPO = "vibe-kanban"
 def fetch_latest_release() -> tuple[str, str, dict[str, object]]:
     """Return (tag, semver, release) of the latest release.
 
-    Tags look like `v0.1.44-20260424091429`; strip the `v` and timestamp
-    suffix to derive the semver used as `version`.
+    Tags carry a dash- or dot-separated timestamp after the semver.
     """
     data = fetch_json(f"https://api.github.com/repos/{OWNER}/{REPO}/releases/latest")
     if not isinstance(data, dict):
         msg = f"Expected dict from GitHub API, got {type(data)}"
         raise TypeError(msg)
     tag: str = data["tag_name"]
-    return tag, tag.lstrip("v").split("-", 1)[0], data
+    match = re.fullmatch(r"v?(\d+\.\d+\.\d+)(?:[-.]\d+)?", tag)
+    if not match:
+        message = f"Cannot parse release version from tag {tag!r}"
+        raise ValueError(message)
+    return tag, match[1], data
 
 
 def release_asset_url(release: dict[str, object], expected_name: str) -> str:
@@ -82,7 +85,7 @@ def main() -> None:
         return
 
     src_url = str(release["tarball_url"])
-    zip_url = release_asset_url(release, f"vibe-kanban-{tag}.zip")
+    zip_url = release_asset_url(release, "linux-x64-vibe-kanban.zip")
 
     new_data = {
         "version": latest,
@@ -94,10 +97,13 @@ def main() -> None:
     }
     save_hashes(HASHES_FILE, new_data)
 
-    # cargoHash and npmDepsHash both fall out of FOD build failures, so
-    # trigger them sequentially.
-    for key in ("cargoHash", "npmDepsHash"):
-        update_dependency_hash(".#vibe-kanban", key, HASHES_FILE, new_data)
+    # Build each fixed-output dependency directly so parallel failures cannot
+    # attribute the frontend hash to cargoHash (or vice versa).
+    for key, attr in (
+        ("cargoHash", ".#vibe-kanban.cargoDeps"),
+        ("npmDepsHash", ".#vibe-kanban.frontend.pnpmDeps"),
+    ):
+        update_dependency_hash(attr, key, HASHES_FILE, new_data)
 
     print(f"Updated to {latest} (tag {tag})")
 

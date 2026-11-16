@@ -73,19 +73,76 @@
   The earlier hand-written unittest command failed because it omitted the
   canonical check's `PYTHONPATH`; no source fix was needed for that invocation
   error.
-- Actual `nix build --accept-flake-config --no-link .#vtcode`: running in Herdr
-  pane `wB:p1S`. Build log and output-path files are outside the repository at
+- Actual `nix build --accept-flake-config --no-link .#vtcode`: passed in Herdr
+  pane `wB:p1S`. Output:
+  `/nix/store/kmzfl2wq5p1xns8s42wcxy0g0c4ap9d4-vtcode-0.182.4`.
+  The resulting binary reports `vtcode-core 0.182.4`. Build log and output-path
+  files are outside the repository at
   `/home/smaximov/src/llm-agents-hermes-ci-build.{log,paths}`.
-- Read-only GLM Flash scout runs in Herdr `wB:p1T` with no write ownership.
-- Commit/bookmark IDs, remote SHA readback and terminal validation pipeline
-  results will be recorded after the build and push. Completion is not claimed.
+- aarch64-linux and aarch64-darwin vtcode derivations both evaluated
+  successfully. They were not built on this x86_64-linux host.
+- Read-only GLM Flash scouting and independent review completed in Herdr.
+  Review found no actionable defect and confirmed the branch-selection
+  regression fails against the parent and passes against the repair.
+- Code commit: `dcb624b8f7e6de717017c591ba4b657f596b943a`, JJ change
+  `pvmyvznn`, bookmark `ci-fix/vtcode`, parent
+  `33e344dd7a25263837cb745f279e4156ca4fc4d2`.
+- Plain `git push --dry-run` followed by plain `git push` created only
+  `refs/heads/ci-fix/vtcode`. No force option or default/update-branch push.
+  GitLab branch API readback returned the exact code commit SHA at 01:01 UTC.
+- MR <https://git.fila.lab/smaximov/llm-agents.nix/-/merge_requests/36> targets
+  main, without automatic merging. Its actual `merge_request_event` pipeline
+  <https://git.fila.lab/smaximov/llm-agents.nix/-/pipelines/10410> has exact SHA
+  `dcb624b8f7e6de717017c591ba4b657f596b943a`. Pipeline 10410 and job 35424
+  **passed**, read back at 01:14 UTC. The real job logged `targeted build: vtcode`, built the Rust 1.100 toolchain and vtcode derivation, and finished
+  `validate-mr: all checks passed` at 01:13:29 UTC. Pipeline finished
+  01:13:39 UTC. This was not formatting-only validation.
+- Long-running monitor for both 10408 and 10410 lives in Herdr pane `wB:p1V`,
+  not a short-lived tool background task. Its log is outside the repository at
+  `/home/smaximov/src/llm-agents-hermes-ci-monitor.log`.
+- Completion is not claimed until actual build and terminal remote verdicts.
+
+## Additional actual failure discovered during monitoring
+
+- Maintenance job 35417 failed with allowed exit 1 at 01:02 UTC. Its only
+  failed package was vibe-kanban: the latest release
+  `v0.1.46.1794744340` no longer publishes the old tag-named source/frontend
+  zip. It publishes platform binary zips instead. Job 35418 subsequently
+  refused still-failing bot MR !35 with allowed exit 3. Those are actual
+  failures, even if the overall maintenance pipeline later appears green.
+- A second read-only GLM Flash scout empirically verified that the official
+  `linux-x64-vibe-kanban.zip` contains the embedded frontend and the same
+  license-key pattern. No key was printed or recorded. Extraction must treat
+  the member as binary. The newer dot-timestamp tag also needs semver parsing.
+- Minimal follow-up modifies `packages/vibe-kanban/{update.py,package.nix, update_test.py,hashes.json}`. Preserve source builds and existing platforms,
+  select the exact current asset, fail if extraction is empty, retain explicit
+  missing-asset errors, and test both timestamp formats. No `skipUpdate`,
+  swallowed exceptions or broader allow-failure rules.
+- The real updater successfully upgraded 0.1.44 to 0.1.46 and regenerated all
+  hashes. The actual frontend and Rust source build passed at 01:35 UTC in
+  Herdr `wB:p1S`, exit 0. Output:
+  `/nix/store/xsr5b85iycyhwlr4imkgaqwnfxv2hcnf-vibe-kanban-0.1.46`.
+  Log: `/home/smaximov/src/llm-agents-hermes-ci-vibe-build.log`.
+- All eight vibe-kanban updater tests, `nix fmt`, the canonical CI-tests
+  derivation, and `nix flake check --no-build` passed on the follow-up.
+- Independent review identified a latent hash-attribution race: building the
+  whole package with two dummy hashes can assign the first failure to the
+  wrong key. The follow-up instead hashes `.cargoDeps` and
+  `.frontend.pnpmDeps` directly, reusing the existing updater helper. The
+  regression asserts both exact targets. The second real downgrade/update
+  round trip passed at 01:38 UTC, exit 0, regenerating identical hashes with
+  those exact targets. aarch64-linux and aarch64-darwin derivations evaluated
+  successfully but were not built on this host.
+- A package-specific `ci-fix/vibe-kanban` branch will exercise its actual remote
+  build independently, without modifying the bot-owned update branch.
 
 ## Remaining actions
 
 1. Complete the actual package build and repository checks, fixing any further
    causal failures rather than bypassing them.
-1. Commit on a task-owned `ci-fix/` bookmark, push without force, read back the
-   remote SHA, and run MR validation to a terminal result.
+1. Monitor the task-owned package-specific CI-fix MRs to terminal results.
+   Only new CI-fix branches and fast-forward follow-ups are pushed.
+   Integration into main and changes to bot-owned MR !35 are not performed.
 1. Monitor maintenance pipeline 10408 to its terminal result and check exact
    parent/default/fork comparisons again. Preserve every fork commit.
 1. Record terminal evidence and any residual integration or platform blockers.
