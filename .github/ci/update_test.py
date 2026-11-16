@@ -1,12 +1,68 @@
 """Tests for the update entry point."""
 
 import os
+import select
+import signal
 import subprocess
+import sys
 import unittest
+from contextlib import suppress
+from pathlib import Path
 from unittest import mock
 
 from discovery import discover_packages
-from update import git_has_changes, refuse_downgrade
+from update import git_has_changes, refuse_downgrade, run_update_command
+
+
+class TestUpdateOutput(unittest.TestCase):
+    def test_child_failure_still_fails_update(self) -> None:
+        with (
+            mock.patch(
+                "update.subprocess.run",
+                return_value=subprocess.CompletedProcess(["updater"], 1),
+            ) as run,
+            self.assertRaises(SystemExit) as error,
+        ):
+            run_update_command(["updater"], "update failed")
+        self.assertEqual(error.exception.code, 1)
+        run.assert_called_once_with(
+            ["updater"], stderr=subprocess.STDOUT, text=True, check=False
+        )
+
+    @unittest.skipUnless(os.name == "posix", "process-group cleanup requires POSIX")
+    def test_child_output_is_visible_before_updater_finishes(self) -> None:
+        child = "import time; print('updater progress', flush=True); time.sleep(30)"
+        parent = (
+            "import sys; from update import run_update_command; "
+            f"run_update_command([sys.executable, '-c', {child!r}], 'failed')"
+        )
+        env = os.environ | {
+            "PYTHONPATH": os.pathsep.join(
+                [str(Path(__file__).parent), os.environ.get("PYTHONPATH", "")]
+            )
+        }
+        process = subprocess.Popen(
+            [sys.executable, "-c", parent],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            env=env,
+            start_new_session=True,
+        )
+        try:
+            assert process.stdout is not None
+            ready, _, _ = select.select([process.stdout], [], [], 5)
+            self.assertTrue(ready, "updater buffered child progress until exit")
+            self.assertEqual(process.stdout.readline(), b"updater progress\n")
+            self.assertIsNone(process.poll())
+        finally:
+            with suppress(ProcessLookupError):
+                os.killpg(process.pid, signal.SIGTERM)
+            try:
+                process.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                with suppress(ProcessLookupError):
+                    os.killpg(process.pid, signal.SIGKILL)
+                process.communicate(timeout=5)
 
 
 class TestRefuseDowngrade(unittest.TestCase):

@@ -92,13 +92,10 @@ def run_update_command(cmd: list[str], error_label: str) -> None:
     """Run an update command, streaming merged stdout+stderr, and exit on failure."""
     result = subprocess.run(
         cmd,
-        stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
         check=False,
     )
-    if result.stdout:
-        sys.stdout.write(result.stdout)
     if result.returncode != 0:
         log.error("::error::%s", error_label)
         sys.exit(1)
