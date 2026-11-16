@@ -12,8 +12,8 @@
 #      .github/ci/check_maintainers.py) — only when packages/** changed.
 #   3. README regeneration check (reuses scripts/generate-package-docs.nu)
 #      — only when packages/** or the generator changed.
-#   4. targeted package build: for update/<package> branches, build the
-#      updated package from the MR's source branch.
+#   4. targeted package build: for update/<package> and ci-fix/<package>
+#      branches, build the package from the MR's source branch.
 #
 # Environment (set by .gitlab-ci.yml):
 #   MR_SOURCE_BRANCH  update/<package> branch (auto-detected from
@@ -58,6 +58,9 @@ fi
 
 if [[ $target_branch == main ]]; then
   prefix='update/'
+  if [[ $source_branch == ci-fix/* ]]; then
+    prefix='ci-fix/'
+  fi
 else
   prefix="update-branch/${target_branch}/"
 fi
