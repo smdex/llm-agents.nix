@@ -7,21 +7,21 @@
   zlib,
 }:
 
-# VTCode requires this stable patch release before nixpkgs provides it.
+# VTCode requires this stable release before nixpkgs provides it.
 let
-  version = "1.99.1";
+  version = "1.100.0";
   target = stdenv.hostPlatform.rust.rustcTarget;
   hashes = {
-    x86_64-linux = "sha256-Ix/K5H7pUGITdHJbX8O1RB0vvaKVWsRd19yBbYh2z+c=";
-    aarch64-linux = "sha256-pI+x6FO+Vs6bjidR9UZNvV4WRAzYHiN5IPOl5+gGMz4=";
-    aarch64-darwin = "sha256-MJdjeLaq79GGG6R1kFxroipEyYFBjOUihQBq8mM3+Yw=";
+    x86_64-linux = "sha256-mO5r7CQOHP6UTxfnCSQS3F724AhIS7ZoxpNtNafRWs0=";
+    aarch64-linux = "sha256-oh9qIYGN8HweLnrdtXCvVESz+p3WHjogf0+xxaXmZck=";
+    aarch64-darwin = "sha256-aLpyn+IN8PdDCe9V/75Rj8mCF38ydlGwYRLvEejh3g0=";
   };
 in
 stdenv.mkDerivation {
   pname = "rust-vtcode";
   inherit version;
   src = fetchurl {
-    url = "https://static.rust-lang.org/dist/2026-10-15/rust-${version}-${target}.tar.xz";
+    url = "https://static.rust-lang.org/dist/2026-11-12/rust-${version}-${target}.tar.xz";
     hash = hashes.${stdenv.hostPlatform.system};
   };
   nativeBuildInputs = lib.optionals stdenv.hostPlatform.isLinux [ patchelf ];
