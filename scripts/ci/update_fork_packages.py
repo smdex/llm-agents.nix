@@ -7,8 +7,8 @@ fork's default branch minus ``packages/`` on upstream — NOT a git-history
 diff: shared upstream packages that this fork modifies are not fork
 additions and stay on the upstream update flow.
 
-The updater itself is reused verbatim from ``.github/ci/discovery.py``
-and ``.github/ci/update.py`` (upstream-owned, unmodified). This driver
+The updater entry points are shared with ``.github/ci/discovery.py``
+and ``.github/ci/update.py``. This driver
 adds:
 
 * credential isolation — the updater runs with every token stripped
