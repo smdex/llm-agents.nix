@@ -93,7 +93,10 @@ class UpdaterRetryTest(unittest.TestCase):
                     driver,
                     "run",
                     return_value=subprocess.CompletedProcess(
-                        [], code, "HTTP Error 503: Service Unavailable", ""
+                        [],
+                        code,
+                        "HTTP Error 503: Service Unavailable",
+                        "dependency fetch still running\n",
                     ),
                 ) as run,
                 mock.patch.object(driver, "prepare_branch") as prepare,
@@ -104,6 +107,7 @@ class UpdaterRetryTest(unittest.TestCase):
                 run.assert_called_once()
                 self.assertEqual(run.call_args.args[0][2], "60s")
                 self.assertIn("timed out for sheprd after 60s", logs.output[0])
+                self.assertIn("dependency fetch still running", logs.output[0])
                 prepare.assert_not_called()
                 sleep.assert_not_called()
 
