@@ -86,6 +86,63 @@ class UpdaterFlowTest(unittest.TestCase):
         self.assertEqual(semver, "0.1.45")
         self.assertEqual(release["tag_name"], tag)
 
+    def test_current_release_version_and_asset(self) -> None:
+        updater = load_updater()
+        release = {
+            "tag_name": "v0.1.46.1794744340",
+            "tarball_url": "https://example/source.tar.gz",
+            "assets": [
+                {
+                    "name": "linux-x64-vibe-kanban.zip",
+                    "browser_download_url": "https://example/binary.zip",
+                }
+            ],
+        }
+        with (
+            mock.patch.object(updater, "fetch_json", return_value=release),
+            mock.patch.object(
+                updater, "load_hashes", return_value={"version": "0.1.44"}
+            ),
+            mock.patch.object(
+                updater, "calculate_url_hash", side_effect=["source", "zip"]
+            ) as calc,
+            mock.patch.object(updater, "save_hashes") as save,
+            mock.patch.object(updater, "update_dependency_hash") as dependencies,
+        ):
+            updater.main()
+        self.assertEqual(
+            calc.call_args_list,
+            [
+                mock.call("https://example/source.tar.gz", unpack=True),
+                mock.call("https://example/binary.zip", unpack=False),
+            ],
+        )
+        saved = save.call_args.args[1]
+        self.assertEqual(saved["version"], "0.1.46")
+        self.assertEqual(saved["tag"], release["tag_name"])
+        self.assertEqual(saved["releaseZipHash"], "zip")
+        self.assertEqual(
+            [call.args[:2] for call in dependencies.call_args_list],
+            [
+                (".#vibe-kanban.cargoDeps", "cargoHash"),
+                (".#vibe-kanban.frontend.pnpmDeps", "npmDepsHash"),
+            ],
+        )
+
+    def test_invalid_release_version_is_rejected(self) -> None:
+        updater = load_updater()
+        for tag in ("not-a-version", "v0.1.46.123-junk", "v0.1.46-preview"):
+            with (
+                self.subTest(tag=tag),
+                mock.patch.object(
+                    updater,
+                    "fetch_json",
+                    return_value={**LATEST_RELEASE, "tag_name": tag},
+                ),
+                self.assertRaises(ValueError),
+            ):
+                updater.fetch_latest_release()
+
     def test_up_to_date_short_circuits_before_any_url_use(self) -> None:
         updater = load_updater()
         with (

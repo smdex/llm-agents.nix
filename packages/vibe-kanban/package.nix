@@ -35,12 +35,10 @@ let
     inherit hash;
   };
 
-  # Upstream's release zip contains pre-built frontend assets with the
-  # react-virtuoso commercial license key already baked in by their CI.
-  # We extract just the key and inject it into our own source build so
-  # we don't have to store it in the repository.
+  # Upstream embeds its licensed frontend in the release binary. Extract
+  # just the key for our source build; never store it in the repository.
   releaseZip = fetchurl {
-    url = "https://github.com/BloopAI/vibe-kanban/releases/download/${tag}/vibe-kanban-${tag}.zip";
+    url = "https://github.com/BloopAI/vibe-kanban/releases/download/${tag}/linux-x64-vibe-kanban.zip";
     hash = releaseZipHash;
   };
 
@@ -70,11 +68,15 @@ let
       # Extract the react-virtuoso license key from upstream's pre-built
       # release assets rather than storing it in our repository.
       export VITE_PUBLIC_REACT_VIRTUOSO_LICENSE_KEY=$(
-        unzip -p ${releaseZip} '*/dist/assets/index-*.js' \
-          | grep -o 'licenseKey:"[^"]*"' \
+        unzip -p ${releaseZip} vibe-kanban \
+          | grep -ao 'licenseKey:"[^"]*"' \
           | head -1 \
           | cut -d'"' -f2
       )
+      if [ -z "$VITE_PUBLIC_REACT_VIRTUOSO_LICENSE_KEY" ]; then
+        echo "react-virtuoso license key not found in release asset" >&2
+        exit 1
+      fi
 
       # 0.1.44 reshapes the source tree into a pnpm workspace under
       # `packages/`. The local browser frontend (formerly `frontend/`)
@@ -143,7 +145,10 @@ rustPlatform.buildRustPackage {
     rm -rf $out/bin/*.dSYM
   '';
 
-  passthru.category = "Workflow & Project Management";
+  passthru = {
+    category = "Workflow & Project Management";
+    inherit frontend;
+  };
 
   meta = {
     description = "Kanban board to orchestrate AI coding agents like Claude Code, Codex, and Gemini CLI";
