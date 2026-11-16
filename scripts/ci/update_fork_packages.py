@@ -281,7 +281,12 @@ def run_updater(
         if result.returncode == 0:
             break
         if result.returncode in (124, 137):
-            log.error("updater timed out for %s after %ss", package, timeout)
+            log.error(
+                "updater timed out for %s after %ss: %s",
+                package,
+                timeout,
+                result.stderr.strip(),
+            )
             return None
         transient = any(
             error in result.stdout + result.stderr
