@@ -23,7 +23,7 @@ stdenv.mkDerivation (finalAttrs: {
   pnpmDeps = fetchPnpmDeps {
     inherit (finalAttrs) pname version src;
     pnpm = pnpm_10;
-    hash = "sha256-tOd/AANBqAV0mOvJdVDlLFHe3mg9I2/u98ic/NAyjQc=";
+    hash = "sha256-zw9f2Lg6T7ON3LdAcSKZLjLFXcXwxckdvfG7xs2NGP4=";
     fetcherVersion = 3;
   };
 
@@ -86,7 +86,8 @@ stdenv.mkDerivation (finalAttrs: {
 
   meta = {
     description = "Desktop client for the Multica platform";
-    inherit (multica.meta) homepage changelog;
+    homepage = "https://github.com/multica-ai/multica";
+    changelog = "https://github.com/multica-ai/multica/releases/tag/v${finalAttrs.version}";
     license = flake.lib.licenses.unfree;
     sourceProvenance = with lib.sourceTypes; [ fromSource ];
     maintainers = with flake.lib.maintainers; [ smdex ];
