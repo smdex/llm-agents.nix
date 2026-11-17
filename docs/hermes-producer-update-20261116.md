@@ -2,7 +2,7 @@
 
 ## Status
 
-**IN PROGRESS: Ursa authentication resolved and the actual remote native-version regression check passed. All 41 inventory dispositions are complete, including the successful bounded retry of the sole network-failed updater. Not yet READY for consumer handoff or publication.** No push, merge, cache publication, activation or deployment has been performed for this campaign.
+**READY for Hermes publication review.** Fixed upstream snapshot integrated forward-only, all 41 custom attributes accounted for, all 15 frozen-source package/check builds passed, CLI version smokes passed, and the actual Ursa native-version regression passed. No engineering blocker remains. Publication approval remains with Hermes. No push, merge, cache publication, activation or deployment has been performed for this campaign.
 
 ## Scope and isolation
 
@@ -27,11 +27,21 @@ Actual remotes: `ssh://git@git.fila.lab/smaximov/llm-agents.nix.git`, `ssh://git
 
 Forward-only local integration commit: `853dcadcf9701b0c011cdbfbaef5f3117834f4a7`, with both the exact chiki and upstream revisions above as parents. Three conflicts concerned only generic upstream version/source/dependency hash bumps in multica, multica-desktop and paseo-desktop. The existing smdex fork recipes were preserved rather than replaced by generic upstream packages. Canonical `nix fmt` passed with zero changes. Bubblewrap namespace preflight passed without host changes.
 
-Supervisor requested one final upstream refresh, fixed at `97b2c73782356e4934a5d350fa4b6b7dbea1b646`. This revision was fetched into `refs/hermes-producer/20261117-0238/upstream-freeze`. Its only delta from the initial upstream snapshot is the generic Paseo 0.15.4 to 0.16.0 version/source/dependency hash bump. Forward-only integration after active package updates will retain the newer smdex 0.16.0-smdex.5 source. No indefinite moving-head chase.
+Supervisor requested one final upstream refresh, fixed at `97b2c73782356e4934a5d350fa4b6b7dbea1b646`. It was integrated forward-only in **`aadd7ef1ccfef285f2687b9f84b8468b7799dec1`**, whose parents are the focused task commit `9778bab8a89f4dc11290f1ed30f98a824b7d14ab` and that exact upstream snapshot. The only additional upstream conflict was generic Paseo version/source/dependency hashes. The verified smdex 0.16.0-smdex.5 recipe was preserved exactly. Both original fork chiki and fixed upstream are verified ancestors. Canonical formatting passed before both task commits. No indefinite moving-head chase.
+
+Fresh independent remote readback at **2026-11-17 03:40:18 UTC** confirmed all three remote default branches are `main` and the chosen upstream snapshot is still current:
+
+| Ref | Actual revision | Fresh upstream-only / fork-only | Remote-only / frozen producer-only |
+| --- | --- | --- | --- |
+| numtide/main | `97b2c73782356e4934a5d350fa4b6b7dbea1b646` | 0 / 0 | 0 / 86 |
+| GitLab main = GitHub main | `de633340f6a52f5468732d36677b51062609a398` | 72 / 72 | 0 / 86 |
+| GitLab chiki = GitHub chiki | `dfd301955d78cff6200a40eefc0f35f95d9b7159` | 72 / 83 | 0 / 75 |
+
+Thus the **local frozen producer has zero upstream-only commits missing**, and preserves all currently published fork main/chiki commits. Published forks intentionally remain unchanged while Hermes reviews publication. Full evidence: `final-freeze-resume.log` and `final-remote-readback.log`. The original workspace still resolves to exact preexisting revision `7dd86e8ea00ac526eec04edd07d3a275350c66ec`, verified in `preservation-capacity.log`; its sheprd conflict and the unrelated global main bookmark conflict were not modified.
 
 ## Verified fork release/source policy
 
-Primary GitHub API readback at approximately 02:47 UTC, retained in `fork-refs.log`:
+Primary GitHub API readback at approximately 02:47 UTC, repeated in the final 03:40 UTC remote readback with the same exact refs, retained in `fork-refs.log` and `final-remote-readback.log`:
 
 | Package | Pinned source | Actual remote state | Disposition |
 | --- | --- | --- | --- |
@@ -122,6 +132,49 @@ Supported package-only updates completed: **37 updater successes**, including Pa
 | wintermolt | 0.7.0 | current, updater exit 0 |
 | xerj | 1.0.0-rc.102 | current, updater exit 0 |
 
-## Remaining gates and next actions
+## Final frozen-source acceptance
 
-Finish all updater dispositions, repair real failures without dropping requested packages, build every changed custom package, perform version/runtime and relevant regression checks, canonical formatting and whole-flake no-build evaluation. Refresh exact remote comparisons and verify original workspace preservation. Replace this interim report with final READY or concrete BLOCKED, exact local commit/bookmark and store paths. Consumer must not update its final lock to an unpublished local source. Hermes must review and approve publication before any push or merge.
+Immutable tested revision: **`aadd7ef1ccfef285f2687b9f84b8468b7799dec1`**. `final-checks.sh` finished with **`PRODUCER_FINAL_CHECKS_EXIT=0`**, and `final-build-results.tsv` records **15 builds/checks, all exit 0**. Commands were serialized and used exact `--option builders ursa --max-jobs 0`, plus the verified invocation-only authentication prefix. Local expensive fallback was disabled, not merely discouraged.
+
+```bash
+nix build --accept-flake-config --option builders ursa --max-jobs 0 \
+  --option build-hook "$(command -v env) NIX_SSHOPTS=-i$HOME/.ssh/id_ed25519 $(nix config show build-hook)" \
+  --no-link --print-out-paths -L \
+  'git+file:///home/smaximov/src/llm-agents.nix?rev=aadd7ef1ccfef285f2687b9f84b8468b7799dec1#<attribute>'
+```
+
+| Built attribute | Realized output | Runtime evidence |
+| --- | --- | --- |
+| jcode | `/nix/store/wch1687xr6s1sjdc3ssjlm30qn2jhfyh-jcode-0.99.2-smdex.14` | isolated-HOME version 0.99.2-smdex.14, exit 0 |
+| paseo | `/nix/store/q23ka6lll4yar5dmhlzgpyfy4aw7nw9h-paseo-0.16.0-smdex.5` | isolated-HOME version 0.16.0-smdex.5, exit 0 |
+| paseo-desktop | `/nix/store/gjisvnalvv96akkyxgadjammnphyrw1v-paseo-desktop-0.16.0-smdex.5` | executable/share layout passed, GUI not launched |
+| multica | `/nix/store/xsxh4l9l412mq9zdrf2bx4ygn8mrji3l-multica-0.4.8-unstable-2026-10-08` | isolated-HOME exact pinned version, exit 0 |
+| multica-desktop | `/nix/store/8hg3a1862l1ffkkzp6w1vi4zj8qnpbcv-multica-desktop-0.4.8-unstable-2026-10-08` | executable/share layout passed, GUI not launched |
+| pi-perplexity | `/nix/store/72l49qd6a94wj4hc8b4vx3a44q4gpp58-pplx-0.1.0` | isolated-HOME pplx version 0.1.0, exit 0 |
+
+The final package requests reused already-realized matching outputs. They are real `nix build` successes against the frozen source, but are **not claimed as fresh Ursa package compilations**. Earlier real source builds and their original logs remain documented above. Fresh Ursa execution is separately proven for the native-version derivation and affected regression/treefmt checks.
+
+All six `checks.x86_64-linux.pkgs-{jcode,paseo,paseo-desktop,multica,multica-desktop,pi-perplexity}` passed. Exact check store paths are in `final-checks.x86_64-linux.pkgs-*.paths`. Final CI/updater regression and treefmt outputs were:
+
+- `/nix/store/h0rzlxq8pvw8a4yxib32f9mjrz8hskcc-ci-tests-check`
+- `/nix/store/sr2291fgyxb7jmvilrs4xkc6f2dp2bw2-updater-tests-check`
+- `/nix/store/35qjy26lm714v18p7al48wzj729ga9sv-treefmt-check`
+
+Their `final-checks.x86_64-linux.*.log` files show actual builds on `ssh://ursa` and output copy-back. Treefmt processed 482 files with zero changes. Whole-flake `nix flake check --no-build` also passed exit 0, retained in `final-flake-eval.log`; this is separately classified as evaluation-only coverage. `packages-final.json` exactly matches the initial 41-attribute version/skipUpdate inventory. The remotely executed native regression script is byte-identical to the frozen commit (`remote-test-input-identity.log`, exit 0), and the final Paseo source path is exactly the tested `/nix/store/ydrdcy9yz5knkyrjczr478p9icccdzpz-source`.
+
+## Reviewable changes and handoff
+
+Beyond the upstream integrations, only three task-owned paths changed from the original integrated source:
+
+1. `packages/paseo/test-native-version.cjs`: repair the preexisting stale regex-extraction test by testing the actual pinned source helper and boundary cases.
+1. `packages/pi-perplexity/package.nix`: correct stale changelog metadata to the already-pinned v0.6.3 source. No false runtime version bump.
+1. `docs/hermes-producer-update-20261116.md`: this evidence report.
+
+Local commit chain is initial integration `853dcadcf9701b0c011cdbfbaef5f3117834f4a7`, focused verification/test/metadata commit `9778bab8a89f4dc11290f1ed30f98a824b7d14ab`, and final upstream merge `aadd7ef1ccfef285f2687b9f84b8468b7799dec1`. The report-only handoff descendant is held by task-owned local bookmark **`hermes-producer-20261116`**. Its exact SHA and final aggregate build readback are recorded after commit in `producer-ledger.json` and `handoff-builds.json` under the evidence directory. The handoff aggregate rechecks all six packages and nine checks against that exact report-inclusive revision, not an unpublished remote assumption.
+
+### Residual gates owned by Hermes and the consumer
+
+- Hermes reviews the local bookmark and evidence, chooses the publication branch/MR policy, and explicitly approves publication. No publication has been attempted. No merge or push is implied by READY.
+- After approved publication, read back its remote SHA before consumer lock updates. The Coma consumer must lock the published verified revision, never a committed `path:` override or the old remote main.
+- Consumer owner then performs the requested package and all three host toplevel builds under its separate contract. This producer report does not claim those consumer builds or any GUI interaction, login, activation or deployment.
+- No outstanding producer engineering blocker remains. The initial npm HTTP/2 failures and daemon identity mismatch were recovered with retained failing and passing evidence, not hidden or bypassed.
