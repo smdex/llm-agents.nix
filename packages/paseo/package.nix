@@ -1,68 +1,41 @@
+# Adapted from https://github.com/getpaseo/paseo/blob/v0.13.2/nix/package.nix.
 {
   lib,
-  flake,
   stdenv,
-  fetchFromGitHub,
+  flake,
   buildNpmPackage,
+  fetchFromGitHub,
   nodejs_22,
   python3,
   makeWrapper,
   formatelf,
+  libuv,
   versionCheckHook,
   versionCheckHomeHook,
-  # node-pty needs libuv headers on Linux
-  libuv,
-  # Exposed so downstream flakes that follow a different nixpkgs revision
-  # (where `fetchNpmDeps` may produce a different hash for the same lockfile)
-  # can override via `.override { npmDepsHash = "sha256-..."; }` without
-  # `overrideAttrs` gymnastics.
-  npmDepsHash ?
-    {
-      x86_64-linux = "sha256-A0ejO8THwzVZlWi0R2L84Xn1FbQQ838TLdM4FEfgFVs=";
-      aarch64-linux = "sha256-Ju/bYwgcht7sn2GnepJmAQwWIfVUSew1lIEy0XqtO9E=";
-      aarch64-darwin = "sha256-A0ejO8THwzVZlWi0R2L84Xn1FbQQ838TLdM4FEfgFVs=";
-    }
-    .${stdenv.hostPlatform.system} or "sha256-rpj4k5n6XSaJp3wH38/HGcYEEPzgTIgDiEVtk9SM3+8=",
 }:
 
-buildNpmPackage rec {
+buildNpmPackage (finalAttrs: {
   pname = "paseo";
-  version = "0.16.0-smdex.5";
+  version = "0.16.0";
+
   src = fetchFromGitHub {
-    owner = "smdex";
+    owner = "getpaseo";
     repo = "paseo";
-    tag = "v${version}";
-    hash = "sha256-TlFfb3Mns/W6Px2ymuN9Umzinie1OYMui21LcJw9yJo=";
+    tag = "v${finalAttrs.version}";
+    hash = "sha256-f07SCDr+Dt0FVtQE8LHOgLB9G5OcWdA9xY8hhMW1X9c=";
   };
 
   nodejs = nodejs_22;
 
-  inherit npmDepsHash;
+  npmDepsHash = "sha256-XwINDDXOj7QwBeUI3z+W3r+Pu5bdZRrMjGT96YWYFg4=";
   npmDepsFetcherVersion = 2;
 
-  # fetchNpmDeps fetches every lockfile entry, including optional binaries for
-  # other platforms. Apply the same filter before fetching and npm ci.
-  # Other architectures retain the original, platform-independent cache.
-  postPatch =
-    lib.optionalString
-      (lib.elem stdenv.hostPlatform.system [
-        "x86_64-linux"
-        "aarch64-linux"
-        "aarch64-darwin"
-      ])
-      ''
-        ${python3}/bin/python3 ${./filter-lockfile.py} \
-          ${if stdenv.hostPlatform.isDarwin then "darwin" else "linux"} \
-          ${if stdenv.hostPlatform.isAarch64 then "arm64" else "x64"}
-      '';
-
-  # Prevent onnxruntime-node's install script from running during automatic
-  # npm rebuild (it tries to download from api.nuget.org, which fails in the
-  # sandbox). We manually rebuild only node-pty in buildPhase.
+  # Skip dependency install scripts that download binaries outside the sandbox.
+  # Apply the monorepo patches and rebuild only node-pty explicitly below.
   npmRebuildFlags = [ "--ignore-scripts" ];
 
   nativeBuildInputs = [
-    python3 # for node-gyp (node-pty compilation)
+    python3
     makeWrapper
   ]
   ++ lib.optionals stdenv.hostPlatform.isLinux [ formatelf ];
@@ -72,23 +45,17 @@ buildNpmPackage rec {
     stdenv.cc.cc.lib
   ];
 
-  # Don't use the default npm build hook — we need a custom build sequence
   dontNpmBuild = true;
 
   buildPhase = ''
     runHook preBuild
 
-    # Rebuild only node-pty (native addon for terminal emulation).
-    # Speech-related native modules (sherpa-onnx-node, onnxruntime-node) are
-    # intentionally left unbuilt — they're lazily loaded and gracefully
-    # degrade when unavailable.
-    rm -rf packages/server/node_modules/node-pty/prebuilds
-    npm rebuild node-pty --workspace=@getpaseo/server
     npm run postinstall
+    npm_config_build_from_source=true npm_config_nodedir=${finalAttrs.nodejs} \
+      npm rebuild node-pty --workspace @getpaseo/server
 
-    # Build all server packages in dependency order (defined in package.json)
+    # Headless daemon and CLI; browser clients are supplied separately.
     npm run build:server
-    npm run build:daemon-web-ui
 
     runHook postBuild
   '';
@@ -96,60 +63,51 @@ buildNpmPackage rec {
   installPhase = ''
     runHook preInstall
 
-    # Compute the daemon's runtime closure by static module-graph tracing
-    # (@vercel/nft from supervisor-entrypoint.js, cli/dist/index.js, and the
-    # forked terminal-worker-process.js) plus an explicit list of non-JS
-    # assets read at runtime. The trace script is the single source of
-    # truth for what the daemon needs at $out — auditable in plain JS, no
-    # npm hoisting / .bin / workspace-symlink footguns.
-    mkdir -p $out/lib/paseo
+    # Upstream traces the daemon, CLI, workers, native addons and runtime assets.
+    mkdir -p "$out/libexec/paseo"
     node scripts/trace-daemon.mjs > daemon-files.txt
-
     while IFS= read -r path; do
       [ -z "$path" ] && continue
-      mkdir -p "$out/lib/paseo/$(dirname "$path")"
-      cp -a "$path" "$out/lib/paseo/$path"
+      mkdir -p "$out/libexec/paseo/$(dirname "$path")"
+      cp -a "$path" "$out/libexec/paseo/$path"
     done < daemon-files.txt
 
-    # The current upstream tracer retains the selected native addon and hooks.
-    patchShebangs --build "$out/lib/paseo"
-    cp -r packages/server/dist/server/web-ui $out/lib/paseo/packages/server/dist/server/
+    cp package.json "$out/libexec/paseo/"
 
-    # Root package.json lets node resolve the workspace layout when the
-    # CLI/server bin starts from $out.
-    cp package.json $out/lib/paseo/
+    # Terminal shell hooks execute the retained CLI without a system Node.
+    patchShebangs --build "$out/libexec/paseo"
 
-    # Create wrapper for the server entry point (for systemd / direct use)
-    mkdir -p $out/bin
-    makeWrapper ${nodejs}/bin/node $out/bin/paseo-server \
-      --add-flags "$out/lib/paseo/packages/server/dist/scripts/supervisor-entrypoint.js" \
+    mkdir -p "$out/bin"
+    makeWrapper ${finalAttrs.nodejs}/bin/node "$out/bin/paseo-server" \
+      --add-flags "$out/libexec/paseo/packages/server/dist/scripts/supervisor-entrypoint.js" \
       --set PASEO_NODE_ENV production
-
-    # Create wrapper for the CLI
-    makeWrapper ${nodejs}/bin/node $out/bin/paseo \
-      --add-flags "$out/lib/paseo/packages/cli/dist/index.js" \
-      --set NODE_PATH "$out/lib/paseo/node_modules"
+    makeWrapper ${finalAttrs.nodejs}/bin/node "$out/bin/paseo" \
+      --add-flags "$out/libexec/paseo/packages/cli/dist/index.js" \
+      --set NODE_PATH "$out/libexec/paseo/node_modules"
 
     runHook postInstall
   '';
-
-  passthru.category = "AI Coding Agents";
 
   doInstallCheck = true;
   nativeInstallCheckInputs = [
     versionCheckHook
     versionCheckHomeHook
   ];
-  versionCheckProgramArg = [ "--version" ];
+
+  passthru.category = "Workflow & Project Management";
 
   meta = {
-    description = "Self-hosted daemon for AI coding agents (server + CLI)";
-    homepage = "https://github.com/getpaseo/paseo";
-    changelog = "https://github.com/smdex/paseo/releases/tag/v${version}";
+    description = "Self-hosted daemon and CLI for orchestrating coding agents";
+    homepage = "https://paseo.sh";
+    changelog = "https://github.com/getpaseo/paseo/releases/tag/v${finalAttrs.version}";
     license = lib.licenses.asl20;
-    sourceProvenance = with lib.sourceTypes; [ fromSource ];
-    maintainers = with flake.lib.maintainers; [ smdex ];
+    sourceProvenance = [ lib.sourceTypes.fromSource ];
+    maintainers = with flake.lib.maintainers; [ sleroq ];
     mainProgram = "paseo";
-    platforms = lib.platforms.linux ++ lib.platforms.darwin;
+    platforms = [
+      "x86_64-linux"
+      "aarch64-linux"
+      "aarch64-darwin"
+    ];
   };
-}
+})
