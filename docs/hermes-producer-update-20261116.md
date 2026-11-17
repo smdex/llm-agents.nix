@@ -37,7 +37,7 @@ Fresh independent remote readback at **2026-11-17 03:40:18 UTC** confirmed all t
 | GitLab main = GitHub main | `de633340f6a52f5468732d36677b51062609a398` | 72 / 72 | 0 / 86 |
 | GitLab chiki = GitHub chiki | `dfd301955d78cff6200a40eefc0f35f95d9b7159` | 72 / 83 | 0 / 75 |
 
-Thus the **local frozen producer has zero upstream-only commits missing**, and preserves all currently published fork main/chiki commits. Published forks intentionally remain unchanged while Hermes reviews publication. Full evidence: `final-freeze-resume.log` and `final-remote-readback.log`. The original workspace still resolves to exact preexisting revision `7dd86e8ea00ac526eec04edd07d3a275350c66ec`, verified in `preservation-capacity.log`; its sheprd conflict and the unrelated global main bookmark conflict were not modified.
+Thus the **local frozen producer has zero upstream-only commits missing**, and preserves all currently published fork main/chiki commits. Published forks intentionally remain unchanged while Hermes reviews publication. Full evidence: `final-freeze-resume.log` and `final-remote-readback.log`. The original workspace still resolves to exact preexisting revision `7dd86e8ea00ac526eec04edd07d3a275350c66ec`, verified in `preservation-capacity.log`; its sheprd files were not edited. The preexisting global main bookmark conflict remains unresolved. Normal upstream fetch advanced the tracked `main@upstream` reference, without force-setting main or changing any published branch.
 
 ## Verified fork release/source policy
 
