@@ -57,7 +57,7 @@ stdenvNoCC.mkDerivation {
   meta = {
     description = "Perplexity CLI for cited answers, research, and threads";
     homepage = "https://github.com/smdex/pi-perplexity";
-    changelog = "https://github.com/smdex/pi-perplexity/releases/tag/v0.6.1";
+    changelog = "https://github.com/smdex/pi-perplexity/releases/tag/v0.6.3";
     license = lib.licenses.mit;
     sourceProvenance = with lib.sourceTypes; [ fromSource ];
     maintainers = with flake.lib.maintainers; [ smdex ];
