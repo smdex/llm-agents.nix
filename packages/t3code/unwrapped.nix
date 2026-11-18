@@ -11,6 +11,7 @@
   node-gyp,
   pkg-config,
   formatelf,
+  playwright-driver,
   libsecret,
   python3,
   cacert,
@@ -116,6 +117,7 @@ stdenv.mkDerivation {
   env = {
     T3CODE_RELAY_URL = "https://relay.t3.codes";
     T3CODE_CLERK_PUBLISHABLE_KEY = "pk_live_Y2xlcmsudDMuY29kZXMk";
+    T3CODE_CLERK_JWT_TEMPLATE = "t3-relay";
     T3CODE_CLERK_CLI_OAUTH_CLIENT_ID = "hzxSgY2cH10sDU2r";
   };
 
@@ -173,6 +175,16 @@ stdenv.mkDerivation {
     spdxVer=$(sed -n 's/^const SPDX_LICENSE_LIST_VERSION = "\(.*\)";/\1/p' scripts/lib/third-party-licenses.ts)
     mkdir -p .generated/third-party-licenses/spdx
     ln -s ${spdxLicenses}/json/details ".generated/third-party-licenses/spdx/$spdxVer"
+  ''
+  # T3 downloads Chrome for Testing's headless shell into $T3CODE_HOME on first
+  # use, where it cannot load its libraries. Use the nixpkgs build instead.
+  + lib.optionalString stdenv.hostPlatform.isLinux ''
+    headlessShell=$(echo ${playwright-driver.components.chromium-headless-shell}/chrome-headless-shell-*/chrome-headless-shell)
+    test -x "$headlessShell"
+    substituteInPlace apps/server/src/preview/PreviewBrowser.ts \
+      --replace-fail \
+        'const executable = path.join(installRoot, release.version, executableName);' \
+        "const executable = \"$headlessShell\";"
   '';
 
   preBuild = ''

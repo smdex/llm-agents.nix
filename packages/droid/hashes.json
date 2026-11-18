@@ -1,9 +1,9 @@
 {
-  "version": "1.12.1",
+  "version": "1.14.0",
   "droid": {
-    "x86_64-linux": "sha256-/9EZaDf2gDJyWAlLwS3Jk/+SMgNslkv4NU/7ftH9zwA=",
-    "aarch64-darwin": "sha256-h7KLd7C/unXmMQIJHU6HlfO8zH9s+QJi3B3xMZ3Vtg0=",
-    "aarch64-linux": "sha256-f2ybNManiWZD5rSFxQRSS/dcsNKIXcPIWvnF70dhk+A="
+    "aarch64-darwin": "sha256-4+FzuwkfE5ww3233Zktnqn+xa8qVudc3xxs/3PmL8zs=",
+    "x86_64-linux": "sha256-7E7GCMiT93NkN+sIf8t7MOLPloE4jjX3deRGc+aKiYc=",
+    "aarch64-linux": "sha256-TYw4nbM8oZJ/XQRQf05vwreobE8VOKznP+1Wwq0jta0="
   },
   "ripgrep": {
     "aarch64-darwin": "sha256-Jz6MZQpCvuwShJEOGCW2Gj5698DOH87BN/4dbMcd77c=",
