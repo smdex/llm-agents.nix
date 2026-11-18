@@ -2,7 +2,7 @@
 
 ## Status and approval boundary
 
-**FRESHNESS VALIDATION PENDING. Prior accepted snapshot retained, not sufficient for the latest-upstream requirement. Not released for consumer use.** Hermes owns exact-diff publication approval. No push, published-branch merge, deployment, restart, garbage collection, credential change or test disabling was performed. Consumer remains inventory-only.
+**READY for Hermes exact-diff review against frozen latest upstream 1bd66a577d1f975927ddfed1a30b2cb19dba1ddc. Not published or released for consumer use.** Hermes owns exact-diff publication approval. No push, published-branch merge, deployment, restart, garbage collection, credential change or test disabling was performed. Consumer remains inventory-only.
 
 Repository: /home/smaximov/src/llm-agents.nix. Sole producer writer uses the isolated shared-store JJ workspace /home/smaximov/src/llm-agents-hermes-producer. The original preexisting sheprd conflict/untracked directory is untouched; its recorded SHA256 passed readback at 14:09 UTC. The preexisting main bookmark conflict was not changed.
 
@@ -108,7 +108,7 @@ The required final immutable build set is dirac, goose-desktop, goose2, happier,
 
 Authoritative continuation directory: /home/smaximov/.hermes/campaigns/2026-11-17-mclan-update/producer-20261118. It contains ledger.json, this report and an evidence symlink to the retained campaign scratch directory. Exact command scripts, source archives, stdout/stderr, exit files and output JSON are retained there, including integration-build-results.tsv, jcode-system.*, retry-consistent-nix/, vtcode-hash-resume.*, custom-inventory-final.json and final-refs.log. Prior failed build/updater/observer logs were not erased. Observer time-window expiry is not a CI/build failure.
 
-Next: complete frozen-latest immutable validation, then Hermes reviews its exact final SHA and diff before any publication. Consumer remains gated until authorized publication and remote SHA readback. Prior eeb0ca6b acceptance is historical evidence, not completion of the latest-upstream requirement. No main/chiki bookmark was moved.
+Next: Hermes reviews the final immutable SHA and exact diff before authorizing publication. Consumer remains gated until authorized publication and remote SHA readback. The former eeb0ca6b acceptance remains historical evidence; latest-upstream acceptance is recorded below. No main/chiki bookmark was moved.
 
 ### Realized package outputs
 
@@ -129,3 +129,15 @@ Next: complete frozen-latest immutable validation, then Hermes reviews its exact
 | vtcode | zcvhra6hxmf5zj4583y1lq2cgdf1lbh5-vtcode-0.183.1 |
 
 The retained private Goose ACP backend passed 358 unit tests and its integration test, with existing upstream ignores/filters unchanged. Desktop package builds and FHS-like layout checks passed, but no interactive GUI session is claimed. Existing realized dependencies were reused where Nix matched their derivations; the final readback is not a claim that every cached dependency was recompiled.
+
+## Frozen latest-upstream freshness completion
+
+At supervisor steering, integrated exactly 1bd66a577d1f975927ddfed1a30b2cb19dba1ddc forward from accepted eeb0ca6beda544bcf18b8d7a21bfd4dfc45b833a. Merge candidate **051a270300b23b45e14e5db21babce6320de6a00** has those exact two parents. The target contains 43 commits after the initial 6b observation. No later upstream drift was chased.
+
+The clean integration required **zero file-conflict resolutions**. Its upstream payload changes 25 paths, adding Kitesurf and refreshing upstream package versions/hashes/locks plus its README entry. The candidate also corrects this report, yielding 26 changed paths versus eeb. Existing newer fork Copilot Language Server was preserved automatically. The full delta is retained in freshness/candidate-delta.diff and its stat file.
+
+All 41 custom package trees, flake.lock, flake.nix, lib and CI paths were verified unchanged versus eeb before committing. The 13 previously tested custom/consumed package derivations were compared and are byte-for-byte identical in the native Nix derivation lists. Consequently no custom inventory sweep or optional native build fan-out was repeated. The existing 29-attribute acceptance was executed against the exact new revision, reusing cached realized packages while refreshing source-sensitive checks. Other newly updated upstream packages were covered by whole-flake evaluation, not represented as independently native-built or consumer-tested.
+
+Actual frozen-latest acceptance finished **15:34:27 UTC**, whole-flake no-build exit 0 and all 29 build attributes exit 0; all outputs were read back using nix path-info. Original unrelated Sheprd checksum remained OK. Exact final report-inclusive commit and its repeated gates are recorded in ledger.json and freshness-final/ evidence. Prior logs were retained, including the initial Git-to-JJ visibility failure and the no-conflicts exit from jj resolve --list; neither was a native package failure.
+
+Execution stayed in the sole existing Jcode root session. Available tools do not expose a root-model switch or a reliable current model identifier, so no GLM switch is claimed and no additional writer, scout or advisor was spawned. Publication, deployment, restarts, GC and consumer updates remain unperformed.
