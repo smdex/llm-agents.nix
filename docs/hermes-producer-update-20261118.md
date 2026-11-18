@@ -2,14 +2,15 @@
 
 ## Status and approval boundary
 
-**READY for Hermes exact-diff review against the explicitly requested upstream snapshot. Not released for consumer use.** Hermes owns exact-diff publication approval. No push, published-branch merge, deployment, restart, garbage collection, credential change or test disabling was performed. Consumer remains inventory-only.
+**FRESHNESS VALIDATION PENDING. Prior accepted snapshot retained, not sufficient for the latest-upstream requirement. Not released for consumer use.** Hermes owns exact-diff publication approval. No push, published-branch merge, deployment, restart, garbage collection, credential change or test disabling was performed. Consumer remains inventory-only.
 
 Repository: /home/smaximov/src/llm-agents.nix. Sole producer writer uses the isolated shared-store JJ workspace /home/smaximov/src/llm-agents-hermes-producer. The original preexisting sheprd conflict/untracked directory is untouched; its recorded SHA256 passed readback at 14:09 UTC. The preexisting main bookmark conflict was not changed.
 
 ## Immutable integration and selected scope
 
 - Previous verified handoff: 12bc90a7575718677833ad419f9655287bfa822f.
-- Requested upstream: 6b0412eca7185b505fa46e39831e3858ad94383c.
+- Initial observed upstream: 6b0412eca7185b505fa46e39831e3858ad94383c. This observation was not a user-imposed fixed-snapshot scope.
+- Supervisor-frozen latest upstream: 1bd66a577d1f975927ddfed1a30b2cb19dba1ddc, integrated forward from accepted eeb0ca6beda544bcf18b8d7a21bfd4dfc45b833a.
 - Forward-only integration: a35d6852f022c63226b31d158957f9aebccd2b09.
 - Integration parents: previous handoff, GitLab chiki 3c88dfaa469a2137ceaa93e879fd24d23ec00881, requested upstream. Both published fork main histories are ancestors. No fork commits were discarded.
 - Verified focused jcode repair commit: b356753499f54cdc571117bff7347377d5d22554.
@@ -17,7 +18,7 @@ Repository: /home/smaximov/src/llm-agents.nix. Sole producer writer uses the iso
 
 Fourteen conflicted paths were reviewed. The verified smdex Jcode/Multica/Paseo recipes were retained instead of generic same-name upstream replacements. Newer fork Copilot Language Server and Dolt definitions were preserved with their matching hashes/lockfiles. Newer upstream command-code/omp and ordering-only hash changes were integrated. Existing CI fixes remain unchanged relative to the previous handoff in scripts/ci, .github/ci and checks/ci-tests.nix.
 
-Fresh readback at **14:09:32 UTC** found upstream main had advanced to **f2c2ae96e351bc6a52d6f4fabfb9112c89610ccd**, another **40 commits after the explicitly requested snapshot**. Those later commits are not silently included or claimed integrated. This bounded candidate targets the requested 6b0412ec snapshot, not an indefinitely moving upstream HEAD.
+Historical readback at 14:09:32 UTC found f2c2ae96e351bc6a52d6f4fabfb9112c89610ccd, 40 commits after the initial observation. The earlier report incorrectly narrowed the request to that initial observation. Supervisor corrected this at 15:29 UTC and froze **1bd66a577d1f975927ddfed1a30b2cb19dba1ddc**, 43 commits after 6b0412ec. This single frozen target is now integrated forward. No later moving-head chase or repeated custom updater sweep is performed.
 
 | Published fork ref | Exact readback SHA | Requested-upstream-only / fork-only |
 | --- | --- | --- |
@@ -107,7 +108,7 @@ The required final immutable build set is dirac, goose-desktop, goose2, happier,
 
 Authoritative continuation directory: /home/smaximov/.hermes/campaigns/2026-11-17-mclan-update/producer-20261118. It contains ledger.json, this report and an evidence symlink to the retained campaign scratch directory. Exact command scripts, source archives, stdout/stderr, exit files and output JSON are retained there, including integration-build-results.tsv, jcode-system.*, retry-consistent-nix/, vtcode-hash-resume.*, custom-inventory-final.json and final-refs.log. Prior failed build/updater/observer logs were not erased. Observer time-window expiry is not a CI/build failure.
 
-Next: Hermes reviews the exact final SHA and diff before authorizing any publication. Consumer remains gated until authorized publication and remote SHA readback. No engineering blocker remains for the requested snapshot after successful final-report readback. Fresh upstream drift of 40 commits remains explicitly outside this requested-snapshot candidate and must not be described as fully current upstream HEAD. No main/chiki bookmark was moved.
+Next: complete frozen-latest immutable validation, then Hermes reviews its exact final SHA and diff before any publication. Consumer remains gated until authorized publication and remote SHA readback. Prior eeb0ca6b acceptance is historical evidence, not completion of the latest-upstream requirement. No main/chiki bookmark was moved.
 
 ### Realized package outputs
 
