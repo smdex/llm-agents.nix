@@ -1,11 +1,16 @@
 {
   lib,
+  stdenv,
   flake,
   rustPlatform,
   fetchFromGitHub,
-  cmake,
+  aws-lc,
   pkg-config,
   openssl,
+  oniguruma,
+  rust-jemalloc-sys,
+  sqlite,
+  zstd,
   versionCheckHook,
   versionCheckHomeHook,
 }:
@@ -28,17 +33,21 @@ rustPlatform.buildRustPackage (finalAttrs: {
     rm .cargo/config.toml
   '';
 
-  # aws-lc-sys (rustls provider) needs cmake; imap's default native-tls
-  # backend links against system openssl.
-  nativeBuildInputs = [
-    cmake
-    pkg-config
-  ];
+  nativeBuildInputs = [ pkg-config ];
 
-  buildInputs = [ openssl ];
+  # Native AWS-LC pkg-config modules coexist with native-tls's OpenSSL.
+  buildInputs = [
+    aws-lc
+    openssl
+    oniguruma
+    rust-jemalloc-sys
+    sqlite
+    zstd
+  ];
 
   # Archives lack git metadata; preserve the verified fork version and revision.
   env = {
+    JEMALLOC_OVERRIDE = "${lib.getLib rust-jemalloc-sys}/lib/libjemalloc${stdenv.hostPlatform.extensions.sharedLibrary}";
     JCODE_RELEASE_BUILD = "1";
     JCODE_BUILD_SEMVER = finalAttrs.version;
     JCODE_BUILD_GIT_HASH = builtins.substring 0 9 finalAttrs.src.rev;
