@@ -42,7 +42,8 @@ let
   goose-cli = callPackage ./cli.nix { };
   pnpm = pnpm_10;
   sourceRevision = "612cd89d515f16c84f70b4c74247e270277fe7ba";
-  version = "1.60.0";
+  # Stable Goose releases no longer contain this experimental GUI.
+  version = "0.1.0-unstable-2026-05-22";
 
   gooseSrc = fetchFromGitHub {
     owner = "aaif-goose";
@@ -171,12 +172,15 @@ let
       runHook postInstall
     '';
 
-    passthru.category = "AI Coding Agents";
+    passthru = {
+      category = "AI Coding Agents";
+      skipUpdate = true;
+    };
 
     meta = {
       description = "Goose 2 Tauri desktop app built from source";
       homepage = "https://github.com/aaif-goose/goose";
-      changelog = "https://github.com/aaif-goose/goose/releases";
+      changelog = "https://github.com/aaif-goose/goose/commit/${sourceRevision}";
       license = lib.licenses.asl20;
       sourceProvenance = with lib.sourceTypes; [ fromSource ];
       maintainers = with flake.lib.maintainers; [ smdex ];

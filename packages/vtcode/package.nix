@@ -9,6 +9,9 @@
   formatelf,
   pkg-config,
   openssl,
+  aws-lc,
+  rust-jemalloc-sys,
+  sqlite,
   libiconv,
   versionCheckHook,
   versionCheckHomeHook,
@@ -23,16 +26,16 @@ let
 in
 rustPlatform.buildRustPackage rec {
   pname = "vtcode";
-  version = "0.183.0";
+  version = "0.183.1";
 
   src = fetchFromGitHub {
     owner = "vinhnx";
     repo = "vtcode";
     tag = version;
-    hash = "sha256-Pe3IPkzLy0i24itr5XPgfCpYhpXSEsiJUXHwSf4t/0Y=";
+    hash = "sha256-zQ1P6/9a3oQuXOA85P91FycM1ORWkPI9Hm4zkr2jjg0=";
   };
 
-  cargoHash = "sha256-jowXHhtb5SpO3yRF8i6oPYzALHRItUGcOFzeZqnNpQs=";
+  cargoHash = "sha256-M4cfplB0kiSBOMQRNNoHHzzZBa5rt0B774W+9b1zEFI=";
 
   cargoBuildFlags = [
     "--bin"
@@ -43,6 +46,9 @@ rustPlatform.buildRustPackage rec {
 
   buildInputs = [
     openssl
+    aws-lc
+    rust-jemalloc-sys
+    sqlite
   ]
   ++ lib.optionals stdenv.hostPlatform.isLinux [ stdenv.cc.cc.lib ]
   ++ lib.optionals stdenv.hostPlatform.isDarwin [ libiconv ];
@@ -53,7 +59,10 @@ rustPlatform.buildRustPackage rec {
       --replace-fail 'lto = true' 'lto = "thin"'
   '';
 
-  env.CARGO_BUILD_JOBS = "4";
+  env = {
+    CARGO_BUILD_JOBS = "4";
+    JEMALLOC_OVERRIDE = "${lib.getLib rust-jemalloc-sys}/lib/libjemalloc${stdenv.hostPlatform.extensions.sharedLibrary}";
+  };
 
   doCheck = false;
 
