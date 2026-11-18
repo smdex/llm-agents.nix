@@ -2,7 +2,7 @@
 
 ## Status and approval boundary
 
-**VALIDATION PENDING, not READY for consumer use.** Hermes owns exact-diff publication approval. No push, published-branch merge, deployment, restart, garbage collection, credential change or test disabling was performed. Consumer remains inventory-only.
+**READY for Hermes exact-diff review against the explicitly requested upstream snapshot. Not released for consumer use.** Hermes owns exact-diff publication approval. No push, published-branch merge, deployment, restart, garbage collection, credential change or test disabling was performed. Consumer remains inventory-only.
 
 Repository: /home/smaximov/src/llm-agents.nix. Sole producer writer uses the isolated shared-store JJ workspace /home/smaximov/src/llm-agents-hermes-producer. The original preexisting sheprd conflict/untracked directory is untouched; its recorded SHA256 passed readback at 14:09 UTC. The preexisting main bookmark conflict was not changed.
 
@@ -95,16 +95,36 @@ The new nixpkgs cargo setup hook requires system libraries. Real jcode builds fi
 
 Goose2 is the experimental GUI pinned to 612cd89d515f16c84f70b4c74247e270277fe7ba, May 22, 2026. Its component Cargo.toml says 0.1.0; stable Goose v1.60.1 does not contain that component. Prior CI had only advanced an unrelated stable version label. The recipe now truthfully names its snapshot, points its changelog at the actual source commit and skips unrelated release tracking. The GUI source, Doctor patch, private Goose 1.57.0 ACP backend and enabled install checks are preserved. This does not drop or replace the application.
 
-## Actual validation, not yet final acceptance
+## Actual terminal validation
 
 All package/check builds use **--option builders ursa --max-jobs 0**, with existing invocation-only SSH identity selection through the unchanged native Nix helper. Actual logs show ssh://ursa builds. No expensive local fallback or remote evaluation-store substitution was used.
 
 The immutable integration build produced eight successful attributes: paseo, multica, pi-perplexity, paseo-desktop, multica-desktop, ci-tests, updater-tests and treefmt. It correctly returned overall exit 1 because the original jcode recipe failed. The corrected jcode subsequently passed its actual Ursa build and enabled version check, output /nix/store/sqiwz7kr3pr0s2c7jsscdnxcajs8lqy6-jcode-0.99.2-smdex.14. These are real outputs, not derivation evaluation or updater-success substitutes.
 
-The required final immutable build set is dirac, goose-desktop, goose2, happier, happier-server, jcode, multica, multica-desktop, paseo, paseo-desktop, pi-perplexity, ruflo and vtcode, their 13 package-layout checks, plus CI/updater/treefmt checks. Whole-flake no-build evaluation is also required. The final candidate and terminal verdicts are pending. No GUI session or optional exhaustive runtime is claimed. README generation passed with no changes. Canonical nix fmt precedes local commits.
+The required final immutable build set is dirac, goose-desktop, goose2, happier, happier-server, jcode, multica, multica-desktop, paseo, paseo-desktop, pi-perplexity, ruflo and vtcode, their 13 package-layout checks, plus CI/updater/treefmt checks. Whole-flake no-build evaluation is also required. Candidate 095b70ded91763431edb2d05b4dcb396687f0e2c passed whole-flake no-build evaluation and all 29 required build attributes, aggregate exit 0 at 15:25 UTC. Exact output paths are retained in final-builds.json. The final report-inclusive revision and its repeated gates are recorded in the external ledger and final-report/ evidence, avoiding a self-referential commit identifier. No GUI session or optional exhaustive runtime is claimed. README generation passed with no changes. Canonical nix fmt precedes local commits.
 
 ## Durable evidence and next actions
 
 Authoritative continuation directory: /home/smaximov/.hermes/campaigns/2026-11-17-mclan-update/producer-20261118. It contains ledger.json, this report and an evidence symlink to the retained campaign scratch directory. Exact command scripts, source archives, stdout/stderr, exit files and output JSON are retained there, including integration-build-results.tsv, jcode-system.*, retry-consistent-nix/, vtcode-hash-resume.*, custom-inventory-final.json and final-refs.log. Prior failed build/updater/observer logs were not erased. Observer time-window expiry is not a CI/build failure.
 
-Next: format/commit the reviewed payload and report, run the exact immutable candidate's required builds/checks to terminal, record failures or successful output paths and final SHA, then request Hermes exact-diff approval. Do not publish or release the consumer gate from a green plan or a started build. Fresh upstream drift remains explicitly outside this requested-snapshot candidate.
+Next: Hermes reviews the exact final SHA and diff before authorizing any publication. Consumer remains gated until authorized publication and remote SHA readback. No engineering blocker remains for the requested snapshot after successful final-report readback. Fresh upstream drift of 40 commits remains explicitly outside this requested-snapshot candidate and must not be described as fully current upstream HEAD. No main/chiki bookmark was moved.
+
+### Realized package outputs
+
+| Package | Output under /nix/store |
+| --- | --- |
+| dirac | 91rd8f7d293y4i8b31zla7pndqchsgl2-dirac-0.6.1 |
+| goose-desktop | nqfj4k7ijrd476wd31mm6byi9zgki544-goose-desktop-1.60.1 |
+| goose2 | hss5g3nn1aiqyrxa8h8n5jmhkx7y2jfd-goose2-0.1.0-unstable-2026-05-22 |
+| happier | d8ij77pxba4j886sn7lqrsfm0j8sa2gr-happier-0.2.21 |
+| happier-server | gf4jkzpl1yy7pfw03wkmms0iqgm3j411-happier-server-0.2.21 |
+| jcode | sqiwz7kr3pr0s2c7jsscdnxcajs8lqy6-jcode-0.99.2-smdex.14 |
+| multica | hcjz7dk5pbncj788vg5w8jszfaqm3s40-multica-0.4.8-unstable-2026-10-08 |
+| multica-desktop | 4p5xhk4l6hqnhp8dajz8lz1zz3h6fxpg-multica-desktop-0.4.8-unstable-2026-10-08 |
+| paseo | 96s89pwnwscp20v4mjzi5g2s9ga1qvky-paseo-0.16.0-smdex.5 |
+| paseo-desktop | 8bsfkdm8jak6mjxycak6hw1fcny3j04m-paseo-desktop-0.16.0-smdex.5 |
+| pi-perplexity | jnyahzfh1fsh8hwaqjck9an9qyswyyxv-pplx-0.1.0 |
+| ruflo | rxhidp44gc11rghpmzq2ly9x1ad5nvq4-ruflo-3.77.2 |
+| vtcode | zcvhra6hxmf5zj4583y1lq2cgdf1lbh5-vtcode-0.183.1 |
+
+The retained private Goose ACP backend passed 358 unit tests and its integration test, with existing upstream ignores/filters unchanged. Desktop package builds and FHS-like layout checks passed, but no interactive GUI session is claimed. Existing realized dependencies were reused where Nix matched their derivations; the final readback is not a claim that every cached dependency was recompiled.
