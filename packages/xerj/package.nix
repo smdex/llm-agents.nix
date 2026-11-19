@@ -78,10 +78,14 @@ rustPlatform'.buildRustPackage rec {
   # The cargo setup hook's JEMALLOC_OVERRIDE sentinel must point at the real
   # prefixed allocator for the vendored tikv-jemalloc-sys, like jcode/vtcode.
   env.JEMALLOC_OVERRIDE = "${lib.getLib rust-jemalloc-sys}/lib/libjemalloc${stdenv.hostPlatform.extensions.sharedLibrary}";
-  # The test binary links libjemalloc.so.2 but runs before install-time rpath
-  # fixes; point the loader at the declared allocator during the check phase.
+  # The test binary links shared libs from buildInputs (jemalloc, zstd, sqlite,
+  # openssl) but runs before install-time rpath fixes; point the loader at every
+  # declared runtime library dir at once and record what the ELF actually needs.
   preCheck = ''
-    export LD_LIBRARY_PATH="${lib.getLib rust-jemalloc-sys}/lib''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    export LD_LIBRARY_PATH="${lib.makeLibraryPath buildInputs}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    for elf in target/*/release/xerj target/*/release/deps/xerj-[0-9a-f]*; do
+      readelf -d "$elf" 2>/dev/null | grep NEEDED | sed "s|^|DT_NEEDED $elf |" || true
+    done
   '';
 
   postInstall = ''
