@@ -10,6 +10,7 @@
   pkg-config,
   openssl,
   zstd,
+  rust-jemalloc-sys,
   git,
   makeWrapper,
   formatelf,
@@ -67,9 +68,13 @@ rustPlatform'.buildRustPackage rec {
   buildInputs = [
     openssl
     zstd
+    rust-jemalloc-sys
   ]
   ++ lib.optionals stdenv.hostPlatform.isLinux [ stdenv.cc.cc.lib ];
   env.OPENSSL_NO_VENDOR = "1";
+  # The cargo setup hook's JEMALLOC_OVERRIDE sentinel must point at the real
+  # prefixed allocator for the vendored tikv-jemalloc-sys, like jcode/vtcode.
+  env.JEMALLOC_OVERRIDE = "${lib.getLib rust-jemalloc-sys}/lib/libjemalloc${stdenv.hostPlatform.extensions.sharedLibrary}";
 
   postInstall = ''
     wrapProgram $out/bin/xerj --prefix PATH : ${lib.makeBinPath [ git ]}
