@@ -9,6 +9,7 @@
   fetchFromGitHub,
   pkg-config,
   openssl,
+  zstd,
   git,
   makeWrapper,
   formatelf,
@@ -62,7 +63,12 @@ rustPlatform'.buildRustPackage rec {
     makeWrapper
   ]
   ++ lib.optionals stdenv.hostPlatform.isLinux [ formatelf ];
-  buildInputs = [ openssl ] ++ lib.optionals stdenv.hostPlatform.isLinux [ stdenv.cc.cc.lib ];
+  # rc.104 vendored zstd-sys 2.1.2 needs system libzstd via pkg-config, like jcode.
+  buildInputs = [
+    openssl
+    zstd
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isLinux [ stdenv.cc.cc.lib ];
   env.OPENSSL_NO_VENDOR = "1";
 
   postInstall = ''
