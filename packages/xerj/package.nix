@@ -9,8 +9,6 @@
   fetchFromGitHub,
   pkg-config,
   openssl,
-  zstd,
-  rust-jemalloc-sys,
   git,
   makeWrapper,
   formatelf,
@@ -35,17 +33,17 @@ let
 in
 rustPlatform'.buildRustPackage rec {
   pname = "xerj";
-  version = "1.0.0-rc.104";
+  version = "1.0.0-rc.102";
 
   src = fetchFromGitHub {
     owner = "xerj-org";
     repo = "xerj";
     tag = "v${version}";
-    hash = "sha256-E2kVEgEVU0bxl5U1NXdzJWwLtMjAIheIQ8W+c6cITEo=";
+    hash = "sha256-hACHohJJ4FCNXP13X16sy7IxiX6KAPi/clp+AIzTNTc=";
   };
 
   sourceRoot = "source/engine";
-  cargoHash = "sha256-b7C0CNREtye+423qYAUe85ZJjJ1FT/QCM9VwskK5eOE=";
+  cargoHash = "sha256-SNP9oR3WRsoe26hePiQliiFegyl/i1rADgXPRxnL91w=";
 
   cargoBuildFlags = [
     "-p"
@@ -64,17 +62,8 @@ rustPlatform'.buildRustPackage rec {
     makeWrapper
   ]
   ++ lib.optionals stdenv.hostPlatform.isLinux [ formatelf ];
-  # rc.104 vendored zstd-sys 2.1.2 needs system libzstd via pkg-config, like jcode.
-  buildInputs = [
-    openssl
-    zstd
-    rust-jemalloc-sys
-  ]
-  ++ lib.optionals stdenv.hostPlatform.isLinux [ stdenv.cc.cc.lib ];
+  buildInputs = [ openssl ] ++ lib.optionals stdenv.hostPlatform.isLinux [ stdenv.cc.cc.lib ];
   env.OPENSSL_NO_VENDOR = "1";
-  # The cargo setup hook's JEMALLOC_OVERRIDE sentinel must point at the real
-  # prefixed allocator for the vendored tikv-jemalloc-sys, like jcode/vtcode.
-  env.JEMALLOC_OVERRIDE = "${lib.getLib rust-jemalloc-sys}/lib/libjemalloc${stdenv.hostPlatform.extensions.sharedLibrary}";
 
   postInstall = ''
     wrapProgram $out/bin/xerj --prefix PATH : ${lib.makeBinPath [ git ]}
