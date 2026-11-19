@@ -33,17 +33,17 @@ let
 in
 rustPlatform'.buildRustPackage rec {
   pname = "xerj";
-  version = "1.0.0-rc.102";
+  version = "1.0.0-rc.104";
 
   src = fetchFromGitHub {
     owner = "xerj-org";
     repo = "xerj";
     tag = "v${version}";
-    hash = "sha256-hACHohJJ4FCNXP13X16sy7IxiX6KAPi/clp+AIzTNTc=";
+    hash = "sha256-E2kVEgEVU0bxl5U1NXdzJWwLtMjAIheIQ8W+c6cITEo=";
   };
 
   sourceRoot = "source/engine";
-  cargoHash = "sha256-SNP9oR3WRsoe26hePiQliiFegyl/i1rADgXPRxnL91w=";
+  cargoHash = "sha256-b7C0CNREtye+423qYAUe85ZJjJ1FT/QCM9VwskK5eOE=";
 
   cargoBuildFlags = [
     "-p"
