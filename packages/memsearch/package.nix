@@ -46,14 +46,14 @@ let
 in
 python3.pkgs.buildPythonApplication rec {
   pname = "memsearch";
-  version = "0.4.24";
+  version = "0.4.25";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "zilliztech";
     repo = "memsearch";
     tag = "v${version}";
-    hash = "sha256-+eHetC2m20wMqxR1kRQrr/8o08MkZif2i8EWJKmXSYg=";
+    hash = "sha256-afIoA0ROBTrb3nhIxLW/g786nBroxBDfMOkiprfzfP4=";
   };
 
   build-system = with python3.pkgs; [ hatchling ];
