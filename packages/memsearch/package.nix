@@ -74,6 +74,8 @@ python3.pkgs.buildPythonApplication rec {
     setuptools
     tomli-w
     openai
+    filelock
+    psutil
   ];
 
   pythonImportsCheck = [ "memsearch" ];
